@@ -1,12 +1,11 @@
-import Router from 'svelte-spa-router'
-import {wrap} from 'svelte-spa-router'
+import Router, {wrap} from 'svelte-spa-router'
+
 import Login from './routes/Login/Login.svelte'
 import Register from './routes/Register/Register.svelte'
 import Panal from './routes/Panal/Panal.svelte'
 import Sample from './routes/Sample/Sample.svelte'
 import TargetMutant from './routes/TargetMutant/TargetMutant.svelte'
 
-import Secret from './routes/Secret/Secret.svelte'
 import {userInfo} from './store/store'
 
 

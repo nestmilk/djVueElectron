@@ -1,18 +1,28 @@
 {
-  "name": "svelte-app",
+  "name": "djSvelteElectron",
   "version": "1.0.0",
+  "main": "main.js",
   "devDependencies": {
+    "concurrently": "^5.1.0",
+    "cross-env": "^7.0.0",
+    "electron-builder": "^22.3.2",
     "rollup": "^1.12.0",
     "rollup-plugin-commonjs": "^10.0.0",
     "rollup-plugin-livereload": "^1.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-svelte": "^5.0.3",
     "rollup-plugin-terser": "^5.1.2",
-    "svelte": "^3.0.0"
+    "svelte": "^3.0.0",
+    "wait-on": "^4.0.0"
   },
   "dependencies": {
     "axios": "^0.19.0",
+    "bootstrap": "^4.4.1",
+    "electron": "^8.0.0",
+    "electron-is-dev": "^1.1.0",
+    "electron-store": "^5.1.0",
     "elizabot": "0.0.2",
+    "iconv-lite": "^0.5.1",
     "igv": "^2.3.5",
     "js2excel": "^1.0.1",
     "sirv-cli": "^0.4.4",
@@ -23,7 +33,9 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "start": "sirv public --host 0.0.0.0 --port 8080"
+    "start": "sirv public --host 0.0.0.0 --port 8080",
+    "electron": "electron .",
+    "devplus": "concurrently \"wait-on http://localhost:8080 && electron .\" \"cross-env BROWSER=none rollup -c -w\""
   },
   "private": true
 }

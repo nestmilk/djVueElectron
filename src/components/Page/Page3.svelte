@@ -4,7 +4,7 @@
 <!--            这个number必须加，不然就是各种传值跳跃错误！！！！ TODO-->
             <select class="select" bind:value={pageSize} on:change="{()=>changePageSize()}">
 <!--                <option value="5">5/页</option>-->
-                <option value="10">10/页</option>
+<!--                <option value="10">10/页</option>-->
                 <option value="20">20/页</option>
                 <option value="50">50/页</option>
                 <option value="500">500/页</option>

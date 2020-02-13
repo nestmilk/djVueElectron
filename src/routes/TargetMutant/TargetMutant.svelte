@@ -339,12 +339,14 @@
                             {/each}
                         </table>
                     </div>
-                    <Page page={mutant_param_page} totalPage={mutant_totalPage}
-                        on:changePageSize={handleChangePageSizeForMutant} on:changePage={handleChangePageForMutant}></Page>
+                    <div class="pagewrapper">
+                        <Page page={mutant_param_page} totalPage={mutant_totalPage}
+                              on:changePageSize={handleChangePageSizeForMutant} on:changePage={handleChangePageForMutant}></Page>
+                    </div>
                 </div>
-                <div class="igvWrapper">
-                    <div class="igvBind" bind:this={igv_bind}></div>
-                </div>
+<!--                <div class="igvWrapper">-->
+<!--                    <div class="igvBind" bind:this={igv_bind}></div>-->
+<!--                </div>-->
             </div>
         </div>
     </div>
@@ -360,6 +362,8 @@
 {/if}
 <script>
     // import io from 'socket.io-client'
+    import {onMount, createEventDispatcher, beforeUpdate, afterUpdate} from 'svelte'
+
     import api from '../../api'
     import fileUtil from '../../utils/file'
     import {
@@ -381,10 +385,13 @@
     import Sure from '../../components/Sure/Sure.svelte'
     import Page from '../../components/Page/Page3.svelte'
 
-    import {onMount, createEventDispatcher, beforeUpdate, afterUpdate} from 'svelte'
     import {dict_translate} from "../../utils/dict";
     import {getTime} from "../../utils/common";
-    import axios from 'axios'
+
+    const { ipcRenderer, remote } =window.require('electron')
+    const {exec, execSync} = window.require('child_process')
+    const iconv = require('iconv-lite');
+
 
     const dispatch = createEventDispatcher()
 
@@ -396,7 +403,7 @@
         STATUS: 'status', SAMPLEID: 'sampleId', SAMPLESN: 'sampleSn', AFFIRMED: 'affirmed', RECOVER: 'recover',
         REASONTYPE: 'reason_type', REASONDESC: 'reason_desc', REASONDISPLAY: 'reason_display',
         BLANK: 'blank', LOGSDISPLAY: 'logs_display', LOG: 'log', LOGFIELDDETAIL: 'log_field_details',
-        COPY: 'copy', MUTANTS: 'mutants', TYPE: 'type'
+        COPY: 'copy', MUTANTS: 'mutants', TYPE: 'type', PATH: 'path'
     }
 
     // 数据下载后，创建mutant_submit_dict, 只有done和free状态
@@ -489,7 +496,7 @@
 
     // 其中sampleIds根据selected_sample_ids内容变动
     let mutant_param_page = 1
-    let mutant_param_page_size = 10
+    let mutant_param_page_size = 20
 
 
     // 筛选mutant完成情况
@@ -582,6 +589,7 @@
 
     // track的configs库
     let track_configs_dict = {}
+    let bamAndBai_path_dict = {}
     let sampleSn_inTrack_list = []
 
     //编辑理由相关参数
@@ -642,6 +650,10 @@
         // console.log(all_excel_url)
         // console.log(sampleSn_dict)
         // console.log(track_configs_dict, Object.keys(track_configs_dict))
+        // console.log(bamAndBai_path_dict)
+        // console.log(remote.app.getPath('userData'))
+        // console.log('store', settingsStore.get('port'))
+
     }
 
     function stopPropagation(event){
@@ -1590,6 +1602,12 @@
                 url: paired_Files[sampleSn][dict.BAM],
                 indexURL: paired_Files[sampleSn][dict.BAI]
             }
+
+            bamAndBai_path_dict[sampleSn_dict[sampleSn][dict.SAMPLEID]] = [
+                    paired_Files[sampleSn][dict.BAM][dict.PATH].replace(/\\/g,'/'),
+                    paired_Files[sampleSn][dict.BAI][dict.PATH].replace(/\\/g,'/')
+                ]
+
             // 刷新 sampleSn_inTrack_list
             if (sampleSn_inTrack_list.indexOf(sampleSn) === -1) {
                 sampleSn_inTrack_list.push(sampleSn)
@@ -1624,7 +1642,7 @@
         // console.log('loadtracks begin')
 
         // 先移除所有的tracks
-        igvBrowser.removeAllTracks()
+        // igvBrowser.removeAllTracks()
 
         let reordered_sampleIds_list = []
         // console.log(now_sample_id + " " + selected_sampleIds_list)
@@ -1640,10 +1658,19 @@
         if(igvBrowser){
             for (let sampleId of reordered_sampleIds_list) {
                 if (track_configs_dict[sampleId]) {
-                    igvBrowser.loadTrack(track_configs_dict[sampleId])
+                    // igvBrowser.loadTrack(track_configs_dict[sampleId])
                 }
             }
         }
+
+        ipcRenderer.send('loadTracks',
+            reordered_sampleIds_list.reduce((result, sampleId)=>{
+                if(bamAndBai_path_dict.hasOwnProperty(sampleId)){
+                    result.push(bamAndBai_path_dict[sampleId])
+                }
+                return result
+            },[])
+        )
 
         pre_selected_sampleIds_list = JSON.parse(JSON.stringify(selected_sampleIds_list))
     }
@@ -1697,20 +1724,20 @@
         // })
 
 
-        let options =
-                {
-                    reference:
-                            {
-                                id: "hg19",
-                                fastaURL: "/database/ucsc.hg19.fasta",
-                                indexURL: "/database/ucsc.hg19.fasta.fai"
-                            },
-                    locus: 'chr1:1983-2020'
-                };
-
-        await igv.createBrowser(igv_bind, options).then((browser)=>{
-            igvBrowser = browser
-        })
+        // let options =
+        //         {
+        //             reference:
+        //                     {
+        //                         id: "hg19",
+        //                         fastaURL: "/database/ucsc.hg19.fasta",
+        //                         indexURL: "/database/ucsc.hg19.fasta.fai"
+        //                     },
+        //             locus: 'chr1:1983-2020'
+        //         };
+        //
+        // await igv.createBrowser(igv_bind, options).then((browser)=>{
+        //     igvBrowser = browser
+        // })
 
         await getSamplesList(params.panalId)
 
@@ -1975,13 +2002,17 @@
         /*此处必须要加这个0，不然table无法滚动 TODO*/
         width: 0;
         flex: 1;
-        display: flex;
-        flex-flow: column;
+        /*display: flex;*/
+        /*flex-flow: column;*/
     }
     .contentRight .mutantList{
-        flex: 0 0 460px;
+        /*flex: 0 0 460;*/
+        height: 100%;
         padding: 3px;
         border-bottom: 1px solid #cccccc;
+        display: flex;
+        flex-flow: column;
+        box-sizing: border-box;
     }
 
 
@@ -2022,10 +2053,12 @@
     }
     .contentRight .topInsideWrapper{
         overflow: scroll;
+        flex: 0 0 51px;
     }
     .contentRight .insideWrapper{
-        height: 370px;
+        /*height: 370px;*/
         overflow: scroll;
+        flex: 0 0 700px;
     }
     .contentRight .rightMutantTable .gray.icon-sort-amount-asc{
         color: #cccccc;
@@ -2407,11 +2440,14 @@
         width: 150px;
     }
 
-
-    .contentRight .igvWrapper{
+    .pagewrapper{
         flex: 1;
     }
-    .contentRight .igvBind{
-        margin: 3px auto;
-    }
+
+    /*.contentRight .igvWrapper{*/
+    /*    flex: 1;*/
+    /*}*/
+    /*.contentRight .igvBind{*/
+    /*    margin: 3px auto;*/
+    /*}*/
 </style>
