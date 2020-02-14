@@ -34,6 +34,10 @@ exports.igvExec = (msg, timestamp) => {
         return {success: true}
     } catch(error){
         if (error.message.includes("ConnectionRefusedError")){
+            // 连接都失败了，就顺带把ifIgvConnect设置为false，避免TargetMutant页面切换current_mutant_id过慢！！
+            settingsStore.set('ifIgvConnect',false)
+            ipcMain.emit('set-ipc-connect-status',false)
+            // 传递到main.js，在那里才有mainWindow发送信号去视窗
             ipcMain.emit('connect-igv-error')
             return {
                 success: false,

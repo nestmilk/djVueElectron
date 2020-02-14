@@ -2,7 +2,6 @@ const {app, shell, ipcMain} = require('electron')
 
 const Store = require('electron-store')
 const settingsStore = new Store({ name: 'Settings'})
-let ifIgvConnect = settingsStore.get('ifIgvConnect')
 
 
 let template = [
@@ -88,11 +87,15 @@ let template = [
                 label: 'IGV工具',
                 submenu: [
                     {
-                        label: '连接igv',
+                        label: '勾选连接igv',
                         type: 'checkbox',
-                        checked: ifIgvConnect,
+                        checked: settingsStore.get('ifIgvConnect'),
                         click: () => {
-                            settingsStore.set('ifIgvConnect', !ifIgvConnect)
+                            settingsStore.set('ifIgvConnect', !settingsStore.get('ifIgvConnect'))
+                            if(settingsStore.get('ifIgvConnect')){
+                                ipcMain.emit('set-ifIgvConnect-true-done')
+                            }
+
                         }
                     }, {
                         label: '打开igv',
@@ -101,8 +104,8 @@ let template = [
                             let res = shell.openItem(settingsStore.get('igvLocation'))
                             // 成功打开返回true，无法打开返回false
                             if(res){
-                                settingsStore.set('isIgvOpened', true)
-                                ipcMain.emit('set-ipc-connect-true')
+                                settingsStore.set('ifIgvConnect', true)
+                                ipcMain.emit('set-ipc-connect-status', true)
                             }
                         }
                     }

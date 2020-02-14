@@ -45,9 +45,11 @@ app.on('ready', ()=>{
             //Create a new session.  Unloads all tracks except the default genome annotations.
 
             if (!igvExec('new', timestamp).success) return
+
             for (let bamAndBaiPaths of bamAndBaiPathsList){
                 if(!igvExec(igvLoadTrack(bamAndBaiPaths[0], bamAndBaiPaths[1]), timestamp).success) return
             }
+
         }
     )
 
@@ -67,7 +69,13 @@ app.on('ready', ()=>{
         mainWindow.webContents.send('connect-igv-error-caution')
     })
 
-    ipcMain.on('set-ipc-connect-true', ()=>{
-        let toolMenu = process.platform === 'darwin'? menu.items[] : menu.items[]
+    ipcMain.on('set-ipc-connect-status', (event, toggle)=>{
+        let toolMenu = process.platform === 'darwin'? menu.items[4] : menu.items[3]
+        toolMenu.submenu.items[2].submenu.items[0].checked = toggle
+        mainWindow.webContents.send('reset-errors')
+    })
+
+    ipcMain.on('set-ifIgvConnect-true-done',()=>{
+        mainWindow.webContents.send('reset-errors')
     })
 })

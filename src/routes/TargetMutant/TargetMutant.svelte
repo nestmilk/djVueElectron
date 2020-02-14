@@ -394,7 +394,6 @@
     const Store = window.require('electron-store')
     const settingsStore = new Store({name: 'Settings'})
 
-
     const dispatch = createEventDispatcher()
 
     let dict = {BAM: 'bam', BAI: 'bai', TARGET: 'target', 'HEREDITARY': 'hereditary', 'TMB': 'TMB', tmb: 'tmb',
@@ -431,6 +430,9 @@
         detail: ''
     }
     let errors_ori = JSON.parse(JSON.stringify(errors))
+    function reset_errors(){
+        errors = JSON.parse(JSON.stringify(errors_ori))
+    }
 
     let loadingShow = false
     let sureShow = false
@@ -654,7 +656,7 @@
         // console.log(track_configs_dict, Object.keys(track_configs_dict))
         // console.log(bamAndBai_path_dict)
         // console.log(remote.app.getPath('userData'))
-        // console.log('store', settingsStore.get('port'))
+        console.log('store', settingsStore.get('ifIgvConnect'))
 
     }
 
@@ -1645,7 +1647,6 @@
 
     // 加载igv的tracks
     function loadTracks() {
-
         // console.log('loadtracks begin')
 
         // 先移除所有的tracks
@@ -1697,6 +1698,7 @@
     function changeLocus() {
         console.log('change Locus begin')
 
+
         let mutant = mutant_submit_dict[now_mutant_id]
         let query = __calculateScope(mutant[dict.CHR], mutant[mutant_field_dict.POSSTART][dict.NOWVALUE], mutant[mutant_field_dict.POSEND][dict.NOWVALUE])
         // console.log(query)
@@ -1707,7 +1709,7 @@
         if(settingsStore.get('ifIgvConnect')){
             ipcRenderer.send('search-locus', query)
         }else{
-            errors.detail = '如果已经打开igv，请前往设置‘igv已连接’！'
+            errors.detail = '如想使用igv，请打开igv、设置"勾选连接igv"'
         }
     }
 
@@ -1761,7 +1763,11 @@
         __setDatabyParamsType()
 
         ipcRenderer.on('connect-igv-error-caution',()=>{
-            errors.detail = '与igv连接失败，如已打开，请关闭后重新打开！'
+            errors.detail = '与igv通信失败，请重新打开igv！'
+        })
+
+        ipcRenderer.on('reset-errors', ()=>{
+            reset_errors()
         })
 
         // console.log('onMount end')
