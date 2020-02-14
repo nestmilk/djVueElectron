@@ -776,6 +776,8 @@
             console.error('getPanalList', error)
             if (error.data) {
                 errors.unauthorized = error.data.detail ? error.data.detail : ""
+            }else{
+                errors.detail = error
             }
         })
 

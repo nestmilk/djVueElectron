@@ -3,7 +3,7 @@ const {execSync} = require('child_process')
 const fs = require('fs')
 const path = require('path')
 const Store = require('electron-store')
-const {app, dialog} = require('electron')
+const {app, dialog, ipcMain} = require('electron')
 
 const settingsStore = new Store({name: 'Settings'})
 
@@ -11,6 +11,7 @@ const {igvSocketTemplate} = require('./templates')
 
 
 exports.igvExec = (msg, timestamp) => {
+    console.log(msg)
     // 第一次如果没有则创建location
     if (!settingsStore.get('savedFileLocation')){
         settingsStore.set('savedFileLocation', app.getPath('userData'))
@@ -29,11 +30,11 @@ exports.igvExec = (msg, timestamp) => {
     fs.writeFileSync(temp_file_path, template)
 
     try{
-        let out = execSync('python '+temp_file_path)
+        execSync('python '+temp_file_path)
         return {success: true}
     } catch(error){
         if (error.message.includes("ConnectionRefusedError")){
-            dialog.showErrorBox('执行igv命令出错', `${msg}\n执行上述命令时，与igv连接失败！`)
+            ipcMain.emit('connect-igv-error')
             return {
                 success: false,
                 error: "ConnectionRefusedError"

@@ -40,8 +40,7 @@ app.on('ready', ()=>{
         })
     })
 
-    ipcMain.on('loadTracks', (event, bamAndBaiPathsList)=>{
-            // console.log(bamAndBaiPathsList)
+    ipcMain.on("load-tracks", (event, bamAndBaiPathsList)=>{
             const timestamp = new Date().getTime()
             //Create a new session.  Unloads all tracks except the default genome annotations.
 
@@ -51,4 +50,24 @@ app.on('ready', ()=>{
             }
         }
     )
+
+    ipcMain.on("remove-tracks", ()=>{
+            const timestamp = new Date().getTime()
+            if (!igvExec('new', timestamp).success) return
+        }
+    )
+
+    ipcMain.on('search-locus', (event, query)=>{
+        const timestamp = new Date().getTime()
+        if (!igvExec(igvGotoLocus(query), timestamp).success) return
+        if (!igvExec("sort base", timestamp).success) return
+    })
+
+    ipcMain.on('connect-igv-error', ()=>{
+        mainWindow.webContents.send('connect-igv-error-caution')
+    })
+
+    ipcMain.on('set-ipc-connect-true', ()=>{
+        let toolMenu = process.platform === 'darwin'? menu.items[] : menu.items[]
+    })
 })

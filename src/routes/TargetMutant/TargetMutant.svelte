@@ -390,7 +390,9 @@
 
     const { ipcRenderer, remote } =window.require('electron')
     const {exec, execSync} = window.require('child_process')
-    const iconv = require('iconv-lite');
+    const iconv = window.require('iconv-lite');
+    const Store = window.require('electron-store')
+    const settingsStore = new Store({name: 'Settings'})
 
 
     const dispatch = createEventDispatcher()
@@ -434,8 +436,8 @@
     let sureShow = false
 
     //igv控制参数
-    let igv_bind
-    let igvBrowser
+    // let igv_bind
+    // let igvBrowser
 
     // panal的done状态
     let panal_unable_handle = false
@@ -1627,12 +1629,17 @@
     }
 
     // 取消所有track信息
-    function clearTracks () {
+    function
+    clearTracks () {
         track_configs_dict = {}
         sampleSn_inTrack_list = []
-        if (igvBrowser) {
-            igvBrowser.removeAllTracks()
+        // if (igvBrowser) {
+        //     igvBrowser.removeAllTracks()
+        // }
+        if(settingsStore.get('ifIgvConnect')){
+            ipcRenderer.send('remove-tracks')
         }
+
     }
 
 
@@ -1655,22 +1662,23 @@
         // console.log(reordered_sampleIds_list)
 
         // 按now_sample_id为第一位的tracks列表，重新加载
-        if(igvBrowser){
-            for (let sampleId of reordered_sampleIds_list) {
-                if (track_configs_dict[sampleId]) {
-                    // igvBrowser.loadTrack(track_configs_dict[sampleId])
-                }
-            }
+        // if(igvBrowser){
+        //     for (let sampleId of reordered_sampleIds_list) {
+        //         if (track_configs_dict[sampleId]) {
+        //             igvBrowser.loadTrack(track_configs_dict[sampleId])
+        //         }
+        //     }
+        // }
+        if(settingsStore.get('ifIgvConnect')){
+            ipcRenderer.send("load-tracks",
+                reordered_sampleIds_list.reduce((result, sampleId)=>{
+                    if(bamAndBai_path_dict.hasOwnProperty(sampleId)){
+                        result.push(bamAndBai_path_dict[sampleId])
+                    }
+                    return result
+                },[])
+            )
         }
-
-        ipcRenderer.send('loadTracks',
-            reordered_sampleIds_list.reduce((result, sampleId)=>{
-                if(bamAndBai_path_dict.hasOwnProperty(sampleId)){
-                    result.push(bamAndBai_path_dict[sampleId])
-                }
-                return result
-            },[])
-        )
 
         pre_selected_sampleIds_list = JSON.parse(JSON.stringify(selected_sampleIds_list))
     }
@@ -1689,13 +1697,18 @@
     function changeLocus() {
         console.log('change Locus begin')
 
-        if (igvBrowser) {
-            let mutant = mutant_submit_dict[now_mutant_id]
-            let query = __calculateScope(mutant[dict.CHR], mutant[mutant_field_dict.POSSTART][dict.NOWVALUE], mutant[mutant_field_dict.POSEND][dict.NOWVALUE])
-            // console.log(query)
-            igvBrowser.search(query)
-        }
+        let mutant = mutant_submit_dict[now_mutant_id]
+        let query = __calculateScope(mutant[dict.CHR], mutant[mutant_field_dict.POSSTART][dict.NOWVALUE], mutant[mutant_field_dict.POSEND][dict.NOWVALUE])
+        // console.log(query)
 
+        // if (igvBrowser) {
+        //     igvBrowser.search(query)
+        // }
+        if(settingsStore.get('ifIgvConnect')){
+            ipcRenderer.send('search-locus', query)
+        }else{
+            errors.detail = '如果已经打开igv，请前往设置‘igv已连接’！'
+        }
     }
 
     function __setDatabyParamsType(){
@@ -1746,6 +1759,10 @@
         buildMutantSubmitDictandAllSampleRecordDictandAllMutantTotalNum()
 
         __setDatabyParamsType()
+
+        ipcRenderer.on('connect-igv-error-caution',()=>{
+            errors.detail = '与igv连接失败，如已打开，请关闭后重新打开！'
+        })
 
         // console.log('onMount end')
         loadingShow = false

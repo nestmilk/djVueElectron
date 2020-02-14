@@ -2,6 +2,7 @@ const {app, shell, ipcMain} = require('electron')
 
 const Store = require('electron-store')
 const settingsStore = new Store({ name: 'Settings'})
+let ifIgvConnect = settingsStore.get('ifIgvConnect')
 
 
 let template = [
@@ -56,8 +57,9 @@ let template = [
                         return 'F11';
                 })(),
                 click: (item, focusedWindow) => {
-                    if (focusedWindow)
+                    if (focusedWindow){
                         focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
+                    }
                 }
             },
         ]
@@ -83,11 +85,29 @@ let template = [
                     shell.openExternal('http://asia.ensembl.org/index.html')
                 }
             }, {
-                label: '打开igv',
-                accelerator: 'Ctrl+I',
-                click: ()=>{
-                    shell.openItem(settingsStore.get('igvLocation'))
-                }
+                label: 'IGV工具',
+                submenu: [
+                    {
+                        label: '连接igv',
+                        type: 'checkbox',
+                        checked: ifIgvConnect,
+                        click: () => {
+                            settingsStore.set('ifIgvConnect', !ifIgvConnect)
+                        }
+                    }, {
+                        label: '打开igv',
+                        accelerator: 'Ctrl+I',
+                        click: ()=>{
+                            let res = shell.openItem(settingsStore.get('igvLocation'))
+                            // 成功打开返回true，无法打开返回false
+                            if(res){
+                                settingsStore.set('isIgvOpened', true)
+                                ipcMain.emit('set-ipc-connect-true')
+                            }
+                        }
+                    }
+                ]
+
             }, {
                 label: '打开调试工具',
                 accelerator: (function () {
