@@ -37,3 +37,14 @@ export const getTime = ()=>{
     if (second>=0 && second<=9) second = "0" + second
     return  hour + ":" + minute + ":" + second
 }
+
+export const getParentNodeByParentClassName = (node, parentClassName) => {
+    let current = node
+    while(current !== null){
+        if (current.classList && current.classList.contains(parentClassName)){
+            return current
+        }
+        current = current.parentNode
+    }
+    return false
+}

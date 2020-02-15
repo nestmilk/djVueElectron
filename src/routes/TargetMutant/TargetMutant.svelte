@@ -147,15 +147,19 @@
                     <div class="insideWrapper" bind:this={insideScroll} on:scroll={()=>handleScroll(dict.INSIDESCROLL)}>
                         <table class="down rightMutantTable">
                             {#each mutant_list as mutant, index (mutant.id)}
-                                <tr class="{now_mutant_id===mutant.id?'current':''}
+                                <tr class="mutantItem
+                                            {now_mutant_id===mutant.id?'current':''}
                                             {mutant_submit_dict[mutant.id]?
                                             (mutant_submit_dict[mutant.id][dict.STATUS]===mutant_status_dict.FREE && mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE]?
                                             mutant_status_dict.DELETED:mutant_submit_dict[mutant.id][dict.STATUS]):''}"
-                                    on:click|stopPropagation={()=>handleChangeCurrentMutantId(mutant.id, mutant.sample)}>
+                                    on:click|stopPropagation={()=>handleChangeCurrentMutantId(mutant.id, mutant.sample)}
+                                    data-mutantId="{mutant.id}"
+                                    data-sampleId="{mutant.sample}"
+                                >
                                     <td class="logs">
                                         <button class="{mutant.logs.length!==0?'icon-calendar':(mutant.copy?'icon-copy':'icon-info')}"
                                             disabled="{mutant.logs.length==0?'disabled':''}"
-                                            on:click|stopPropagation={()=>handleLogsDisplay(mutant.id)}></button>
+                                            on:click={()=>handleLogsDisplay(mutant.id)}></button>
                                         {#if mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][dict.LOGSDISPLAY]:false }
                                             <div class="logsWrapper">
                                                 <table class="logTable">
@@ -212,7 +216,7 @@
                                         <button class="{mutant_submit_dict[mutant.id]?
                                                             (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?
                                                             'icon-lock':'icon-unlocked'):'icon-unlocked'}"
-                                            on:click|stopPropagation={()=>handleEventForSure(model_dict.MUTANT, mutant_status_dict.DONE, [mutant.id, mutant.sample])}
+                                            on:click={()=>handleEventForSure(model_dict.MUTANT, mutant_status_dict.DONE, [mutant.id, mutant.sample])}
                                             disabled="{panal_unable_handle?'disabled':''}">
                                         </button>
                                     </td>
@@ -220,13 +224,13 @@
                                         <button class="{mutant_submit_dict[mutant.id]?
                                                             ([mutant_status_dict.CHECKED, mutant_status_dict.EDITED, mutant_status_dict.DELETED].indexOf(mutant_submit_dict[mutant.id][dict.STATUS]) !== -1?
                                                             'icon-checkbox-checked':'icon-checkbox-unchecked'):''}"
-                                            on:click|stopPropagation={()=>handleAffirmForMutSubmits(mutant.id, mutant.sample)}
+                                            on:click={()=>handleAffirmForMutSubmits(mutant.id, mutant.sample)}
                                             disabled="{panal_unable_handle?'disabled':
                                                 (mutant_submit_dict[mutant.id]?
                                                 (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':''):'')}">
                                         </button>
                                         {#if mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][dict.REASONDISPLAY]:false}
-                                            <div class="reasonWrapper" on:click={stopPropagation}>
+                                            <div class="reasonWrapper">
                                                 <div class="selectWrapper">
                                                     修改类型：
                                                     <select value="{mutant_submit_dict[mutant.id]?
@@ -258,7 +262,7 @@
                                                               mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.NOWVALUE] === mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.PREVALUE] &&
                                                               mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.NOWVALUE] === mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.PREVALUE]
                                                             ?'equal':''):''} icon-undo2"
-                                            on:click|stopPropagation={()=>recoverValueForMutSubmits([mutant.id],[dict.POSSTART, dict.POSEND, dict.REF, dict.ALT, dict.DELETE, dict.REASONDESC, dict.REASONTYPE])}
+                                            on:click={()=>recoverValueForMutSubmits([mutant.id],[dict.POSSTART, dict.POSEND, dict.REF, dict.ALT, dict.DELETE, dict.REASONDESC, dict.REASONTYPE])}
                                             disabled="{panal_unable_handle?'disabled':
                                                 (mutant_submit_dict[mutant.id]?
                                                 (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
@@ -267,7 +271,7 @@
                                     </td>
                                     <td class="delete" title="实时数据：{mutant.delete?'删除':'保留'}">
                                         <button class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE]?'':'undeleted'):'undeleted'} icon-cross"
-                                            on:click|stopPropagation={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.DELETE)}
+                                            on:click={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.DELETE)}
                                                 disabled="{panal_unable_handle?'disabled':
                                                     (mutant_submit_dict[mutant.id]?
                                                     (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
@@ -362,7 +366,7 @@
 {/if}
 <script>
     // import io from 'socket.io-client'
-    import {onMount, createEventDispatcher, beforeUpdate, afterUpdate} from 'svelte'
+    import {onMount, onDestroy, createEventDispatcher, beforeUpdate, afterUpdate} from 'svelte'
 
     import api from '../../api'
     import fileUtil from '../../utils/file'
@@ -386,7 +390,7 @@
     import Page from '../../components/Page/Page3.svelte'
 
     import {dict_translate} from "../../utils/dict";
-    import {getTime} from "../../utils/common";
+    import {getTime, getParentNodeByParentClassName} from "../../utils/common";
 
     const { ipcRenderer, remote } =window.require('electron')
     const {exec, execSync} = window.require('child_process')
@@ -647,7 +651,7 @@
         // console.log(mutant_list)
         // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
         // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
-        // console.log( Object.keys(mutant_submit_dict).length)
+        console.log( mutant_submit_dict)
         // console.log(all_mutant_total_num)
         // console.log(all_totalSubmitAndAffirmed, all_totalUnsubmitAndAffirmed, all_totalUnsubmitAndUnaffirmed)
         // console.log(panal_unable_handle)
@@ -656,7 +660,8 @@
         // console.log(track_configs_dict, Object.keys(track_configs_dict))
         // console.log(bamAndBai_path_dict)
         // console.log(remote.app.getPath('userData'))
-        console.log('store', settingsStore.get('ifIgvConnect'))
+        // console.log('store', settingsStore.get('ifIgvConnect'))
+        // console.log(window.location.href)
 
     }
 
@@ -1725,6 +1730,30 @@
         excel_url = all_excel_url[params.type]
     }
 
+
+    function __showContextMenu(e){
+        // console.log(e.target, document.querySelector('.down'), document.querySelector('.down').contains(e.target))
+
+
+        if (document.querySelector('.down').contains(e.target)){
+            let menu = new remote.Menu()
+            let deleteMenuItem = new remote.MenuItem({
+                label: '复制',
+                click: ()=>{
+                    let element =getParentNodeByParentClassName(e.target, 'mutantItem')
+                    // todo dataset中data-后面大写没用，全部转为小写了, 类型是字符串了
+                    // console.log(element, element.dataset, element.dataset.mutantid, element.dataset.sampleid)
+                    handleChangeCurrentMutantId(parseInt(element.dataset.mutantid), parseInt(element.dataset.sampleid))
+                    handleEventForSure(model_dict.MUTANT, dict.COPY)
+                }
+            })
+            menu.append(deleteMenuItem)
+            menu.popup({window: remote.getCurrentWindow()})
+        }
+
+    }
+
+
     onMount(async ()=>{
         // console.log('begin onMount')
         //开启loading层
@@ -1770,8 +1799,14 @@
             reset_errors()
         })
 
+        document.addEventListener('contextmenu', __showContextMenu)
+
         // console.log('onMount end')
         loadingShow = false
+    })
+
+    onDestroy(()=>{
+        document.removeEventListener('contextmenu', __showContextMenu)
     })
 
     beforeUpdate(()=>{
@@ -1782,6 +1817,8 @@
     afterUpdate(()=>{
         if (autoscroll) uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
     })
+
+
 
 </script>
 
@@ -2355,9 +2392,6 @@
         color: #cccccc;
     }
     .contentRight tr.edited .icon-undo2{
-        color: #cccccc;
-    }
-    .contentRight tr.deleted .icon-undo2{
         color: #cccccc;
     }
     .contentRight .delete{

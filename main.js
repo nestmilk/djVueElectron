@@ -75,6 +75,11 @@ app.on('ready', ()=>{
         mainWindow.webContents.send('reset-errors')
     })
 
+    ipcMain.on('open-igv-caution', ()=>{
+        let toolMenu = process.platform === 'darwin'? menu.items[4] : menu.items[3]
+        toolMenu.submenu.items[2].submenu.items[0].checked = true
+    })
+
     ipcMain.on('set-ifIgvConnect-true-done',()=>{
         mainWindow.webContents.send('reset-errors')
     })

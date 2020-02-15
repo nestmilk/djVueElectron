@@ -105,7 +105,9 @@ let template = [
                             // 成功打开返回true，无法打开返回false
                             if(res){
                                 settingsStore.set('ifIgvConnect', true)
-                                ipcMain.emit('set-ipc-connect-status', true)
+                                // todo 这个发出去的和ipcRenderer.send不一样，不会添加event， 第一个就是true
+                                // ipcMain.emit('set-ipc-connect-status', true)
+                                ipcMain.emit('open-igv-caution')
                             }
                         }
                     }
