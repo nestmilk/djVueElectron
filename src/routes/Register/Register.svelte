@@ -1,6 +1,6 @@
 <div class="wrapper">
     <div class="register">
-        <img src="/logo.png" style="width:190px;" alt="logo">
+        <img src="./logo.png" style="width:190px;" alt="logo">
         <div>
             <label>用户名</label>
             <input type="text" bind:value={username} on:change={change}/>
@@ -137,7 +137,7 @@
         position: fixed;
         width: 100%;
         height: 100%;
-        background: url('/background.jpg');
+        background: url('../background.jpg');
         background-repeat: no-repeat;
         background-size: cover;
         color: white;

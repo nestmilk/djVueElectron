@@ -2118,7 +2118,7 @@
     .contentRight .insideWrapper{
         /*height: 370px;*/
         overflow: scroll;
-        flex: 0 0 700px;
+        flex: 0 0 718px;
     }
     .contentRight .rightMutantTable .gray.icon-sort-amount-asc{
         color: #cccccc;

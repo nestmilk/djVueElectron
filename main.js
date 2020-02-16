@@ -13,7 +13,7 @@ app.on('ready', ()=>{
         height: 768
     }
 
-    const urlLocation = isDev? 'http://localhost:8080': 'fakeUrl'
+    const urlLocation = isDev? 'http://localhost:8080': `file://${path.join(__dirname, './index.html')}`
     let mainWindow = new AppWindow(mainWindowConfig, urlLocation)
     mainWindow.on('closed', ()=>{
         mainWindow = null

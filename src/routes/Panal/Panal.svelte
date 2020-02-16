@@ -49,7 +49,7 @@
                                     </table>
                                 </div>
                                 <br>
-                                <span>选择模板标题栏为输出exce样式</span>
+                                <span>选择模板标题栏为输出excel样式</span>
                                 <table>
                                     <tr>
                                         <th class="templateName">模板名称</th>
@@ -309,6 +309,8 @@
                 }
                 selected_file_list.push(file)
             }
+
+            selected_file_list = selected_file_list
         }
         // console.log(file_list)
 
@@ -659,6 +661,7 @@
         let form = new FormData()
 
         // 添加panal名
+        console.log('upload file_name', name)
         form.append('name', file_name)
 
         // 添加excel文件，制作上传表名列表文件sheet_names
@@ -710,10 +713,16 @@
             success = true
             errors.panal = response.data.panal ? response.data.panal : ''
         }).catch((error)=>{
-            console.error('uploadfile', error)
-            errors.name = error.data.name ? error.data.name : ""
-            errors.detail = error.data.sheet_names_dict ? error.data.sheet_names_dict : ""
-            errors.unauthorized = error.data.detail? error.data.detail: ""
+            if( error.data && typeof error.data === 'string'){
+                console.error('load', error.data)
+                errors.detail = "数据不匹配，写入错误！"
+            }else{
+                errors.name = error.data.name ? error.data.name : ""
+                errors.detail = error.data.sheet_names_dict ? error.data.sheet_names_dict : ""
+                errors.unauthorized = error.data.detail? error.data.detail: ""
+            }
+
+
         })
 
         if (success) {
@@ -1067,6 +1076,9 @@
         padding: 5px;
         text-align: left;
         border-top: 1px solid #cccccc;
+        overflow: hidden;
+        white-space:nowrap;
+        text-overflow: ellipsis;
     }
 
     .midRightContent{

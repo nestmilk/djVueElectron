@@ -1,7 +1,7 @@
 <div class="floatLayer"></div>
 
 <div class="loading">
-    <img src="/loading.gif" alt="loading">
+    <img src="./loading.gif" alt="loading">
 </div>
 
 <style>
