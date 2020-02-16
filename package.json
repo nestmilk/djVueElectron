@@ -13,6 +13,7 @@
     "cross-env": "^7.0.0",
     "electron": "^7.1.10",
     "electron-builder": "^22.3.2",
+    "electron-updater": "^4.2.0",
     "rollup": "^1.12.0",
     "rollup-plugin-commonjs": "^10.0.0",
     "rollup-plugin-livereload": "^1.0.0",
@@ -47,8 +48,10 @@
     "buildMain": "webpack",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
+    "release": "cross-env GH_TOKEN=e0c58beb0096210ca18d300899636e20c0ccab98 electron-builder",
     "prepack": "npm run build && npm run buildMain",
-    "predist": "npm run build && npm run buildMain"
+    "predist": "npm run build && npm run buildMain",
+    "prerelease": "npm run build && npm run buildMain"
   },
   "homepage": "./",
   "build": {

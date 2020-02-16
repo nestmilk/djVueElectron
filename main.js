@@ -1,4 +1,5 @@
-const {app, ipcMain, Menu} = require("electron")
+const {app, ipcMain, Menu, dialog} = require("electron")
+const {autoUpdater} = require('electron-updater')
 const isDev = require('electron-is-dev')
 const path = require('path')
 
@@ -8,6 +9,57 @@ const {igvExec} = require('./electron/utils/igvTool')
 const {igvSocketTemplate, igvLoadTrack, igvGotoLocus} = require('./electron/utils/templates')
 
 app.on('ready', ()=>{
+    // if (isDev) {
+    //     autoUpdater.updateConfigPath = path.join(__dirname, 'dev-app-update.yml')
+    // }
+    // autoUpdater.autoDownload = false
+    // autoUpdater.checkForUpdates().then(res=>{
+    //     console.log('res', res)
+    // }).catch(err=>{
+    //     console.log('err', err)
+    // })
+    // autoUpdater.on('error', (error) => {
+    //     dialog.showErrorBox('自动更新错误', error == null ? "unknown" : (error.stack || error).toString())
+    // })
+    // autoUpdater.on('checking-for-update', () => {
+    //     console.log('Checking for update...');
+    // })
+    // autoUpdater.on('update-available', () => {
+    //     dialog.showMessageBox({
+    //         type: 'info',
+    //         title: '应用有新的版本',
+    //         message: '发现新版本，是否现在更新?',
+    //         buttons: ['是', '否']
+    //     }, (buttonIndex) => {
+    //         if (buttonIndex === 0) {
+    //             autoUpdater.downloadUpdate()
+    //         }
+    //     })
+    // })
+    // autoUpdater.on('update-not-available', () => {
+    //     dialog.showMessageBox({
+    //         title: '没有新版本',
+    //         message: '当前已经是最新版本'
+    //     })
+    // })
+    // autoUpdater.on('download-progress', (progressObj) => {
+    //     let log_message = "Download speed: " + progressObj.bytesPerSecond;
+    //     log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+    //     log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+    //     console.log(log_message)
+    // })
+    //
+    // autoUpdater.on('update-downloaded', () => {
+    //     dialog.showMessageBox({
+    //         title: '安装更新',
+    //         message: '更新下载完毕，应用将重启并进行安装'
+    //     }, () => {
+    //         setImmediate(() => autoUpdater.quitAndInstall())
+    //     })
+    // })
+
+
+
     const mainWindowConfig = {
         width: 1366,
         height: 768
