@@ -1736,14 +1736,15 @@
 
 
         if (document.querySelector('.down').contains(e.target)){
+            let element =getParentNodeByParentClassName(e.target, 'mutantItem')
+            handleChangeCurrentMutantId(parseInt(element.dataset.mutantid), parseInt(element.dataset.sampleid))
+
             let menu = new remote.Menu()
             let deleteMenuItem = new remote.MenuItem({
                 label: '复制',
                 click: ()=>{
-                    let element =getParentNodeByParentClassName(e.target, 'mutantItem')
                     // todo dataset中data-后面大写没用，全部转为小写了, 类型是字符串了
                     // console.log(element, element.dataset, element.dataset.mutantid, element.dataset.sampleid)
-                    handleChangeCurrentMutantId(parseInt(element.dataset.mutantid), parseInt(element.dataset.sampleid))
                     handleEventForSure(model_dict.MUTANT, dict.COPY)
                 }
             })
