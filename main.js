@@ -2,6 +2,8 @@ const {app, ipcMain, Menu, dialog} = require("electron")
 const {autoUpdater} = require('electron-updater')
 const isDev = require('electron-is-dev')
 const path = require('path')
+const Store = require('electron-store')
+const settingsStore = new Store({name: 'Settings'})
 
 const AppWindow = require('./electron/AppWindow')
 const menuTemplate = require('./electron/menuTemplate')
@@ -76,12 +78,17 @@ app.on('ready', ()=>{
     Menu.setApplicationMenu(menu)
 
     ipcMain.on('open-settings-window', ()=>{
+        // 第一次如果没有则创建location
+        if (!settingsStore.get('savedFileLocation')){
+            settingsStore.set('savedFileLocation', app.getPath('userData'))
+        }
+
         const settingWindowConfig = {
             width: 500,
             height: 600,
             parent: mainWindow
         }
-        const settingsFileLocation = `file://${path.join(__dirname, './settings/settings.html')}`
+        const settingsFileLocation = isDev? `file://${path.join(__dirname, './settings/settings.html')}` : `file://${path.join(__dirname, '../settings/settings.html')}`
         let settingsWindow = new AppWindow(settingWindowConfig, settingsFileLocation)
 
         // todo 去除settingsWindow和mainWindow一样的菜单,调试时候打开，不然调试界面打不开
@@ -117,20 +124,29 @@ app.on('ready', ()=>{
         if (!igvExec("sort base", timestamp).success) return
     })
 
-    ipcMain.on('connect-igv-error', ()=>{
-        mainWindow.webContents.send('connect-igv-error-caution')
+    ipcMain.on('connect-igv-error', (message)=>{
+        mainWindow.webContents.send('connect-igv-error-caution', message)
     })
 
-    ipcMain.on('set-ipc-connect-status', (event, toggle)=>{
+    ipcMain.on('set-ipc-connect-status', (obj)=>{
+        let status = JSON.parse(JSON.stringify(obj))
         let toolMenu = process.platform === 'darwin'? menu.items[4] : menu.items[3]
-        toolMenu.submenu.items[2].submenu.items[0].checked = toggle
-        mainWindow.webContents.send('reset-errors')
+        toolMenu.submenu.items[2].submenu.items[0].checked = status.toggle
+        switch (status.type) {
+            case "error":
+                break
+            default:
+                mainWindow.webContents.send('reset-errors')
+        }
     })
 
-    ipcMain.on('open-igv-caution', ()=>{
-        let toolMenu = process.platform === 'darwin'? menu.items[4] : menu.items[3]
-        toolMenu.submenu.items[2].submenu.items[0].checked = true
-    })
+    // ipcMain.on('igv-toggle-emit-caution', (status)=>{
+    //     // 无奈转义，不然不让checked赋值！！
+    //     let toggle = JSON.parse(JSON.stringify(status))
+    //     let toolMenu = process.platform === 'darwin'? menu.items[4] : menu.items[3]
+    //     toolMenu.submenu.items[2].submenu.items[0].checked = toggle
+    //     mainWindow.webContents.send('reset-errors')
+    // })
 
     ipcMain.on('set-ifIgvConnect-true-done',()=>{
         mainWindow.webContents.send('reset-errors')

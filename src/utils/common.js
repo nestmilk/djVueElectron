@@ -1,8 +1,13 @@
 import cookie from "./cookie";
 import axios from "axios";
-import api from "../api";
+const Store = window.require('electron-store')
+const settingsStore = new Store({name: 'Settings'})
+export const host = ()=> `http://${settingsStore.get('host')}:${settingsStore.get('port')}`
+
 import {userInfo} from "../store/store"
+
 import {push} from 'svelte-spa-router'
+import {draw} from "svelte/transition";
 
 
 export const  setUserInfoInStoreByToken = async (token, keep) => {
@@ -11,7 +16,8 @@ export const  setUserInfoInStoreByToken = async (token, keep) => {
     let group = null
     let config ={headers: {'Authorization': 'JWT ' + token}}
 
-    await axios.get(`${api.host}/users/123/`, config).then((response)=>{
+    // 此时还没获取到token,不能用api中userDetail, 只能手动获取
+    await axios.get(`${host()}/users/123/`, config).then((response)=>{
         let data = response.data
         userInfo.updateName(data.username)
         userInfo.updateLevel(data.position.level)

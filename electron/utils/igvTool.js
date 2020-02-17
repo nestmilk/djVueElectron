@@ -12,10 +12,7 @@ const {igvSocketTemplate} = require('./templates')
 
 exports.igvExec = (msg, timestamp) => {
     console.log(msg)
-    // 第一次如果没有则创建location
-    if (!settingsStore.get('savedFileLocation')){
-        settingsStore.set('savedFileLocation', app.getPath('userData'))
-    }
+
     // console.log('savedFileLocation', settingsStore.get('savedFileLocation'), 'userData', app.getPath('userData'))
 
     const temp_path = path.join(settingsStore.get('savedFileLocation'), '/temp')
@@ -33,16 +30,18 @@ exports.igvExec = (msg, timestamp) => {
         execSync('python '+temp_file_path)
         return {success: true}
     } catch(error){
+        settingsStore.set('ifIgvConnect',false)
+        // 连接都失败了，就顺带把ifIgvConnect设置为false，避免TargetMutant页面切换current_mutant_id过慢！！
+        ipcMain.emit('set-ipc-connect-status',{toggle: false, type: "error"})
+        // todo 尚未处理没有按装python的报错处理！！
         if (error.message.includes("ConnectionRefusedError")){
-            // 连接都失败了，就顺带把ifIgvConnect设置为false，避免TargetMutant页面切换current_mutant_id过慢！！
-            settingsStore.set('ifIgvConnect',false)
-            ipcMain.emit('set-ipc-connect-status',false)
             // 传递到main.js，在那里才有mainWindow发送信号去视窗
-            ipcMain.emit('connect-igv-error')
-            return {
-                success: false,
-                error: "ConnectionRefusedError"
-            }
+            ipcMain.emit('connect-igv-error','与igv通信失败，请重新打开igv！')
+
+        }else{
+            ipcMain.emit('connect-igv-error','请确保环境变量中已添加Python3！')
         }
+
+        return {success: false,}
     }
 }

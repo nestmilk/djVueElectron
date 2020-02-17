@@ -1,4 +1,5 @@
-const {app, shell, ipcMain} = require('electron')
+const {app, shell, ipcMain, dialog} = require('electron')
+const {execSync} = require('child_process')
 
 const Store = require('electron-store')
 const settingsStore = new Store({ name: 'Settings'})
@@ -106,8 +107,19 @@ let template = [
                             if(res){
                                 settingsStore.set('ifIgvConnect', true)
                                 // todo 这个发出去的和ipcRenderer.send不一样，不会添加event， 第一个就是true
-                                // ipcMain.emit('set-ipc-connect-status', true)
-                                ipcMain.emit('open-igv-caution')
+                                ipcMain.emit('set-ipc-connect-status', {toggle:false, type: 'open_igv'})
+                            }
+                        }
+                    }, {
+                        label: '关闭igv',
+                        accelerator: 'Ctrl+O',
+                        click: ()=>{
+                            try{
+                                execSync('taskkill /fi "imagename eq javaw.exe" /f')
+                                settingsStore.set('ifIgvConnect', false)
+                                ipcMain.emit('set-ipc-connect-status', {toggle:false, type: 'close_igv'})
+                            } catch(error){
+                                dialog.showErrorBox('cmd关闭igv失败','error')
                             }
                         }
                     }

@@ -96,9 +96,9 @@
                     </div>
                 </div>
 
-                <div class="leftButtomWrapper">
-                    <button class="copy" on:click={()=>handleEventForSure(model_dict.MUTANT, dict.COPY)}>复制突变</button>
-                </div>
+<!--                <div class="leftButtomWrapper">-->
+<!--                    <button class="copy" on:click={()=>handleEventForSure(model_dict.MUTANT, dict.COPY)}>复制突变</button>-->
+<!--                </div>-->
             </div>
             <div class="contentRight">
                 <div class="mutantList">
@@ -157,7 +157,7 @@
                                     data-sampleId="{mutant.sample}"
                                 >
                                     <td class="logs">
-                                        <button class="{mutant.logs.length!==0?'icon-calendar':(mutant.copy?'icon-copy':'icon-info')}"
+                                        <button class="{mutant.copy?'icon-copy':(mutant.logs.length!==0?'icon-calendar':'icon-info')}"
                                             disabled="{mutant.logs.length==0?'disabled':''}"
                                             on:click={()=>handleLogsDisplay(mutant.id)}></button>
                                         {#if mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][dict.LOGSDISPLAY]:false }
@@ -417,7 +417,7 @@
     let mutant_field_dict = {'POSSTART': 'posStart', 'POSEND': 'posEnd', 'REF': 'ref', 'ALT': 'alt', 'DELETE': 'delete', 'DONE': 'done'}
     let model_dict = {PANAL: 'panal', MUTANT: 'mutant'}
     let log_reason_type_dict = {false_positive: '假阳性', merge_complex_loci: '复杂位点合并', other: '其它'}
-    let log_submit_type_dict = {check: '核查', edit: '编辑', delete: '删除', release: '释放',
+    let log_submit_type_dict = {copy: '拷贝', check: '核查', edit: '编辑', delete: '删除', release: '释放',
     undelete: '撤销删除', undelete_edit: '撤销删除再编辑'}
 
 
@@ -640,7 +640,8 @@
 
     // let socket = null
 
-    async function test() {
+    async function test(e) {
+        // console.log(e, e.shiftKey, e.ctrlKey)
         // getItemByIdandOperateAttr(list, 2, ['content'], 'delete')
         // console.log(sample_list)
         // console.log(selected_sampleIds_list)
@@ -648,10 +649,10 @@
         // console.log(sample_record_dict)
         // console.log(sampleSn_inTrack_list)
         // console.log(params.type)
-        // console.log(mutant_list)
+        console.log(mutant_list)
         // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
         // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
-        console.log( mutant_submit_dict)
+        // console.log( mutant_submit_dict)
         // console.log(all_mutant_total_num)
         // console.log(all_totalSubmitAndAffirmed, all_totalUnsubmitAndAffirmed, all_totalUnsubmitAndUnaffirmed)
         // console.log(panal_unable_handle)
@@ -1090,10 +1091,11 @@
     // 处理复制突变拷贝
     async function handleCopyMutant(){
         // console.log('handlecopymutant ' + now_mutant_id)
+
         loadingShow = true
 
         let success = false
-        await api.copyMutant(now_mutant_id).then((response)=>{
+        await api.copyMutant(now_mutant_id, 1).then((response)=>{
             // console.log(response.data)
             success = true
             // 现在的突变id需要更换
@@ -1154,6 +1156,8 @@
 
     // TODO 此处确定对象类型，事件类型，对象id，对象目的值
     function handleEventForSure(model, event, object_id_list=[], object_value_list=[]) {
+        reset_errors()
+
         sureModel = model
         sureEvent = event
         sureObjectIdList = object_id_list
@@ -1184,6 +1188,11 @@
                             errors.detail = '请先选择一条需要复制的突变！'
                             return
                         }
+                        if (mutant_submit_dict[now_mutant_id][dict.STATUS] !== mutant_status_dict.FREE ){
+                            errors.detail = '请先释放或解除锁定此条突变后，再复制！'
+                            return
+                        }
+
                         changeSendSureMessage()
                         sureShow = true
                         break
@@ -1714,7 +1723,7 @@
         if(settingsStore.get('ifIgvConnect')){
             ipcRenderer.send('search-locus', query)
         }else{
-            errors.detail = '如想使用igv，请打开igv、设置"勾选连接igv"'
+            errors.detail = '使用igv，请设置"勾选连接igv"、打开igv。'
         }
     }
 
@@ -1742,6 +1751,7 @@
             let menu = new remote.Menu()
             let deleteMenuItem = new remote.MenuItem({
                 label: '复制',
+                // enabled: mutant_submit_dict[element.dataset.mutantid][dict.STATUS] === mutant_status_dict.FREE,
                 click: ()=>{
                     // todo dataset中data-后面大写没用，全部转为小写了, 类型是字符串了
                     // console.log(element, element.dataset, element.dataset.mutantid, element.dataset.sampleid)
@@ -1792,8 +1802,8 @@
 
         __setDatabyParamsType()
 
-        ipcRenderer.on('connect-igv-error-caution',()=>{
-            errors.detail = '与igv通信失败，请重新打开igv！'
+        ipcRenderer.on('connect-igv-error-caution',(event, message)=>{
+            errors.detail = message
         })
 
         ipcRenderer.on('reset-errors', ()=>{

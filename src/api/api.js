@@ -30,4 +30,4 @@ export const updateMutant = (id, params) => {return axios.patch(`${host()}/mutan
 // 生成结果excel
 export const createExcel = (id, type) => {return axios.get(`${host()}/excel/${type}/${id}/`)}
 // 复制一条mutant
-export const copyMutant = (id) => {return axios.get(`${host()}/copy/${id}/`)}
+export const copyMutant = (mutant_id, user_id) => {return axios.get(`${host()}/copy/${mutant_id}/${user_id}/`)}

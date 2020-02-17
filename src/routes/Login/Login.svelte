@@ -50,6 +50,7 @@
         }).then((response)=>{
             let token = response.data.token
             userInfo.updateToken(token)
+            console.log('token', token)
         }).catch((response)=>{
             console.error('login api 出错', error)
             if (error.data) {
