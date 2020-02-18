@@ -99,6 +99,13 @@ let template = [
 
                         }
                     }, {
+                        label: '当前突变置顶',
+                        type: 'checkbox',
+                        checked: settingsStore.get('ifNowMutantTop'),
+                        click: () => {
+                            settingsStore.set('ifNowMutantTop', !settingsStore.get('ifNowMutantTop'))
+                        }
+                    }, {
                         label: '打开igv',
                         accelerator: 'Ctrl+I',
                         click: ()=>{

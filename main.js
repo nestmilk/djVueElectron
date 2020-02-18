@@ -151,4 +151,5 @@ app.on('ready', ()=>{
     ipcMain.on('set-ifIgvConnect-true-done',()=>{
         mainWindow.webContents.send('reset-errors')
     })
+
 })

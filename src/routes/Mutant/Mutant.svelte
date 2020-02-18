@@ -380,7 +380,7 @@
     import {userInfo} from '../../store/store'
 
     import {push} from 'svelte-spa-router'
-    import igv from 'igv/dist/igv.min'
+    // import igv from 'igv/dist/igv.min'
 
     import Header from '../../components/Header/Header.svelte'
     import Footer from '../../components/Footer/Footer.svelte'
@@ -894,7 +894,11 @@
 
         // 非同一sample 或者 样本选中的有改变， 都需要重新加载
         let ifEqual = ifContentEqualArrays(selected_sampleIds_list, pre_selected_sampleIds_list)
-        if (pre_sample_id !== now_sample_id  || !ifEqual) loadTracks()
+        if (settingsStore.get('ifNowMutantTop')){
+            if (pre_sample_id !== now_sample_id  || !ifEqual) loadTracks()
+        }else{
+            if(!ifEqual) loadTracks()
+        }
 
         // 非同一mutant， 进入后再判断位置是否有变化
         if (pre_mutant_id !== now_mutant_id) changeLocus()
