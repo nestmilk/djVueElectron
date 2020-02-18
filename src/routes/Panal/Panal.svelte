@@ -230,6 +230,13 @@
 
     const dispatch = createEventDispatcher()
     let excel2json = js2excel.excel2json
+    let __getJsonFromExcel = (file) => {
+        return new Promise(function(resolve, reject){
+            excel2json([file[dict.FILE]], (data) => {
+                resolve([file, data])
+            }, 'excel2json')
+        })
+    }
 
     let dict = {DELETE: 'delete', DONE: 'done', PANAL: 'panal', NAME: 'name', FILE: 'file',
     SHEETDICT: 'sheet_dict', UPSHEETNAMELIST: 'up_sheet_name_LIST', TARGET: 'target',
@@ -274,79 +281,78 @@
     let selected_file_list = []
     let file_name = ''
     let uploadBtnDisabled = false
-    let file_excel2json_unfinised_num = -1
+    // let file_excel2json_unfinised_num = -1
     let excelsDivShow = false
     $: if (file_list.length === 0) {
         excelsDivShow = false
     }
-    $: if (file_excel2json_unfinised_num===0) {
-        console.log('all file excel2json finished')
-
-        for (let file of file_list) {
-            let sheet_name_list = Object.keys(file[dict.SHEETDICT])
-
-            // console.log(sheet_name_list)
-            let up_sheet_name_list = []
-            for (let sheet_name of sheet_name_list) {
-                // 在全局上传字典up_sheet_name_dict中能找到，
-                // 在局部上传列表up_sheet_name_list中尚不存在
-                if (up_sheet_name_dict.hasOwnProperty(sheet_name) &&
-                    up_sheet_name_list.indexOf(sheet_name) === -1) {
-                    up_sheet_name_list.push(sheet_name)
-                }
-            }
-
-            // 如果 局部上传列表up_sheet_name_list的长度不等于0，则包含
-            if (up_sheet_name_list.length !== 0) {
-                // sheet_name_list改为file的sheet_name_dict
-                for (let name of up_sheet_name_list){
-                    let sheet_lines = file[dict.SHEETDICT][name].length===0? 0:file[dict.SHEETDICT][name].length - up_sheet_name_dict[name][dict.SKIP]
-                    let status = sheet_lines >0 ? true: false
-                    file[dict.UPSHEETNAMELIST].push({
-                        name: name,
-                        status: status
-                    })
-                }
-                selected_file_list.push(file)
-            }
-
-            selected_file_list = selected_file_list
-        }
-        // console.log(file_list)
-
-        // 制作template选择的数据
-        for (let file of file_list) {
-            for (let sheet_name of file[dict.UPSHEETNAMELIST]) {
-                // console.log(file[dict.NAME], sheet_name[dict.NAME])
-
-                // 判断sheet页是否有内容，有内容就一定有标题栏
-                let num = file[dict.SHEETDICT][sheet_name[dict.NAME]].length
-                // console.log('$: if ', num)
-                if (num===0) continue
-
-                let value = up_sheet_name_dict[sheet_name[dict.NAME]][dict.VALUE]
-                if (up_sheet_value_dict[value]) {
-                    // console.log('$: if', value)
-                    // 第一项默认选中
-                    let status = up_sheet_value_dict[value].length===0?true:false
-                    let item = {
-                        excel_name: file[dict.NAME],
-                        sheet_name: sheet_name[dict.NAME],
-                        status: status
-                   }
-                   up_sheet_value_dict[value].push(item)
-                }
-            }
-        }
-        // console.log(up_sheet_value_dict)
-
-        // 重置为-1，等待下一次上传
-        file_excel2json_unfinised_num = -1
-
-        loadingShow = false
-        excelsDivShow = true
-    }
-
+    // $: if (file_excel2json_unfinised_num===0) {
+    //     console.log('all file excel2json finished')
+    //
+    //     for (let file of file_list) {
+    //         let sheet_name_list = Object.keys(file[dict.SHEETDICT])
+    //
+    //         // console.log(sheet_name_list)
+    //         let up_sheet_name_list = []
+    //         for (let sheet_name of sheet_name_list) {
+    //             // 在全局上传字典up_sheet_name_dict中能找到，
+    //             // 在局部上传列表up_sheet_name_list中尚不存在
+    //             if (up_sheet_name_dict.hasOwnProperty(sheet_name) &&
+    //                 up_sheet_name_list.indexOf(sheet_name) === -1) {
+    //                 up_sheet_name_list.push(sheet_name)
+    //             }
+    //         }
+    //
+    //         // 如果 局部上传列表up_sheet_name_list的长度不等于0，则包含
+    //         if (up_sheet_name_list.length !== 0) {
+    //             // sheet_name_list改为file的sheet_name_dict
+    //             for (let name of up_sheet_name_list){
+    //                 let sheet_lines = file[dict.SHEETDICT][name].length===0? 0:file[dict.SHEETDICT][name].length - up_sheet_name_dict[name][dict.SKIP]
+    //                 let status = sheet_lines >0 ? true: false
+    //                 file[dict.UPSHEETNAMELIST].push({
+    //                     name: name,
+    //                     status: status
+    //                 })
+    //             }
+    //             selected_file_list.push(file)
+    //         }
+    //
+    //         selected_file_list = selected_file_list
+    //     }
+    //     // console.log(file_list)
+    //
+    //     // 制作template选择的数据
+    //     for (let file of file_list) {
+    //         for (let sheet_name of file[dict.UPSHEETNAMELIST]) {
+    //             // console.log(file[dict.NAME], sheet_name[dict.NAME])
+    //
+    //             // 判断sheet页是否有内容，有内容就一定有标题栏
+    //             let num = file[dict.SHEETDICT][sheet_name[dict.NAME]].length
+    //             // console.log('$: if ', num)
+    //             if (num===0) continue
+    //
+    //             let value = up_sheet_name_dict[sheet_name[dict.NAME]][dict.VALUE]
+    //             if (up_sheet_value_dict[value]) {
+    //                 // console.log('$: if', value)
+    //                 // 第一项默认选中
+    //                 let status = up_sheet_value_dict[value].length===0?true:false
+    //                 let item = {
+    //                     excel_name: file[dict.NAME],
+    //                     sheet_name: sheet_name[dict.NAME],
+    //                     status: status
+    //                }
+    //                up_sheet_value_dict[value].push(item)
+    //             }
+    //         }
+    //     }
+    //     // console.log(up_sheet_value_dict)
+    //
+    //     // 重置为-1，等待下一次上传
+    //     file_excel2json_unfinised_num = -1
+    //
+    //     loadingShow = false
+    //     excelsDivShow = true
+    // }
 
 
     let errors = {
@@ -423,9 +429,11 @@
         // console.log(mutant_list)
         // console.log(sample_list)
         // console.log(paged_sample_list)
-        console.log(file_list)
+        // console.log(file_list)
         // console.log(selected_file_list)
         // console.log(up_sheet_value_dict)
+        // 使用Promise.all处理
+
     }
 
     async function handleFilter(field, selectedStatus) {
@@ -578,20 +586,20 @@
         errors = JSON.parse(JSON.stringify(errors_ori))
     }
 
-    function __setFileSheetDict(){
-        for (let file of file_list) {
-            // console.log('file', file)
-
-            excel2json([file[dict.FILE]], (data) => {
-                // console.log(data)
-                // 获取excel的sheet名列表
-                // file[dict.SHEETDICT] = Object.keys(data)
-                file[dict.SHEETDICT] = data
-
-                file_excel2json_unfinised_num--
-            }, 'excel2json')
-        }
-    }
+    // function __setFileSheetDict(){
+    //     for (let file of file_list) {
+    //         // console.log('file', file)
+    //
+    //         excel2json([file[dict.FILE]], (data) => {
+    //             // console.log(data)
+    //             // 获取excel的sheet名列表
+    //             // file[dict.SHEETDICT] = Object.keys(data)
+    //             file[dict.SHEETDICT] = data
+    //
+    //             file_excel2json_unfinised_num--
+    //         }, 'excel2json')
+    //     }
+    // }
 
     function __resetFileRelated() {
         // 文件名置空
@@ -641,14 +649,90 @@
         })
         file_name = name_list[0][0]
 
-        file_excel2json_unfinised_num = file_list.length
+        // file_excel2json_unfinised_num = file_list.length
         loadingShow = true
 
-        // excel2json 回调函数是异步的，哎
-        __setFileSheetDict()
+        // excel2json 回调函数是异步的
+        // __setFileSheetDict()
 
-        // TODO 置空，不然同一文件无法再传
-        filewidget.value = ''
+        // todo 使用Promise.all处理
+        let jsonGetPromiseArr = file_list.map(file=>{
+            return __getJsonFromExcel(file)
+        })
+        // console.log("jsonGetPromiseArr", jsonGetPromiseArr)
+        Promise.all(jsonGetPromiseArr).then((fileJsonList)=>{
+            for (let fileJson of fileJsonList) {
+                fileJson[0][dict.SHEETDICT] = fileJson[1]
+            }
+            // console.log(file_list)
+
+            for (let file of file_list) {
+                let sheet_name_list = Object.keys(file[dict.SHEETDICT])
+
+                // console.log(sheet_name_list)
+                let up_sheet_name_list = []
+                for (let sheet_name of sheet_name_list) {
+                    // 在全局上传字典up_sheet_name_dict中能找到，
+                    // 在局部上传列表up_sheet_name_list中尚不存在
+                    if (up_sheet_name_dict.hasOwnProperty(sheet_name) &&
+                            up_sheet_name_list.indexOf(sheet_name) === -1) {
+                        up_sheet_name_list.push(sheet_name)
+                    }
+                }
+
+                // 如果 局部上传列表up_sheet_name_list的长度不等于0，则包含
+                if (up_sheet_name_list.length !== 0) {
+                    // sheet_name_list改为file的sheet_name_dict
+                    for (let name of up_sheet_name_list){
+                        let sheet_lines = file[dict.SHEETDICT][name].length===0? 0:file[dict.SHEETDICT][name].length - up_sheet_name_dict[name][dict.SKIP]
+                        let status = sheet_lines >0 ? true: false
+                        file[dict.UPSHEETNAMELIST].push({
+                            name: name,
+                            status: status
+                        })
+                    }
+                    selected_file_list.push(file)
+                }
+
+                selected_file_list = selected_file_list
+            }
+            // console.log(file_list)
+
+            // 制作template选择的数据
+            for (let file of file_list) {
+                for (let sheet_name of file[dict.UPSHEETNAMELIST]) {
+                    // console.log(file[dict.NAME], sheet_name[dict.NAME])
+
+                    // 判断sheet页是否有内容，有内容就一定有标题栏
+                    let num = file[dict.SHEETDICT][sheet_name[dict.NAME]].length
+                    // console.log('$: if ', num)
+                    if (num===0) continue
+
+                    let value = up_sheet_name_dict[sheet_name[dict.NAME]][dict.VALUE]
+                    if (up_sheet_value_dict[value]) {
+                        // console.log('$: if', value)
+                        // 第一项默认选中
+                        let status = up_sheet_value_dict[value].length===0?true:false
+                        let item = {
+                            excel_name: file[dict.NAME],
+                            sheet_name: sheet_name[dict.NAME],
+                            status: status
+                        }
+                        up_sheet_value_dict[value].push(item)
+                    }
+                }
+            }
+
+            loadingShow = false
+            excelsDivShow = true
+
+            // TODO 置空，不然同一文件无法再传
+            filewidget.value = ''
+        }).catch((err)=>{
+            console.log('load', err)
+            loadingShow = false
+        })
+
     }
 
     async function upload() {

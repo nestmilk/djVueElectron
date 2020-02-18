@@ -107,7 +107,9 @@ let template = [
                             if(res){
                                 settingsStore.set('ifIgvConnect', true)
                                 // todo 这个发出去的和ipcRenderer.send不一样，不会添加event， 第一个就是true
-                                ipcMain.emit('set-ipc-connect-status', {toggle:false, type: 'open_igv'})
+                                ipcMain.emit('set-ipc-connect-status', {toggle:true, type: 'open_igv'})
+                            }else{
+                                dialog.showErrorBox('无法打开igv', '请在"设置"中,选择正确的igv.bat路径。')
                             }
                         }
                     }, {
