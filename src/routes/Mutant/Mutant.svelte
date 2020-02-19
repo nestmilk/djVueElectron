@@ -135,10 +135,10 @@
                                 <th class="ref">参考序列</th>
                                 <th class="alt">突变序列</th>
                                 <th class="freq">频率</th>
+                                <th class="exonicfuncRefgene">突变方式</th>
                                 <th class="projectAbbreviation">项目简称</th>
                                 <th class="hgvs">hgvs命名</th>
                                 <th class="geneVar">位点解析</th>
-                                <th class="exonicfuncRefgene">突变方式</th>
                                 <th class="clinsig">突变分类</th>
                                 <th class="intervarAutomated">突变分类2</th>
                             </tr>
@@ -322,15 +322,15 @@
                                         <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.PREVALUE]?'icon-warning':''):''}"></div>
                                     </td>
                                     <td class="freq">{mutant.freq?mutant.freq.toFixed(4):''}</td>
+                                    <td class="exonicfuncRefgene" title="{mutant.exonicfuncRefgene}">
+                                        <div class="inside">{mutant.exonicfuncRefgene}</div>
+                                    </td>
                                     <td class="projectAbbreviation">{mutant.projectAbbreviation}</td>
                                     <td class="hgvs" title="{mutant.hgvs}">
                                         <div class="inside" >{mutant.hgvs}</div>
                                     </td>
                                     <td class="geneVar" title="{mutant.geneVar}">
                                         <div class="inside">{mutant.geneVar}</div>
-                                    </td>
-                                    <td class="exonicfuncRefgene" title="{mutant.exonicfuncRefgene}">
-                                        <div class="inside">{mutant.exonicfuncRefgene}</div>
                                     </td>
                                     <td class="clinsig" title="{mutant.clinsig}">
                                         <div class="inside">{mutant.clinsig}</div>
@@ -526,12 +526,13 @@
     }
 
     // 筛选是否存在编辑或删除的记录
-    let log_status_list = [
-        {status: null,
-            content: '全部记录'},
-        {status: 'True',
-            content: '修改记录'}
-    ]
+    let log_status_list = [{
+            status: null,
+            content: '全部记录'
+        }, {
+            status: 'True',
+            content: '修改记录'
+        }]
     let log_status_selected_index = 0
     let mutant_param_logsEdit = log_status_list[0].status
     function changeMutantParamLogsEdit(index=null) {
@@ -580,6 +581,13 @@
             order_query_dict[dict.POSEND][posEnd_status_selected_index].status
         ].join(',')
     }
+
+    // exonicfuncRefgene筛选相关参数
+    let all_exonicfuncRefgene_type_list ={target: [{name: "全选", value: null}],
+        hereditary: [{name: "全选", value: null}],
+        TMB: [{name: "全选", value: null}]}
+    let exonicfuncRefgene_type_list = all_exonicfuncRefgene_type_list[dict.TARGET]
+    let mutant_param_exonicfuncRefgene = exonicfuncRefgene_type_list[0].value
 
     // 用于sure组件通信使用
     let sureModel
@@ -638,6 +646,11 @@
         }
     }
 
+
+    let FieldDisplayOrderList = ['sampleSn', 'chr', 'posStart', 'posEnd', 'ref', 'alt', 'freq',
+          'drugLevel', 'cancerType', 'drugs', 'hgvs', 'geneVar', 'exonicfuncRefgene', 'clinsig', 'intervarAutomated'
+    ]
+
     // let socket = null
 
     async function test(e) {
@@ -663,7 +676,7 @@
         // console.log(remote.app.getPath('userData'))
         // console.log('store', settingsStore.get('ifIgvConnect'))
         // console.log(window.location.href)
-
+        console.log(all_exonicfuncRefgene_type_list)
     }
 
     function stopPropagation(event){
@@ -855,6 +868,14 @@
                 case dict.TMB:
                     all_mutant_total_num[dict.TMB]++
                     break
+            }
+
+            // 添加筛选mutant.exonicfuncRefgene的项目
+            if(all_exonicfuncRefgene_type_list[mutant.type].every(type=>type.name!==mutant.exonicfuncRefgene)){
+                all_exonicfuncRefgene_type_list[mutant.type].push({
+                    name: mutant.exonicfuncRefgene,
+                    value: mutant.exonicfuncRefgene
+                })
             }
         }
 
@@ -1742,6 +1763,8 @@
         totalUnsubmitAndUnaffirmed = all_totalUnsubmitAndUnaffirmed[params.type]
 
         excel_url = all_excel_url[params.type]
+
+        exonicfuncRefgene_type_list = all_exonicfuncRefgene_type_list[params.type]
     }
 
 
@@ -2482,6 +2505,12 @@
     .contentRight .freq{
         min-width: 60px;
     }
+    .contentRight .exonicfuncRefgene{
+        min-width: 150px;
+    }
+    .contentRight .exonicfuncRefgene .inside{
+        width: 150px;
+    }
     .contentRight .hgvs{
         min-width: 150px;
     }
@@ -2492,12 +2521,6 @@
         min-width: 150px;
     }
     .contentRight .geneVar .inside{
-        width: 150px;
-    }
-    .contentRight .exonicfuncRefgene{
-        min-width: 150px;
-    }
-    .contentRight .exonicfuncRefgene .inside{
         width: 150px;
     }
     .contentRight .clinsig{

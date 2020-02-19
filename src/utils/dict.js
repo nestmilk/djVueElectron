@@ -8,34 +8,90 @@ export const dict_translate = {
 
 export const defaultMutantDisplayConfig = {
     sampleSn: {
-
+        modify: false
     },
-    projectAbbreviation: {},
-    NM_ID: {},
-    GeneName: {},
-    DNA_change: {},
-    AA_change: {},
-    drugLevel: {},
-    cancerType: {},
-    drugs: {},
-    hgvs: {},
-    geneVar: {},
-    chr: {},
-    posStart: {},
-    posEnd: {},
-    ref: {},
-    alt: {},
-    freq: {},
-    wxz: {},
-    zlb: {},
-    hgsGb: {},
-    ajsGb: {},
-    alteration: {},
-    geneName: {},
-    geneType: {},
-    exonicfuncRefgene: {},
-    aachangeRefgene: {},
-    clinsig: {},
-    intervarAutomated: {},
-    level: {},
+    projectAbbreviation: {
+        modify: false
+    },
+    NM_ID: {
+        modify: false
+    },
+    GeneName: {
+        modify: false
+    },
+    DNA_change: {
+        modify: false
+    },
+    AA_change: {
+        modify: false
+    },
+    drugLevel: {
+        modify: false
+    },
+    cancerType: {
+        modify: false
+    },
+    drugs: {
+        modify: false
+    },
+    hgvs: {
+        modify: false
+    },
+    geneVar: {
+        modify: false
+    },
+    chr: {
+        modify: false
+    },
+    posStart: {
+        modify: false
+    },
+    posEnd: {
+        modify: false
+    },
+    ref: {
+        modify: false
+    },
+    alt: {
+        modify: false
+    },
+    freq: {
+        modify: false
+    },
+    wxz: {
+        modify: false
+    },
+    zlb: {
+        modify: false
+    },
+    hgsGb: {
+        modify: false
+    },
+    ajsGb: {
+        modify: false
+    },
+    alteration: {
+        modify: false
+    },
+    geneName: {
+        modify: false
+    },
+    geneType: {
+        modify: false
+    },
+    exonicfuncRefgene: {
+        modify: false
+    },
+    aachangeRefgene: {
+        modify: false
+    },
+    clinsig: {
+        modify: false
+    },
+    intervarAutomated: {
+        modify: false
+    },
+    level: {
+        modify: false
+    },
 }
