@@ -40,24 +40,6 @@ export const defaultMutantDisplayConfig = {
     geneVar: {
         modify: false
     },
-    chr: {
-        modify: false
-    },
-    posStart: {
-        modify: false
-    },
-    posEnd: {
-        modify: false
-    },
-    ref: {
-        modify: false
-    },
-    alt: {
-        modify: false
-    },
-    freq: {
-        modify: false
-    },
     wxz: {
         modify: false
     },

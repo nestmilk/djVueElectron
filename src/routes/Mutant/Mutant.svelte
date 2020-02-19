@@ -136,7 +136,10 @@
                                 <th class="alt">突变序列</th>
                                 <th class="freq">频率</th>
                                 <th class="exonicfuncRefgene">
-                                    <select on:change="{(e) => changeMutantParamExonicfuncRefgene(e.target.value)}" class="inside">
+                                    <select bind:this={exonicfuncRefgeneSelection}
+                                            on:change="{(e) => changeMutantParamExonicfuncRefgene(e.target.value)}"
+                                            class="inside"
+                                    >
                                         {#each exonicfuncRefgene_type_list as type}
                                             <option value={type.value}>
                                                 {type.name}
@@ -591,11 +594,12 @@
     }
 
     // exonicfuncRefgene筛选相关参数
-    let all_exonicfuncRefgene_type_list ={target: [{name: "全选", value: null}],
-        hereditary: [{name: "全选", value: null}],
-        TMB: [{name: "全选", value: null}]}
+    let all_exonicfuncRefgene_type_list ={target: [{name: "突变方式(全选)", value: null}],
+        hereditary: [{name: "突变方式(全选)", value: null}],
+        TMB: [{name: "突变方式(全选)", value: null}]}
     let exonicfuncRefgene_type_list = all_exonicfuncRefgene_type_list[dict.TARGET]
     let mutant_param_exonicfuncRefgene = null
+    let exonicfuncRefgeneSelection
     function changeMutantParamExonicfuncRefgene(value){
         // value为null时候，返回的是"null"字符串
         // console.log(mutant_param_exonicfuncRefgene, value)
@@ -641,7 +645,6 @@
             __setDatabyParamsType()
 
             mutant_param_page = 1
-            mutant_param_exonicfuncRefgene = null
             getMutantslist()
         }
 
@@ -651,7 +654,6 @@
             __setDatabyParamsType()
 
             mutant_param_page = 1
-            mutant_param_exonicfuncRefgene = null
             getMutantslist()
         }
 
@@ -661,15 +663,12 @@
             __setDatabyParamsType()
 
             mutant_param_page = 1
-            mutant_param_exonicfuncRefgene = null
             getMutantslist()
         }
     }
 
 
-    let FieldDisplayOrderList = ['sampleSn', 'chr', 'posStart', 'posEnd', 'ref', 'alt', 'freq',
-          'drugLevel', 'cancerType', 'drugs', 'hgvs', 'geneVar', 'exonicfuncRefgene', 'clinsig', 'intervarAutomated'
-    ]
+    let FieldDisplayOrderList = ['drugLevel', 'cancerType', 'drugs', 'hgvs', 'geneVar', 'clinsig', 'intervarAutomated']
 
     // let socket = null
 
@@ -696,7 +695,6 @@
         // console.log(remote.app.getPath('userData'))
         // console.log('store', settingsStore.get('ifIgvConnect'))
         // console.log(window.location.href)
-        console.log(all_exonicfuncRefgene_type_list)
     }
 
     function stopPropagation(event){
@@ -790,7 +788,7 @@
             logsEdit: mutant_param_logsEdit,
             exonicfuncRefgene: mutant_param_exonicfuncRefgene
         }).then((response)=>{
-            // console.log(response.data)
+            console.log('getMutantsList', response.data)
             __setMutListAndMutantNum(response.data.results, response.data.count)
         }).catch((error)=>{
             console.error('getMutantList', error)
@@ -798,6 +796,7 @@
                 errors.detail = error.data.detail?error.data.detail: ''
             }
         })
+
 
         loadingShow = false
         // console.log('end getMutantsList')
@@ -1786,6 +1785,9 @@
         excel_url = all_excel_url[params.type]
 
         exonicfuncRefgene_type_list = all_exonicfuncRefgene_type_list[params.type]
+        // todo 筛选框值修改，不会触发onChange事件！！
+        exonicfuncRefgeneSelection.value = null
+        mutant_param_exonicfuncRefgene = null
     }
 
 
