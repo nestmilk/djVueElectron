@@ -400,7 +400,7 @@
 
     const dispatch = createEventDispatcher()
 
-    let dict = {BAM: 'bam', BAI: 'bai', TARGET: 'target', 'HEREDITARY': 'hereditary', 'TMB': 'TMB', tmb: 'tmb',
+    let dict = {BAM: 'bam', BAI: 'bai', TARGET: 'target', HEREDITARY: 'hereditary', TMB: 'TMB', tmb: 'tmb',
         CONTENT: 'content', GET: 'get', ADD: 'add', MODIFY: 'modify', DELETE: 'delete',
         TOPSCROLL: 'topScroll', INSIDESCROLL: 'insideScroll', NOWVALUE: 'nowValue', PREVALUE: 'preValue',
         SAMPLEID2UNDERLINE: 'sample__id', DONE: 'done', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
@@ -649,7 +649,7 @@
         // console.log(sample_record_dict)
         // console.log(sampleSn_inTrack_list)
         // console.log(params.type)
-        console.log(mutant_list)
+        // console.log(mutant_list)
         // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
         // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
         // console.log( mutant_submit_dict)
@@ -693,7 +693,7 @@
         }).catch((error) => {
             console.error("getSamplesList", error)
             if (error.data) {
-                errors.detail = error.data.detail ? error.data.detail : ''
+                errors.detail = error.data.detail ? error.data.detail : error.data
             }
         })
 
@@ -908,6 +908,7 @@
 
     // 处理切换target，hereditary，tmb
     function handleSelectSubmenu(type){
+        console.log(type, params.type)
         if (type===params.type) return
         // console.log('handleSelectSubmenu ' + type)
         let panalId = params.panalId
