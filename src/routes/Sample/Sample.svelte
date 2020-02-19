@@ -3,19 +3,23 @@
 <div class="middle">
     <LeftMenus active="样本信息"></LeftMenus>
     <div class="midRight">我就是samples11
-        <table>
-            <tr>
-                <td class="here">11
-                </td>
-                <td>21</td>
-                <td>31</td>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-            </tr>
-        </table>
+        <div class="try">
+            <table>
+                <tr>
+                    <td>11</td>
+                    <td>21</td>
+                    <td>31</td>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td class="here">3
+                        <div class="three"></div>
+                    </td>
+                    <td>2</td>
+                </tr>
+            </table>
+        </div>
+
     </div>
 </div>
 
@@ -47,8 +51,21 @@
         min-width: 40px;
         border: 1px solid black;
     }
+    .try{
+        overflow: scroll;
+        width: 125px;
+        height: 60px;
+    }
     .here{
         position: relative;
+    }
+    .three{
+        position: absolute;
+        top: 0px;
+        left: 100px;
+        width: 100px;
+        height: 100px;
+        background: yellow;
     }
 
 

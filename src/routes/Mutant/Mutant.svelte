@@ -135,7 +135,15 @@
                                 <th class="ref">参考序列</th>
                                 <th class="alt">突变序列</th>
                                 <th class="freq">频率</th>
-                                <th class="exonicfuncRefgene">突变方式</th>
+                                <th class="exonicfuncRefgene">
+                                    <select on:change="{(e) => changeMutantParamExonicfuncRefgene(e.target.value)}" class="inside">
+                                        {#each exonicfuncRefgene_type_list as type}
+                                            <option value={type.value}>
+                                                {type.name}
+                                            </option>
+                                        {/each}
+                                    </select>
+                                </th>
                                 <th class="projectAbbreviation">项目简称</th>
                                 <th class="hgvs">hgvs命名</th>
                                 <th class="geneVar">位点解析</th>
@@ -587,7 +595,13 @@
         hereditary: [{name: "全选", value: null}],
         TMB: [{name: "全选", value: null}]}
     let exonicfuncRefgene_type_list = all_exonicfuncRefgene_type_list[dict.TARGET]
-    let mutant_param_exonicfuncRefgene = exonicfuncRefgene_type_list[0].value
+    let mutant_param_exonicfuncRefgene = null
+    function changeMutantParamExonicfuncRefgene(value){
+        // value为null时候，返回的是"null"字符串
+        // console.log(mutant_param_exonicfuncRefgene, value)
+        mutant_param_exonicfuncRefgene = value==='null' ? null: value
+        getMutantslist()
+    }
 
     // 用于sure组件通信使用
     let sureModel
@@ -625,7 +639,9 @@
         if (sample_record_dict !==  all_sample_record_dict[dict.TARGET]){
             // console.log('params.type sample_record_dict 对象不一致，更新开始')
             __setDatabyParamsType()
+
             mutant_param_page = 1
+            mutant_param_exonicfuncRefgene = null
             getMutantslist()
         }
 
@@ -633,7 +649,9 @@
     $: if (params.type === dict.HEREDITARY) {
         if (sample_record_dict !==  all_sample_record_dict[dict.HEREDITARY]){
             __setDatabyParamsType()
+
             mutant_param_page = 1
+            mutant_param_exonicfuncRefgene = null
             getMutantslist()
         }
 
@@ -641,7 +659,9 @@
     $: if (params.type === dict.TMB) {
         if (sample_record_dict !==  all_sample_record_dict[dict.TMB]){
             __setDatabyParamsType()
+
             mutant_param_page = 1
+            mutant_param_exonicfuncRefgene = null
             getMutantslist()
         }
     }
@@ -767,7 +787,8 @@
             ordering: mutant_param_order,
             sampleIds: selected_sampleIds_list.join(','),
             panalId: params.panalId,
-            logsEdit: mutant_param_logsEdit
+            logsEdit: mutant_param_logsEdit,
+            exonicfuncRefgene: mutant_param_exonicfuncRefgene
         }).then((response)=>{
             // console.log(response.data)
             __setMutListAndMutantNum(response.data.results, response.data.count)
@@ -2186,6 +2207,7 @@
         background: #09c762;
     }
 
+
     .contentRight .rightMutantTable>tr>th, .contentRight .rightMutantTable>tr>td{
         height: 32px;
         border-right: 1px solid #cccccc;
@@ -2266,7 +2288,7 @@
     }
     .contentRight td.logs .logsWrapper{
         position: absolute;
-        /*因为外侧.insideWrapper使用了wrapper, 无法溢出左table边界了*/
+        /* todo 因为外侧.insideWrapper使用了overflow: scroll; 横向的scroll使得无法溢出左table边界了*/
         left: 0px;
         top: 35px;
         z-index: 20;
@@ -2509,8 +2531,13 @@
         min-width: 150px;
     }
     .contentRight .exonicfuncRefgene .inside{
+        padding: 0;
+        margin: 0;
         width: 150px;
+        height: 100%;
+        border: none;
     }
+
     .contentRight .hgvs{
         min-width: 150px;
     }
