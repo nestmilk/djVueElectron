@@ -648,7 +648,10 @@
 
 
     // 标题栏相关参数
-    let mutantDispConfList = JSON.parse(JSON.stringify(mutantDisplayConfigList))
+    let mutantDispConfList = JSON.parse(JSON.stringify(mutantDisplayConfigList.map(item=>{
+        item["nowDisplay"] = item.defaultDisplay[params.type] ? true: false
+        return item
+    })))
     let mutantDispConfDict = arrayToDict(mutantDispConfList, 'title')
     let defaultFieldDisplayList = JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
                 if (item.defaultDisplay[params.type]){
@@ -683,9 +686,8 @@
         // console.log(sample_record_dict)
         // console.log(sampleSn_inTrack_list)
         // console.log(params.type)
-        console.log(typeof now_mutant_id)
-        console.log(mutant_list)
-        console.log(mutant_list.find(mutant=>mutant.id===now_mutant_id))
+        // console.log(typeof now_mutant_id)
+        // console.log(mutant_list)
         // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
         // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
         // console.log( mutant_submit_dict)
@@ -699,7 +701,7 @@
         // console.log(remote.app.getPath('userData'))
         // console.log('store', settingsStore.get('ifIgvConnect'))
         // console.log(window.location.href)
-        // console.log(mutantDispConfList, mutantDispConfDict)
+        console.log(mutantDispConfList, mutantDispConfDict)
     }
 
     function stopPropagation(event){
@@ -1756,7 +1758,7 @@
 
 
         let mutant = mutant_submit_dict[now_mutant_id]
-        let query = __calculateScope(mutant[dict.CHR], mutant[mutant_field_dict.POSSTART][dict.NOWVALUE], mutant[mutant_field_dict.POSEND][dict.NOWVALUE])
+        let query = __calculateScope(mutant[dict.CHR][dict.NOWVALUE], mutant[mutant_field_dict.POSSTART][dict.NOWVALUE], mutant[mutant_field_dict.POSEND][dict.NOWVALUE])
         // console.log(query)
 
         // if (igvBrowser) {
