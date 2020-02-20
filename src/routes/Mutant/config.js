@@ -1,94 +1,9 @@
-export const mutantDisplayConfig = [
-    {
-        title: "projectAbbreviation",
-        modify: {
-            target: false
-        },
-        defaultDisplay: {
-            target:false
-        }
-    },
-    {
-        title: "NM_ID",
-        modify: {
-            target: false
-        },
-        defaultDisplay: {
-            target: false
-        }
-    },
-    {
-        title: "GeneName",
-        modify: {
-            target: false
-        },
-        defaultDisplay: {
-            target: false
-        }
-    },
-    {
-        title: "DNA_change",
-        modify: {
-            target: false
-        },
-        defaultDisplay: {
-            target: false
-        }
-    },
-    {
-        title: "AA_change",
-        modify: {
-            target: false
-        },
-        defaultDisplay: {
-            target: false
-        }
-    },
-    {
-        title: "drugLevel",
-        modify: {
-            target: true
-        },
-        defaultDisplay: {
-            target: true
-        }
-    },
-    {
-        title: "cancerType",
-        modify: {
-            target: true
-        },
-        defaultDisplay: {
-            target: true
-        }
-    },
-    {
-        title: "drugs",
-        modify: {
-            target: true
-        },
-        defaultDisplay: {
-            target: true
-        }
-    },
-    {
-        title: "hgvs",
-        modify: {
-            target: true
-        },
-        defaultDisplay: {
-            target: true
-        }
-    },
-    {
-        title: "geneVar",
-        modify: {
-            target: true
-        },
-        defaultDisplay: {
-            target: true
-        }
-    },
+// modify: 表示是否需要修改
+// defaultDisplay: 是否作为默认必须显示标题，用于生成defaultDisplayList，默认标题显示顺序
+// ifSelect: 是否需要用作选择性显示标题，用于生成selectDisplayList, 默认菜单栏选择顺序
+
+export const mutantDisplayConfigList = [
+    // 染色体相关
     {
         title: "chr",
         modify: {
@@ -97,9 +12,10 @@ export const mutantDisplayConfig = [
         defaultDisplay: {
             target: true
         },
-        ifSelect: {
+        selectDisplay: {
             target: true
-        }
+        },
+        nowDisplay: false
     },
     {
         title: "posStart",
@@ -110,9 +26,10 @@ export const mutantDisplayConfig = [
         defaultDisplay: {
             target: true
         },
-        ifSelect: {
+        selectDisplay: {
             target: true
-        }
+        },
+        nowDisplay: false
     },
     {
         title: "posEnd",
@@ -123,9 +40,10 @@ export const mutantDisplayConfig = [
         defaultDisplay: {
             target: true
         },
-        ifSelect: {
+        selectDisplay: {
             target: true
-        }
+        },
+        nowDisplay: false
     },
     {
         title: "ref",
@@ -136,9 +54,10 @@ export const mutantDisplayConfig = [
         defaultDisplay: {
             target: true
         },
-        ifSelect: {
+        selectDisplay: {
             target: true
-        }
+        },
+        nowDisplay: false
     },
     {
         title: "alt",
@@ -149,9 +68,10 @@ export const mutantDisplayConfig = [
         defaultDisplay: {
             target: true
         },
-        ifSelect: {
+        selectDisplay: {
             target: true
-        }
+        },
+        nowDisplay: false
     },
     {
         title: "freq",
@@ -162,45 +82,240 @@ export const mutantDisplayConfig = [
         defaultDisplay: {
             target: true
         },
-        ifSelect: {
+        selectDisplay: {
             target: true
-        }
+        },
+        nowDisplay: false
+    },
+    // 药物相关
+    {
+        title: "drugLevel",
+        modify: {
+            target: true
+        },
+        defaultDisplay: {
+            target: true
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
     },
     {
+        title: "cancerType",
+        modify: {
+            target: true
+        },
+        defaultDisplay: {
+            target: true
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
+    },
+    {
+        title: "drugs",
+        modify: {
+            target: true
+        },
+        defaultDisplay: {
+            target: true
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
+    },
+    {
+        title: "hgvs",
+        modify: {
+            target: true
+        },
+        defaultDisplay: {
+            target: true
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
+    },
+    {
+        title: "geneVar",
+        modify: {
+            target: true
+        },
+        defaultDisplay: {
+            target: true
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
+    },
+    
+
+    {
+        title: "projectAbbreviation",
+        type: "text",
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target:false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
+    },
+    {
+        title: "NM_ID",
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
+    },
+    {
+        title: "GeneName",
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
+    },
+    {
+        title: "DNA_change",
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
+    },
+    {
+        title: "AA_change",
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
+    },
+
+
+    {
         title: "wxz",
-        modify: false,
-        defaultDisplay: false
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
     },
     {
         title: "zlb",
-        modify: false,
-        defaultDisplay: false
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
     },
     {
         title: "hgsGb",
-        modify: false,
-        defaultDisplay: false
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
     },
     {
         title: "ajsGb",
-        modify: false,
-        defaultDisplay: false
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
     },
     {
         title: "alteration",
-        modify: false,
-        defaultDisplay: false
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
     },
     {
         title: "geneName",
-        modify: false,
-        defaultDisplay: false
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
     },
     {
         title: "geneType",
-        modify: false,
-        defaultDisplay: false
+        modify: {
+            target: false
+        },
+        defaultDisplay: {
+            target: false
+        },
+        selectDisplay: {
+            target: true
+        },
+        nowDisplay: false
     },
+
+
     {
         title: "aachangeRefgene",
         modify: false,
@@ -223,5 +338,7 @@ export const mutantDisplayConfig = [
     },
 ]
 
-export const targetDefaultDisplayList = ['posStart', 'posEnd', 'ref', 'alt']
+export const defaultDisplayLists = {
+    target: ['posStart', 'posEnd', 'ref', 'alt']
+}
 

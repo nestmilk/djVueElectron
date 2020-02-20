@@ -149,7 +149,7 @@ export const ifContentEqualArrays = (arrayA, arrayB) => {
     return true
 }
 
-// field的值用于生成key
+// field的值用于生成key, 返回的对象，如果对obj的值修改，同样会改变array中的值
 export const arrayToDict = (array, field) => {
     return array.reduce((obj, item)=>{
         obj[item[field]] = item

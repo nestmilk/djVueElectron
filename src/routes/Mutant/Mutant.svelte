@@ -284,26 +284,34 @@
                                         <button class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE]?'':'undeleted'):'undeleted'} icon-cross"
                                             on:click={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.DELETE)}
                                                 disabled="{panal_unable_handle?'disabled':
-                                                    (mutant_submit_dict[mutant.id]?
-                                                    (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
-                                                    (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">
+                                                (mutant_submit_dict[mutant.id]?
+                                                (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':
+                                                (mutant[dict.AVAILABLE_EDIT]?'':'disabled'))):'')}">
                                         </button>
                                         <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.PREVALUE]?'icon-warning':''):''}"></div>
                                     </td>
                                     <td class="sampleSn" title="样本id为：{mutant.sample}，突变id为：{mutant.id}">{mutant.sampleSn}</td>
                                     <td class="chr">{mutant.chr}</td>
-<!--                                    {#each targetDefaultDisplayList as title}-->
-<!--                                        <td class={title} title="实时数据：{mutant[title]}">-->
-<!--                                            <input class="mutantInput" type={mutantDisplayConfig[title].type}-->
-<!--                                                   value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"-->
-<!--                                                   on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}-->
-<!--                                                   disabled="{panal_unable_handle?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id]?-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
-<!--                                            <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>-->
-<!--                                        </td>-->
-<!--                                    {/each}}-->
+                                    {#each fieldDisplayOrderList as title}
+                                        {#if mutant[dict.AVAILABLE_EDIT]}
+                                            <td class="{title}" title="实时数据：{mutant[title]}">
+                                                <input class="mutantInput" type={mutantDispConfDict[title].type}
+                                                       value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"
+                                                       on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}
+                                                       disabled="{panal_unable_handle?'disabled':
+                                                                   (mutant_submit_dict[mutant.id]?
+                                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}"
+                                                >
+                                                <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>
+                                            </td>
+                                        {:else}
+                                            <td class="{title}" title="实时数据：{mutant[title]}">
+                                                <div class="inside">{mutant[title]}</div>
+                                            </td>
+                                        {/if}
+                                    {/each}}
 
 <!--                                    <td class="posStart" title="实时数据：{mutant.posStart}">-->
 <!--                                        <input class="mutantInput" type="number"-->
@@ -425,9 +433,8 @@
 
     const dispatch = createEventDispatcher()
 
-    import {mutantDisplayConfig, targetDefaultDisplayList} from './config'
-    let targetDisplayList = JSON.parse(JSON.stringify(targetDefaultDisplayList))
-    let FieldDisplayOrderList = ['drugLevel', 'cancerType', 'drugs', 'hgvs', 'geneVar', 'clinsig', 'intervarAutomated']
+    import {mutantDisplayConfigList, defaultDisplayLists} from './config'
+
 
     let dict = {BAM: 'bam', BAI: 'bai', TARGET: 'target', HEREDITARY: 'hereditary', TMB: 'TMB', tmb: 'tmb',
         CONTENT: 'content', GET: 'get', ADD: 'add', MODIFY: 'modify', DELETE: 'delete',
@@ -437,7 +444,7 @@
         STATUS: 'status', SAMPLEID: 'sampleId', SAMPLESN: 'sampleSn', AFFIRMED: 'affirmed', RECOVER: 'recover',
         REASONTYPE: 'reason_type', REASONDESC: 'reason_desc', REASONDISPLAY: 'reason_display',
         BLANK: 'blank', LOGSDISPLAY: 'logs_display', LOG: 'log', LOGFIELDDETAIL: 'log_field_details',
-        COPY: 'copy', MUTANTS: 'mutants', TYPE: 'type', PATH: 'path'
+        COPY: 'copy', MUTANTS: 'mutants', TYPE: 'type', PATH: 'path', AVAILABLE_EDIT: 'availableEdit'
     }
 
     // 数据下载后，创建mutant_submit_dict, 只有done和free状态
@@ -521,6 +528,8 @@
     // 目前的mutant的id，sample的id
     let now_mutant_id = -1
     let now_sample_id = -1
+    let pre_mutant_id = -1
+    let pre_sample_id = -1
 
     // 当前筛选条件下的突变总数
     let mutant_num
@@ -686,7 +695,17 @@
     }
 
 
-
+    // 标题栏相关参数
+    let mutantDispConfList = JSON.parse(JSON.stringify(mutantDisplayConfigList))
+    let mutantDispConfDict = arrayToDict(mutantDispConfList, 'title')
+    let defaultFieldDisplayList = JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+                if (item.defaultDisplay[params.type]){
+                    list.push(item.title)
+                }
+                return list
+            }, [])
+        ))
+    let fieldDisplayOrderList = defaultFieldDisplayList
     // let socket = null
 
     async function test(e) {
@@ -698,7 +717,9 @@
         // console.log(sample_record_dict)
         // console.log(sampleSn_inTrack_list)
         // console.log(params.type)
-        // console.log(mutant_list)
+        console.log(typeof now_mutant_id)
+        console.log(mutant_list)
+        console.log(mutant_list.find(mutant=>mutant.id===now_mutant_id))
         // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
         // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
         // console.log( mutant_submit_dict)
@@ -712,8 +733,7 @@
         // console.log(remote.app.getPath('userData'))
         // console.log('store', settingsStore.get('ifIgvConnect'))
         // console.log(window.location.href)
-        arrayToDict(mutantDisplayConfig, 'title')
-
+        // console.log(mutantDispConfList, mutantDispConfDict)
     }
 
     function stopPropagation(event){
@@ -772,6 +792,7 @@
                     }
                 }
             }
+            mutant[dict.AVAILABLE_EDIT] = false
         }
         mutant_list = mutant_list
         // 此筛选条件下的mutant总数，用于总页数计算
@@ -941,8 +962,8 @@
 
     // 处理点击mutant行，更好当前选中突变id
     function handleChangeCurrentMutantId (mutant_id, sample_id) {
-        let pre_sample_id = now_sample_id
-        let pre_mutant_id = now_mutant_id
+        pre_mutant_id = now_mutant_id
+        pre_sample_id = now_sample_id
         now_mutant_id = mutant_id
         now_sample_id = sample_id
 
@@ -1815,10 +1836,24 @@
 
 
         if (document.querySelector('.down').contains(e.target)){
+
             let element =getParentNodeByParentClassName(e.target, 'mutantItem')
             handleChangeCurrentMutantId(parseInt(element.dataset.mutantid), parseInt(element.dataset.sampleid))
 
             let menu = new remote.Menu()
+
+            let editMenuItem = new remote.MenuItem({
+                label: '编辑',
+                click: () => {
+                    for (let mutant of mutant_list) {
+                        mutant[dict.AVAILABLE_EDIT] = mutant.id === now_mutant_id? !mutant[dict.AVAILABLE_EDIT] : false
+                    }
+
+                    mutant_list = mutant_list
+                }
+            })
+            menu.append(editMenuItem)
+
             let deleteMenuItem = new remote.MenuItem({
                 label: '复制',
                 // enabled: mutant_submit_dict[element.dataset.mutantid][dict.STATUS] === mutant_status_dict.FREE,
@@ -1829,12 +1864,23 @@
                 }
             })
             menu.append(deleteMenuItem)
+
             menu.popup({window: remote.getCurrentWindow()})
         }
 
         if (document.querySelector('.up').contains(e.target)){
             let menu = new remote.Menu()
+            let defaultMenuItem = new remote.MenuItem({
+                label: '恢复默认标题栏',
+                click: ()=>{
+                    console.log('recover')
+                }
+            })
+            menu.append(defaultMenuItem)
 
+
+
+            menu.popup({window: remote.getCurrentWindow()})
         }
 
     }
@@ -2528,6 +2574,9 @@
         float: left;
         width: 90px;
     }
+    .contentRight .posStart .inside{
+        width: 120px;
+    }
     .contentRight .posEnd{
         position: relative;
         min-width: 120px;
@@ -2536,6 +2585,9 @@
         float: left;
         width: 90px;
     }
+    .contentRight .posEnd .inside{
+        width: 120px;
+    }
     .contentRight .ref{
         min-width: 90px;
     }
@@ -2543,12 +2595,18 @@
         float: left;
         width: 60px;
     }
+    .contentRight .ref .inside{
+        width: 90px;
+    }
     .contentRight .alt{
         min-width: 90px;
     }
     .contentRight .alt .mutantInput{
         float: left;
         width: 60px;
+    }
+    .contentRight .alt .inside{
+        width: 90px;
     }
     .contentRight .freq{
         min-width: 60px;
