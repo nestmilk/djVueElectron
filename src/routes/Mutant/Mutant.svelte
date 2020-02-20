@@ -116,42 +116,53 @@
                                 <th class="affirmed">确定审核</th>
                                 <th class="recover">修改恢复</th>
                                 <th class="delete">删除此行</th>
-                                <th class="sampleSn" on:click={()=>handleOrderEVENT(dict.SAMPLEID2UNDERLINE)}>样本编号
-                                    <div class="icon-sort-amount-asc {order_query_dict[dict.SAMPLEID2UNDERLINE][sampleId_status_selected_index].status !== dict.SAMPLEID2UNDERLINE?
-                                    'gray':''}"></div>
-                                </th>
-                                <th class="chr" on:click={()=>handleOrderEVENT(dict.CHR)}>染色体
-                                    <div class="icon-sort-amount-asc {order_query_dict[dict.CHR][chr_status_selected_index].status !== dict.CHR?
-                                    'gray':''}"></div>
-                                </th>
-                                <th class="posStart" on:click={()=>handleOrderEVENT(dict.POSSTART)}>起始位置
-                                    <div class="icon-sort-amount-asc {order_query_dict[dict.POSSTART][posStart_status_selected_index].status !== dict.POSSTART?
-                                    'gray':''}"></div>
-                                </th>
-                                <th class="posEnd" on:click={()=>handleOrderEVENT(dict.POSEND)}>终止位置
-                                    <div class="icon-sort-amount-asc {order_query_dict[dict.POSEND][posEnd_status_selected_index].status !== dict.POSEND?
-                                    'gray':''}"></div>
-                                </th>
-                                <th class="ref">参考序列</th>
-                                <th class="alt">突变序列</th>
-                                <th class="freq">频率</th>
-                                <th class="exonicfuncRefgene">
-                                    <select bind:this={exonicfuncRefgeneSelection}
-                                            on:change="{(e) => changeMutantParamExonicfuncRefgene(e.target.value)}"
-                                            class="inside"
-                                    >
-                                        {#each exonicfuncRefgene_type_list as type}
-                                            <option value={type.value}>
-                                                {type.name}
-                                            </option>
-                                        {/each}
-                                    </select>
-                                </th>
-                                <th class="projectAbbreviation">项目简称</th>
-                                <th class="hgvs">hgvs命名</th>
-                                <th class="geneVar">位点解析</th>
-                                <th class="clinsig">突变分类</th>
-                                <th class="intervarAutomated">突变分类2</th>
+
+                                {#each fieldDisplayOrderList as title}
+                                    {#if title=== 'sampleSn'}
+                                        <th class="sampleSn" on:click={()=>handleOrderEVENT(dict.SAMPLEID2UNDERLINE)}>{mutantDispConfDict[title].translate}
+                                            <div class="icon-sort-amount-asc {order_query_dict[dict.SAMPLEID2UNDERLINE][sampleId_status_selected_index].status !== dict.SAMPLEID2UNDERLINE?
+                                            'gray':''}"></div>
+                                        </th>
+                                    {:else if title==="chr"}
+                                        <th class="chr" on:click={()=>handleOrderEVENT(dict.CHR)}>{mutantDispConfDict[title].translate}
+                                            <div class="icon-sort-amount-asc {order_query_dict[dict.CHR][chr_status_selected_index].status !== dict.CHR?
+                                            'gray':''}"></div>
+                                        </th>
+                                    {:else if title==="posStart"}
+                                        <th class="posStart" on:click={()=>handleOrderEVENT(dict.POSSTART)}>{mutantDispConfDict[title].translate}
+                                            <div class="icon-sort-amount-asc {order_query_dict[dict.POSSTART][posStart_status_selected_index].status !== dict.POSSTART?
+                                            'gray':''}"></div>
+                                        </th>
+                                    {:else if title==="posEnd"}
+                                        <th class="posEnd" on:click={()=>handleOrderEVENT(dict.POSEND)}>{mutantDispConfDict[title].translate}
+                                            <div class="icon-sort-amount-asc {order_query_dict[dict.POSEND][posEnd_status_selected_index].status !== dict.POSEND?
+                                            'gray':''}"></div>
+                                        </th>
+                                    {:else if title==="exonicfuncRefgene"}
+                                        <th class="exonicfuncRefgene">
+                                            <select bind:this={exonicfuncRefgeneSelection}
+                                                    on:change="{(e) => changeMutantParamExonicfuncRefgene(e.target.value)}"
+                                                    class="inside"
+                                            >
+                                                {#each exonicfuncRefgene_type_list as type}
+                                                    <option value={type.value}>
+                                                        {type.name}
+                                                    </option>
+                                                {/each}
+                                            </select>
+                                        </th>
+                                    {:else}
+                                        <th class="{title}">{mutantDispConfDict[title].translate}</th>
+                                    {/if}
+                                {/each}
+<!--                                <th class="ref">参考序列</th>-->
+<!--                                <th class="alt">突变序列</th>-->
+<!--                                <th class="freq">频率</th>-->
+<!--                                <th class="projectAbbreviation">项目简称</th>-->
+<!--                                <th class="hgvs">hgvs命名</th>-->
+<!--                                <th class="geneVar">位点解析</th>-->
+<!--                                <th class="clinsig">突变分类</th>-->
+<!--                                <th class="intervarAutomated">突变分类2</th>-->
                             </tr>
                         </table>
                     </div>
@@ -291,18 +302,17 @@
                                         </button>
                                         <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.PREVALUE]?'icon-warning':''):''}"></div>
                                     </td>
-                                    <td class="sampleSn" title="样本id为：{mutant.sample}，突变id为：{mutant.id}">{mutant.sampleSn}</td>
-                                    <td class="chr">{mutant.chr}</td>
+
                                     {#each fieldDisplayOrderList as title}
-                                        {#if mutant[dict.AVAILABLE_EDIT]}
+                                        {#if mutantDispConfDict[title].modify[params.type] && mutant[dict.AVAILABLE_EDIT]}
                                             <td class="{title}" title="实时数据：{mutant[title]}">
                                                 <input class="mutantInput" type={mutantDispConfDict[title].type}
                                                        value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"
                                                        on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}
                                                        disabled="{panal_unable_handle?'disabled':
-                                                                   (mutant_submit_dict[mutant.id]?
-                                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
-                                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}"
+                                                       (mutant_submit_dict[mutant.id]?
+                                                       (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                       (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}"
                                                 >
                                                 <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>
                                             </td>
@@ -312,64 +322,6 @@
                                             </td>
                                         {/if}
                                     {/each}}
-
-<!--                                    <td class="posStart" title="实时数据：{mutant.posStart}">-->
-<!--                                        <input class="mutantInput" type="number"-->
-<!--                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.NOWVALUE]:null}"-->
-<!--                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.POSSTART)}-->
-<!--                                               disabled="{panal_unable_handle?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id]?-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
-<!--                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.PREVALUE]?'icon-warning':''):''}"></div>-->
-<!--                                    </td>-->
-<!--                                    <td class="posEnd" title="实时数据：{mutant.posEnd}">-->
-<!--                                        <input class="mutantInput" type="number"-->
-<!--                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.NOWVALUE]:null}"-->
-<!--                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.POSEND)}-->
-<!--                                               disabled="{panal_unable_handle?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id]?-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
-<!--                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.PREVALUE]?'icon-warning':''):''}"></div>-->
-<!--                                    </td>-->
-<!--                                    <td class="ref" title="实时数据：{mutant.ref}">-->
-<!--                                        <input class="mutantInput" type="text"-->
-<!--                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.NOWVALUE]:null}"-->
-<!--                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.REF)}-->
-<!--                                               disabled="{panal_unable_handle?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id]?-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
-<!--                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.PREVALUE]?'icon-warning':''):''}"></div>-->
-<!--                                    </td>-->
-<!--                                    <td class="alt" title="实时数据：{mutant.alt}">-->
-<!--                                        <input class="mutantInput" type="text"-->
-<!--                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.NOWVALUE]:null}"-->
-<!--                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.ALT)}-->
-<!--                                               disabled="{panal_unable_handle?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id]?-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
-<!--                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.PREVALUE]?'icon-warning':''):''}"></div>-->
-<!--                                    </td>-->
-                                    <td class="freq">{mutant.freq?mutant.freq.toFixed(4):''}</td>
-                                    <td class="exonicfuncRefgene" title="{mutant.exonicfuncRefgene}">
-                                        <div class="inside">{mutant.exonicfuncRefgene}</div>
-                                    </td>
-                                    <td class="projectAbbreviation">{mutant.projectAbbreviation}</td>
-                                    <td class="hgvs" title="{mutant.hgvs}">
-                                        <div class="inside" >{mutant.hgvs}</div>
-                                    </td>
-                                    <td class="geneVar" title="{mutant.geneVar}">
-                                        <div class="inside">{mutant.geneVar}</div>
-                                    </td>
-                                    <td class="clinsig" title="{mutant.clinsig}">
-                                        <div class="inside">{mutant.clinsig}</div>
-                                    </td>
-                                    <td class="intervarAutomated" title="{mutant.intervarAutomated}">
-                                        <div class="inside">{mutant.intervarAutomated}</div>
-                                    </td>
 
                                 </tr>
                             {/each}
@@ -706,6 +658,20 @@
             }, [])
         ))
     let fieldDisplayOrderList = defaultFieldDisplayList
+    let modifyFieldList = mutantDispConfList.reduce((list, item)=>{
+        if (item.modify) list.push(item.title)
+        return list
+    }, [])
+    let selectFieldDisplayList = JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+                if (item.selectDisplay[params.type]){
+                    list.push({
+                        title: item.title,
+                        translate: item.translate
+                    })
+                }
+                return list
+            }, [])
+    ))
     // let socket = null
 
     async function test(e) {
@@ -853,23 +819,6 @@
                 nowValue: mutant.delete,
                 preValue: mutant.delete
             },
-            posStart: {
-                nowValue: mutant.posStart,
-                preValue: mutant.posStart
-            },
-            posEnd: {
-                nowValue: mutant.posEnd,
-                preValue: mutant.posEnd
-            },
-            ref: {
-                nowValue: mutant.ref,
-                preValue: mutant.ref
-            },
-            alt: {
-                nowValue: mutant.alt,
-                preValue: mutant.alt
-            },
-            chr: mutant.chr,
             reason_type: {
                 nowValue: '',
                 preValue: ''
@@ -880,6 +829,13 @@
             },
             reason_display: false,
             logs_display: false
+        }
+
+        for (let field of modifyFieldList) {
+            mutant_submit_dict[mutant.id][field] = {
+                nowValue: mutant[field],
+                preValue: mutant[field]
+            }
         }
     }
 
@@ -1872,13 +1828,26 @@
             let menu = new remote.Menu()
             let defaultMenuItem = new remote.MenuItem({
                 label: '恢复默认标题栏',
+                type: 'checkbox',
+                checked: true,
                 click: ()=>{
                     console.log('recover')
                 }
             })
             menu.append(defaultMenuItem)
 
+            for (let item of selectFieldDisplayList) {
+                let selectMenuItem = new remote.MenuItem({
+                    label: item.title + "(" + item.translate + ")",
+                    type: 'checkbox',
+                    checked: false,
+                    click: ()=>{
+                        console.log(item.title)
+                    }
+                })
 
+                menu.append(selectMenuItem)
+            }
 
             menu.popup({window: remote.getCurrentWindow()})
         }
@@ -2281,7 +2250,9 @@
 
 
     .contentRight .rightMutantTable>tr>th, .contentRight .rightMutantTable>tr>td{
-        height: 32px;
+        height: 33px;
+        padding-top: 0;
+        padding-bottom: 0;
         border-right: 1px solid #cccccc;
         border-bottom: 1px solid #cccccc;
     }
@@ -2304,10 +2275,11 @@
         margin: 0 5px 0 3px;
         border: none;
         font-weight: bold;
+        background: #eaffad;
     }
-    .contentRight .mutantInput:hover{
-        background: #09c762;
-    }
+    /*.contentRight .mutantInput:hover{*/
+    /*    background: #09c762;*/
+    /*}*/
     /*此处必须用min-width，不然table会在div宽度内自己调整，无法溢出实现scroll TODO*/
     .contentRight .logs{
         min-width: 35px;
@@ -2559,12 +2531,25 @@
         position: relative;
         min-width: 110px;
     }
+    .contentRight .sampleSn .inside{
+        width: 110px;
+        overflow: hidden;
+    }
+
     .contentRight .projectAbbreviation{
         min-width: 35px;
     }
     .contentRight .chr{
         position: relative;
         min-width: 92px;
+    }
+    .contentRight .chr .mutantInput{
+        float: left;
+        width: 62px;
+    }
+    .contentRight .chr .inside{
+        width: 92px;
+        overflow: hidden;
     }
     .contentRight .posStart{
         position: relative;
@@ -2576,6 +2561,7 @@
     }
     .contentRight .posStart .inside{
         width: 120px;
+        overflow: hidden;
     }
     .contentRight .posEnd{
         position: relative;
@@ -2587,6 +2573,7 @@
     }
     .contentRight .posEnd .inside{
         width: 120px;
+        overflow: hidden;
     }
     .contentRight .ref{
         min-width: 90px;
@@ -2597,6 +2584,7 @@
     }
     .contentRight .ref .inside{
         width: 90px;
+        overflow: hidden;
     }
     .contentRight .alt{
         min-width: 90px;
@@ -2607,9 +2595,18 @@
     }
     .contentRight .alt .inside{
         width: 90px;
+        overflow: hidden;
     }
     .contentRight .freq{
-        min-width: 60px;
+        min-width: 90px;
+    }
+    .contentRight .freq .mutantInput{
+        float: left;
+        width: 60px;
+    }
+    .contentRight .freq .inside{
+        width: 90px;
+        overflow: hidden;
     }
     .contentRight .exonicfuncRefgene{
         min-width: 150px;
@@ -2625,11 +2622,19 @@
     .contentRight .hgvs{
         min-width: 150px;
     }
+    .contentRight .hgvs .mutantInput{
+        float: left;
+        width: 120px;
+    }
     .contentRight .hgvs .inside{
         width: 150px;
     }
     .contentRight .geneVar{
         min-width: 150px;
+    }
+    .contentRight .geneVar .mutantInput{
+        float: left;
+        width: 120px;
     }
     .contentRight .geneVar .inside{
         width: 150px;
@@ -2644,6 +2649,36 @@
         min-width: 150px;
     }
     .contentRight .intervarAutomated .inside{
+        width: 150px;
+    }
+    .contentRight .drugLevel{
+        min-width: 150px;
+    }
+    .contentRight .drugLevel .mutantInput{
+        float: left;
+        width: 120px;
+    }
+    .contentRight .drugLevel .inside{
+        width: 150px;
+    }
+    .contentRight .cancerType{
+        min-width: 150px;
+    }
+    .contentRight .cancerType .mutantInput{
+        float: left;
+        width: 120px;
+    }
+    .contentRight .cancerType .inside{
+        width: 150px;
+    }
+    .contentRight .drugs{
+        min-width: 150px;
+    }
+    .contentRight .drugs .mutantInput{
+        float: left;
+        width: 120px;
+    }
+    .contentRight .drugs .inside{
         width: 150px;
     }
 
