@@ -148,3 +148,11 @@ export const ifContentEqualArrays = (arrayA, arrayB) => {
     }
     return true
 }
+
+// field的值用于生成key
+export const arrayToDict = (array, field) => {
+    return array.reduce((obj, item)=>{
+        obj[item[field]] = item
+        return obj
+    }, {})
+}

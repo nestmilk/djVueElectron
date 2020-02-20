@@ -103,7 +103,7 @@
             <div class="contentRight">
                 <div class="mutantList">
                     <div class="topInsideWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)}>
-                        <table class="up rightMutantTable">
+                        <table class="rightMutantTable">
                             <tr>
                                 <th class="logs"
                                     on:click={()=>handleSubmenuFilter(dict.LOG)}>
@@ -292,59 +292,46 @@
                                     </td>
                                     <td class="sampleSn" title="样本id为：{mutant.sample}，突变id为：{mutant.id}">{mutant.sampleSn}</td>
                                     <td class="chr">{mutant.chr}</td>
-<!--                                    {#each targetDefaultDisplayList as title}-->
-<!--                                        <td class={title} title="实时数据：{mutant[title]}">-->
-<!--                                            <input class="mutantInput" type={mutantDisplayConfig[title].type}-->
-<!--                                                   value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"-->
-<!--                                                   on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}-->
-<!--                                                   disabled="{panal_unable_handle?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id]?-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
-<!--                                            <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>-->
-<!--                                        </td>-->
-<!--                                    {/each}}-->
-
-<!--                                    <td class="posStart" title="实时数据：{mutant.posStart}">-->
-<!--                                        <input class="mutantInput" type="number"-->
-<!--                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.NOWVALUE]:null}"-->
-<!--                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.POSSTART)}-->
-<!--                                               disabled="{panal_unable_handle?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id]?-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
-<!--                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.PREVALUE]?'icon-warning':''):''}"></div>-->
-<!--                                    </td>-->
-<!--                                    <td class="posEnd" title="实时数据：{mutant.posEnd}">-->
-<!--                                        <input class="mutantInput" type="number"-->
-<!--                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.NOWVALUE]:null}"-->
-<!--                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.POSEND)}-->
-<!--                                               disabled="{panal_unable_handle?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id]?-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
-<!--                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.PREVALUE]?'icon-warning':''):''}"></div>-->
-<!--                                    </td>-->
-<!--                                    <td class="ref" title="实时数据：{mutant.ref}">-->
-<!--                                        <input class="mutantInput" type="text"-->
-<!--                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.NOWVALUE]:null}"-->
-<!--                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.REF)}-->
-<!--                                               disabled="{panal_unable_handle?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id]?-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
-<!--                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.PREVALUE]?'icon-warning':''):''}"></div>-->
-<!--                                    </td>-->
-<!--                                    <td class="alt" title="实时数据：{mutant.alt}">-->
-<!--                                        <input class="mutantInput" type="text"-->
-<!--                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.NOWVALUE]:null}"-->
-<!--                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.ALT)}-->
-<!--                                               disabled="{panal_unable_handle?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id]?-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
-<!--                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
-<!--                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.PREVALUE]?'icon-warning':''):''}"></div>-->
-<!--                                    </td>-->
+                                    <td class="posStart" title="实时数据：{mutant.posStart}">
+                                        <input class="mutantInput" type="number"
+                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.NOWVALUE]:null}"
+                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.POSSTART)}
+                                               disabled="{panal_unable_handle?'disabled':
+                                                   (mutant_submit_dict[mutant.id]?
+                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">
+                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.PREVALUE]?'icon-warning':''):''}"></div>
+                                    </td>
+                                    <td class="posEnd" title="实时数据：{mutant.posEnd}">
+                                        <input class="mutantInput" type="number"
+                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.NOWVALUE]:null}"
+                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.POSEND)}
+                                               disabled="{panal_unable_handle?'disabled':
+                                                   (mutant_submit_dict[mutant.id]?
+                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">
+                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.PREVALUE]?'icon-warning':''):''}"></div>
+                                    </td>
+                                    <td class="ref" title="实时数据：{mutant.ref}">
+                                        <input class="mutantInput" type="text"
+                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.NOWVALUE]:null}"
+                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.REF)}
+                                               disabled="{panal_unable_handle?'disabled':
+                                                   (mutant_submit_dict[mutant.id]?
+                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">
+                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.PREVALUE]?'icon-warning':''):''}"></div>
+                                    </td>
+                                    <td class="alt" title="实时数据：{mutant.alt}">
+                                        <input class="mutantInput" type="text"
+                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.NOWVALUE]:null}"
+                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.ALT)}
+                                               disabled="{panal_unable_handle?'disabled':
+                                                   (mutant_submit_dict[mutant.id]?
+                                                   (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                   (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">
+                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.PREVALUE]?'icon-warning':''):''}"></div>
+                                    </td>
                                     <td class="freq">{mutant.freq?mutant.freq.toFixed(4):''}</td>
                                     <td class="exonicfuncRefgene" title="{mutant.exonicfuncRefgene}">
                                         <div class="inside">{mutant.exonicfuncRefgene}</div>
@@ -399,8 +386,7 @@
         getItemById2,
         getItemByIdandOperateAttr,
         removeFromUniqueArray,
-        ifContentEqualArrays,
-        arrayToDict
+        ifContentEqualArrays
     } from '../../utils/arrays'
     import {userInfo} from '../../store/store'
 
@@ -424,10 +410,6 @@
     const settingsStore = new Store({name: 'Settings'})
 
     const dispatch = createEventDispatcher()
-
-    import {mutantDisplayConfig, targetDefaultDisplayList} from './config'
-    let targetDisplayList = JSON.parse(JSON.stringify(targetDefaultDisplayList))
-    let FieldDisplayOrderList = ['drugLevel', 'cancerType', 'drugs', 'hgvs', 'geneVar', 'clinsig', 'intervarAutomated']
 
     let dict = {BAM: 'bam', BAI: 'bai', TARGET: 'target', HEREDITARY: 'hereditary', TMB: 'TMB', tmb: 'tmb',
         CONTENT: 'content', GET: 'get', ADD: 'add', MODIFY: 'modify', DELETE: 'delete',
@@ -686,6 +668,7 @@
     }
 
 
+    let FieldDisplayOrderList = ['drugLevel', 'cancerType', 'drugs', 'hgvs', 'geneVar', 'clinsig', 'intervarAutomated']
 
     // let socket = null
 
@@ -712,8 +695,6 @@
         // console.log(remote.app.getPath('userData'))
         // console.log('store', settingsStore.get('ifIgvConnect'))
         // console.log(window.location.href)
-        arrayToDict(mutantDisplayConfig, 'title')
-
     }
 
     function stopPropagation(event){
@@ -1832,11 +1813,6 @@
             menu.popup({window: remote.getCurrentWindow()})
         }
 
-        if (document.querySelector('.up').contains(e.target)){
-            let menu = new remote.Menu()
-
-        }
-
     }
 
 
@@ -1885,14 +1861,14 @@
             reset_errors()
         })
 
-        document.addEventListener('contextmenu', __handleContextMenu)
+        document.addEventListener('contextmenu', __showContextMenu)
 
         // console.log('onMount end')
         loadingShow = false
     })
 
     onDestroy(()=>{
-        document.removeEventListener('contextmenu', __handleContextMenu)
+        document.removeEventListener('contextmenu', __showContextMenu)
     })
 
     beforeUpdate(()=>{
