@@ -334,7 +334,9 @@
 
                                     {#each allFieldDisplayList as title}
                                         {#if mutantDispConfDict[title][dict.MODIFY][params.type] && mutant[dict.AVAILABLE_EDIT]}
-                                            <td class="{title}" title="实时数据：{mutant[title]}">
+                                            <td class="{title}"
+                                                title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}"
+                                            >
                                                 <input class="mutantInput" type={mutantDispConfDict[title].type}
                                                        value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"
                                                        on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}
@@ -346,7 +348,7 @@
                                                 <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>
                                             </td>
                                         {:else}
-                                            <td class="{title}" title="实时数据：{mutant[title]}">
+                                            <td class="{title}" title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}">
                                                 <div class="inside">{mutant[title]}</div>
                                             </td>
                                         {/if}
@@ -1426,7 +1428,7 @@
     }
     // 处理mutant属性修改
     function handleValueChangeForMutSubmits(e, mutant_id, field){
-        // console.log(e.target.value)
+        console.log(e.target.value)
 
         if (field === mutant_field_dict.DELETE) {
             mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = !mutant_submit_dict[mutant_id][field][dict.NOWVALUE]
@@ -1438,7 +1440,7 @@
             // 接着修改field的nowValue
             if ([dict.POSSTART, dict.POSEND].indexOf(field) !== -1) {
                 mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = parseInt(e.target.value)
-            }else if ([dict.REF, dict.ALT].indexOf(field) !== -1) {
+            }else {
                 mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = e.target.value
             }
         }
