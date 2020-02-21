@@ -108,7 +108,7 @@
                             <span>默认显示标题栏</span>
                             <span class="checkBox {defaultAndSelectShow?'icon-checkbox-checked':'icon-checkbox-unchecked'}"></span>
                         </div>
-                        {#if all_selectFieldDisplayList[params.type].length > 0}
+                        {#if  all_selectFieldDisplayList[params.type].length > 0}
                             <div class="contentWrapper">
                                 {#each all_selectFieldDisplayList[params.type] as field }
                                     <div class="selectFieldItem">
@@ -170,7 +170,7 @@
                                                         on:change="{(e) => changeMutantParamExonicfuncRefgene(e.target.value)}"
                                                         class="inside"
                                                 >
-                                                    {#each exonicfuncRefgene_type_list as type}
+                                                    {#each all_exonicfuncRefgene_type_list[params.type] as type}
                                                         <option value={type.value}>
                                                             {type.name}
                                                         </option>
@@ -606,10 +606,11 @@
     }
 
     // exonicfuncRefgene筛选相关参数
-    let all_exonicfuncRefgene_type_list ={target: [{name: "突变方式(全选)", value: null}],
+    let all_exonicfuncRefgene_type_list ={
+        target: [{name: "突变方式(全选)", value: null}],
         hereditary: [{name: "突变方式(全选)", value: null}],
-        TMB: [{name: "突变方式(全选)", value: null}]}
-    let exonicfuncRefgene_type_list = all_exonicfuncRefgene_type_list[dict.TARGET]
+        TMB: [{name: "突变方式(全选)", value: null}]
+    }
     let mutant_param_exonicfuncRefgene = null
     let exonicfuncRefgeneSelection
     function changeMutantParamExonicfuncRefgene(value){
@@ -965,6 +966,7 @@
                     value: mutant.exonicfuncRefgene
                 })
             }
+            all_exonicfuncRefgene_type_list = all_exonicfuncRefgene_type_list
         }
 
         // console.log(all_mutant_total_num)
@@ -1852,7 +1854,6 @@
 
         excel_url = all_excel_url[params.type]
 
-        exonicfuncRefgene_type_list = all_exonicfuncRefgene_type_list[params.type]
         // todo 筛选框值修改，不会触发onChange事件！！
         exonicfuncRefgeneSelection.value = null
         mutant_param_exonicfuncRefgene = null
