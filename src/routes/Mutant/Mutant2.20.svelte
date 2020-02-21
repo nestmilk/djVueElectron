@@ -1861,14 +1861,14 @@
             reset_errors()
         })
 
-        document.addEventListener('contextmenu', __showContextMenu)
+        document.addEventListener('contextmenu', __handleContextMenu)
 
         // console.log('onMount end')
         loadingShow = false
     })
 
     onDestroy(()=>{
-        document.removeEventListener('contextmenu', __showContextMenu)
+        document.removeEventListener('contextmenu', __handleContextMenu)
     })
 
     beforeUpdate(()=>{

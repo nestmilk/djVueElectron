@@ -1,9 +1,9 @@
 // modify: 是否需要修改
 // defaultDisplay: 是否作为默认必须显示标题，用于生成defaultDisplayList，默认标题显示顺序
 // selectDisplay: 是否需要用作选择性显示标题，用于生成selectDisplayList, 默认菜单栏选择顺序
-// 固定显示的defaultDisplay true, selectDisplay false,
-// 默认显示的defaultDisplay true, selectDisplay true,
-// 选择显示的defaultDisplay false, selectDisplay true,
+// fixed固定显示的defaultDisplay true, selectDisplay false,
+// default默认显示的defaultDisplay true, selectDisplay true,
+// select选择显示的defaultDisplay false, selectDisplay true,
 // 不显示的defaultDisplay false, selectDisplay false,
 
 
@@ -169,6 +169,8 @@ export const mutantDisplayConfigList = [
             TMB: false
         }
     },
+
+
     {
         title: "clinsig",
         translate: "突变分类1",
@@ -184,8 +186,8 @@ export const mutantDisplayConfigList = [
             TMB: false
         },
         selectDisplay: {
-            target: false,
-            hereditary: false,
+            target: true,
+            hereditary: true,
             TMB: false
         }
     },
@@ -204,8 +206,8 @@ export const mutantDisplayConfigList = [
             TMB: false
         },
         selectDisplay: {
-            target: false,
-            hereditary: false,
+            target: true,
+            hereditary: true,
             TMB: false
         }
     },
@@ -227,7 +229,7 @@ export const mutantDisplayConfigList = [
             TMB: false
         },
         selectDisplay: {
-            target: false,
+            target: true,
             hereditary: false,
             TMB: false
         }
@@ -247,7 +249,7 @@ export const mutantDisplayConfigList = [
             TMB: false
         },
         selectDisplay: {
-            target: false,
+            target: true,
             hereditary: false,
             TMB: false
         }
@@ -267,7 +269,7 @@ export const mutantDisplayConfigList = [
             TMB: false
         },
         selectDisplay: {
-            target: false,
+            target: true,
             hereditary: false,
             TMB: false
         }
@@ -287,8 +289,8 @@ export const mutantDisplayConfigList = [
             TMB: false
         },
         selectDisplay: {
-            target: false,
-            hereditary: false,
+            target: true,
+            hereditary: true,
             TMB: false
         }
     },
@@ -307,7 +309,7 @@ export const mutantDisplayConfigList = [
             TMB: false
         },
         selectDisplay: {
-            target: false,
+            target: true,
             hereditary: true,
             TMB: false
         }

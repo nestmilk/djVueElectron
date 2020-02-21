@@ -102,57 +102,86 @@
             </div>
             <div class="contentRight">
                 <div class="mutantList">
+
+                    <div class="selectFieldsDiv">
+                        <div class="firstDefaultTitle selectFieldItem">
+                            <span>默认显示标题栏</span>
+                            <span class="checkBox {defaultAndSelectShow?'icon-checkbox-checked':'icon-checkbox-unchecked'}"></span>
+                        </div>
+                        {#if all_selectFieldDisplayList[params.type].length > 0}
+                            <div class="contentWrapper">
+                                {#each all_selectFieldDisplayList[params.type] as field }
+                                    <div class="selectFieldItem">
+                                        <span>{field.title + "(" + field.translate + ")"}</span>
+                                        <span class="checkBox {mutantDispConfDict[field.title][dict.NOWDISPLAY][params.type]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"></span>
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
+                        <div class="closeWrapper">
+                            <button>关闭</button>
+                        </div>
+                    </div>
+
                     <div class="topInsideWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)}>
                         <table class="up rightMutantTable">
                             <tr>
-                                <th class="logs"
+                                <th class="logs fieldTitle" data-title="sampleSn"
                                     on:click={()=>handleSubmenuFilter(dict.LOG)}>
                                     {log_status_list[log_status_selected_index].content}
                                 </th>
-                                <th class="done"
+                                <th class="done fieldTitle" data-title="sampleSn"
                                     on:click={()=>handleSubmenuFilter(mutant_status_dict.DONE)}>
                                     {done_status_list[done_status_selected_index].content}
                                 </th>
-                                <th class="affirmed">确定审核</th>
-                                <th class="recover">修改恢复</th>
-                                <th class="delete">删除此行</th>
+                                <th class="affirmed fieldTitle" data-title="sampleSn">确定审核</th>
+                                <th class="recover fieldTitle" data-title="sampleSn">修改恢复</th>
+                                <th class="delete fieldTitle" data-title="sampleSn">删除此行</th>
 
-                                {#each fieldDisplayOrderList as title}
-                                    {#if title=== 'sampleSn'}
-                                        <th class="sampleSn" on:click={()=>handleOrderEVENT(dict.SAMPLEID2UNDERLINE)}>{mutantDispConfDict[title].translate}
-                                            <div class="icon-sort-amount-asc {order_query_dict[dict.SAMPLEID2UNDERLINE][sampleId_status_selected_index].status !== dict.SAMPLEID2UNDERLINE?
+                                {#each allFieldDisplayList as title}
+                                    {#if mutantDispConfDict[title][dict.NOWDISPLAY][params.type]}
+                                        {#if title=== 'sampleSn'}
+                                            <th class="sampleSn fieldTitle" data-title="sampleSn"
+                                                on:click={()=>handleOrderEVENT(dict.SAMPLEID2UNDERLINE)}>{mutantDispConfDict[title].translate}
+                                                <div class="icon-sort-amount-asc {order_query_dict[dict.SAMPLEID2UNDERLINE][sampleId_status_selected_index].status !== dict.SAMPLEID2UNDERLINE?
                                             'gray':''}"></div>
-                                        </th>
-                                    {:else if title==="chr"}
-                                        <th class="chr" on:click={()=>handleOrderEVENT(dict.CHR)}>{mutantDispConfDict[title].translate}
-                                            <div class="icon-sort-amount-asc {order_query_dict[dict.CHR][chr_status_selected_index].status !== dict.CHR?
+                                            </th>
+                                        {:else if title==="chr"}
+                                            <th class="chr fieldTitle" data-title="chr"
+                                                on:click={()=>handleOrderEVENT(dict.CHR)}>{mutantDispConfDict[title].translate}
+                                                <div class="icon-sort-amount-asc {order_query_dict[dict.CHR][chr_status_selected_index].status !== dict.CHR?
                                             'gray':''}"></div>
-                                        </th>
-                                    {:else if title==="posStart"}
-                                        <th class="posStart" on:click={()=>handleOrderEVENT(dict.POSSTART)}>{mutantDispConfDict[title].translate}
-                                            <div class="icon-sort-amount-asc {order_query_dict[dict.POSSTART][posStart_status_selected_index].status !== dict.POSSTART?
+                                            </th>
+                                        {:else if title==="posStart"}
+                                            <th class="posStart fieldTitle" data-title="posStart"
+                                                on:click={()=>handleOrderEVENT(dict.POSSTART)}>{mutantDispConfDict[title].translate}
+                                                <div class="icon-sort-amount-asc {order_query_dict[dict.POSSTART][posStart_status_selected_index].status !== dict.POSSTART?
                                             'gray':''}"></div>
-                                        </th>
-                                    {:else if title==="posEnd"}
-                                        <th class="posEnd" on:click={()=>handleOrderEVENT(dict.POSEND)}>{mutantDispConfDict[title].translate}
-                                            <div class="icon-sort-amount-asc {order_query_dict[dict.POSEND][posEnd_status_selected_index].status !== dict.POSEND?
+                                            </th>
+                                        {:else if title==="posEnd"}
+                                            <th class="posEnd fieldTitle" data-title="posEnd"
+                                                on:click={()=>handleOrderEVENT(dict.POSEND)}>{mutantDispConfDict[title].translate}
+                                                <div class="icon-sort-amount-asc {order_query_dict[dict.POSEND][posEnd_status_selected_index].status !== dict.POSEND?
                                             'gray':''}"></div>
-                                        </th>
-                                    {:else if title==="exonicfuncRefgene"}
-                                        <th class="exonicfuncRefgene">
-                                            <select bind:this={exonicfuncRefgeneSelection}
-                                                    on:change="{(e) => changeMutantParamExonicfuncRefgene(e.target.value)}"
-                                                    class="inside"
-                                            >
-                                                {#each exonicfuncRefgene_type_list as type}
-                                                    <option value={type.value}>
-                                                        {type.name}
-                                                    </option>
-                                                {/each}
-                                            </select>
-                                        </th>
-                                    {:else}
-                                        <th class="{title}">{mutantDispConfDict[title].translate}</th>
+                                            </th>
+                                        {:else if title==="exonicfuncRefgene"}
+                                            <th class="exonicfuncRefgene fieldTitle" data-title="exonicfuncRefgene">
+                                                <select bind:this={exonicfuncRefgeneSelection}
+                                                        on:change="{(e) => changeMutantParamExonicfuncRefgene(e.target.value)}"
+                                                        class="inside"
+                                                >
+                                                    {#each exonicfuncRefgene_type_list as type}
+                                                        <option value={type.value}>
+                                                            {type.name}
+                                                        </option>
+                                                    {/each}
+                                                </select>
+                                            </th>
+                                        {:else}
+                                            <th class="{title} fieldTitle" data-title="{title}">
+                                                {mutantDispConfDict[title].translate}
+                                            </th>
+                                        {/if}
                                     {/if}
                                 {/each}
 <!--                                <th class="ref">参考序列</th>-->
@@ -303,8 +332,8 @@
                                         <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.PREVALUE]?'icon-warning':''):''}"></div>
                                     </td>
 
-                                    {#each fieldDisplayOrderList as title}
-                                        {#if mutantDispConfDict[title].modify[params.type] && mutant[dict.AVAILABLE_EDIT]}
+                                    {#each allFieldDisplayList as title}
+                                        {#if mutantDispConfDict[title][dict.MODIFY][params.type] && mutant[dict.AVAILABLE_EDIT]}
                                             <td class="{title}" title="实时数据：{mutant[title]}">
                                                 <input class="mutantInput" type={mutantDispConfDict[title].type}
                                                        value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"
@@ -396,7 +425,9 @@
         STATUS: 'status', SAMPLEID: 'sampleId', SAMPLESN: 'sampleSn', AFFIRMED: 'affirmed', RECOVER: 'recover',
         REASONTYPE: 'reason_type', REASONDESC: 'reason_desc', REASONDISPLAY: 'reason_display',
         BLANK: 'blank', LOGSDISPLAY: 'logs_display', LOG: 'log', LOGFIELDDETAIL: 'log_field_details',
-        COPY: 'copy', MUTANTS: 'mutants', TYPE: 'type', PATH: 'path', AVAILABLE_EDIT: 'availableEdit'
+        COPY: 'copy', MUTANTS: 'mutants', TYPE: 'type', PATH: 'path', AVAILABLE_EDIT: 'availableEdit',
+        NOWDISPLAY: "nowDisplay", SELECT_DISPLAY: "selectDisplay", DEFAULT_DISPLAY: "defaultDisplay",
+        TITLE: "title", TRANSLATE: "translate", TYPE: "type"
     }
 
     // 数据下载后，创建mutant_submit_dict, 只有done和free状态
@@ -649,33 +680,68 @@
 
     // 标题栏相关参数
     let mutantDispConfList = JSON.parse(JSON.stringify(mutantDisplayConfigList.map(item=>{
-        item["nowDisplay"] = item.defaultDisplay[params.type] ? true: false
+        item[dict.NOWDISPLAY] = {
+            target: item.defaultDisplay[dict.TARGET] ? true: false,
+            hereditary: item.defaultDisplay[dict.HEREDITARY] ? true: false,
+            TMB: item.defaultDisplay[dict.TMB] ? true: false
+        }
         return item
     })))
     let mutantDispConfDict = arrayToDict(mutantDispConfList, 'title')
-    let defaultFieldDisplayList = JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
-                if (item.defaultDisplay[params.type]){
-                    list.push(item.title)
-                }
-                return list
-            }, [])
+    // 固定、默认、选择，即所有title名列表
+    let allFieldDisplayList = JSON.parse(JSON.stringify(mutantDispConfList.map(item=>item.title)))
+    let defaultAndSelectShow = true
+    // 用于生成mutant_submit_dict中前、后值
+    let all_modifyFieldLists = {
+        target: mutantDispConfList.reduce((list, item)=>{
+            if (item[dict.MODIFY][dict.TARGET]) list.push(item.title)
+            return list
+        }, []),
+        hereditary: mutantDispConfList.reduce((list, item)=>{
+            if (item[dict.MODIFY][dict.HEREDITARY]) list.push(item.title)
+            return list
+        }, []),
+        TMB: mutantDispConfList.reduce((list, item)=>{
+            if (item[dict.MODIFY][dict.TMB]) list.push(item.title)
+            return list
+        }, [])
+    }
+    // 用于生成selectDisplayDiv中的选择项
+    let all_selectFieldDisplayList = {
+        target: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+                    if (item.selectDisplay[dict.TARGET]){
+                        list.push({
+                            title: item.title,
+                            translate: item.translate
+                        })
+                    }
+                    return list
+                }, [])
+        )),
+        hereditary: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+                    if (item.selectDisplay[dict.HEREDITARY]){
+                        list.push({
+                            title: item.title,
+                            translate: item.translate
+                        })
+                    }
+                    return list
+                }, [])
+        )),
+        TMB: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+                    if (item.selectDisplay[dict.TMB]){
+                        list.push({
+                            title: item.title,
+                            translate: item.translate
+                        })
+                    }
+                    return list
+                }, [])
         ))
-    let fieldDisplayOrderList = defaultFieldDisplayList
-    let modifyFieldList = mutantDispConfList.reduce((list, item)=>{
-        if (item.modify) list.push(item.title)
-        return list
-    }, [])
-    let selectFieldDisplayList = JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
-                if (item.selectDisplay[params.type]){
-                    list.push({
-                        title: item.title,
-                        translate: item.translate
-                    })
-                }
-                return list
-            }, [])
-    ))
+    }
     // let socket = null
+    //突变标题栏右键，选择标题的窗口显示状态
+    let selectFields_show = false
 
     async function test(e) {
         // console.log(e, e.shiftKey, e.ctrlKey)
@@ -690,7 +756,7 @@
         // console.log(mutant_list)
         // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
         // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
-        // console.log( mutant_submit_dict)
+        console.log( mutant_submit_dict)
         // console.log(all_mutant_total_num)
         // console.log(all_totalSubmitAndAffirmed, all_totalUnsubmitAndAffirmed, all_totalUnsubmitAndUnaffirmed)
         // console.log(panal_unable_handle)
@@ -701,7 +767,9 @@
         // console.log(remote.app.getPath('userData'))
         // console.log('store', settingsStore.get('ifIgvConnect'))
         // console.log(window.location.href)
-        console.log(mutantDispConfList, mutantDispConfDict)
+        // console.log(mutantDispConfList, mutantDispConfDict, mutantDispConfDict['sampleSn'][dict.NOWDISPLAY])
+        // console.log(allFieldDisplayList, allFieldDisplayList.length, mutantDispConfList.length)
+        console.log(all_modifyFieldLists)
     }
 
     function stopPropagation(event){
@@ -833,7 +901,7 @@
             logs_display: false
         }
 
-        for (let field of modifyFieldList) {
+        for (let field of allFieldDisplayList) {
             mutant_submit_dict[mutant.id][field] = {
                 nowValue: mutant[field],
                 preValue: mutant[field]
@@ -1827,31 +1895,14 @@
         }
 
         if (document.querySelector('.up').contains(e.target)){
-            let menu = new remote.Menu()
-            let defaultMenuItem = new remote.MenuItem({
-                label: '恢复默认标题栏',
-                type: 'checkbox',
-                checked: true,
-                click: ()=>{
-                    console.log('recover')
-                }
-            })
-            menu.append(defaultMenuItem)
 
-            for (let item of selectFieldDisplayList) {
-                let selectMenuItem = new remote.MenuItem({
-                    label: item.title + "(" + item.translate + ")",
-                    type: 'checkbox',
-                    checked: false,
-                    click: ()=>{
-                        console.log(item.title)
-                    }
-                })
+            let element =getParentNodeByParentClassName(e.target, 'fieldTitle')
+            console.log('element', element.dataset.title)
 
-                menu.append(selectMenuItem)
-            }
 
-            menu.popup({window: remote.getCurrentWindow()})
+            let selectElement = document.querySelector('.selectFieldsDiv')
+            selectElement.style.left = `${e.clientX-440}px`
+            selectElement.style.display = 'block'
         }
 
     }
@@ -2169,6 +2220,7 @@
         /*flex-flow: column;*/
     }
     .contentRight .mutantList{
+        position: relative;
         /*flex: 0 0 460;*/
         height: 100%;
         padding: 3px;
@@ -2177,7 +2229,81 @@
         flex-flow: column;
         box-sizing: border-box;
     }
-
+    .contentRight .mutantList .selectFieldsDiv{
+        position: absolute;
+        top: 40px;
+        left: 3px;
+        z-index: 30;
+        width: 220px;
+        background: white;
+        border: 1px solid #939393;
+        box-shadow: 3px 3px 3px #cccccc;
+        display: none;
+        font-size: 14px;
+    }
+    .contentRight .mutantList .selectFieldsDiv .firstDefaultTitle{
+        margin: 0 0 0 6px!important;
+    }
+    .contentRight .selectFieldsDiv .contentWrapper{
+        width: 100%;
+        min-height: 26px;
+        max-height: 273px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        border-top: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+    }
+    .contentRight .selectFieldsDiv .selectFieldItem{
+        margin: 3px auto;
+        width: 191px;
+        height: 20px;
+        cursor: pointer;
+    }
+    .contentRight .selectFieldsDiv .selectFieldItem span{
+        display: block;
+        box-sizing: border-box;
+        padding: 0 10px;
+        width: 170px;
+        height: 20px;
+        line-height: 20px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space:nowrap;
+        float: left;
+    }
+    .contentRight .selectFieldsDiv .selectFieldItem span:hover{
+        background: #09c762;
+    }
+    .contentRight .selectFieldsDiv .selectFieldItem .checkBox{
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        text-align: center;
+        float: right;
+    }
+    .contentRight .selectFieldsDiv .selectFieldItem .checkBox:hover{
+        background: white!important;
+    }
+    .contentRight .selectFieldsDiv .closeWrapper{
+        width: 100%;
+        height: 24px;
+        margin: auto 0;
+        line-height: 35px;
+    }
+    .contentRight .selectFieldsDiv .closeWrapper button{
+        display: block;
+        padding: 0;
+        margin: 3px auto;
+        width: 45px;
+        height: 22px;
+        font-size: 14px;
+        text-align: center;
+        border: 1px solid #cccccc;
+    }
+    .contentRight .selectFieldsDiv .closeWrapper button:hover{
+        background: #09c762;
+    }
 
     .contentRight .rightMutantTable{
         border-collapse: collapse;
@@ -2216,8 +2342,9 @@
     }
     .contentRight .topInsideWrapper{
         overflow: scroll;
-        flex: 0 0 51px;
+        flex: 0 0 54px;
     }
+
     .contentRight .insideWrapper{
         /*height: 370px;*/
         overflow: scroll;
@@ -2541,6 +2668,10 @@
     .contentRight .projectAbbreviation{
         min-width: 35px;
     }
+    .contentRight .projectAbbreviation .inside{
+        width: 35px;
+        overflow: hidden;
+    }
     .contentRight .chr{
         position: relative;
         min-width: 92px;
@@ -2682,6 +2813,138 @@
     }
     .contentRight .drugs .inside{
         width: 150px;
+    }
+
+    .contentRight .NM_ID{
+        min-width: 120px;
+    }
+    .contentRight .NM_ID .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .NM_ID .inside{
+        width: 120px;
+    }
+    .contentRight .GeneName{
+        min-width: 120px;
+    }
+    .contentRight .GeneName .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .GeneName .inside{
+        width: 120px;
+    }
+    .contentRight .DNA_change{
+         min-width: 120px;
+     }
+    .contentRight .DNA_change .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .DNA_change .inside{
+        width: 120px;
+    }
+    .contentRight .AA_change{
+        min-width: 120px;
+    }
+    .contentRight .AA_change .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .AA_change .inside{
+        width: 120px;
+    }
+    .contentRight .wxz{
+        min-width: 90px;
+    }
+    .contentRight .wxz .mutantInput{
+        float: left;
+        width: 60px;
+    }
+    .contentRight .wxz .inside{
+        width: 90px;
+        overflow: hidden;
+    }
+    .contentRight .zlb{
+        min-width: 120px;
+    }
+    .contentRight .zlb .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .zlb .inside{
+        width: 120px;
+    }
+    .contentRight .hgsGb{
+        min-width: 120px;
+    }
+    .contentRight .hgsGb .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .hgsGb .inside{
+        width: 120px;
+    }
+    .contentRight .ajsGb{
+        min-width: 120px;
+    }
+    .contentRight .ajsGb .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .ajsGb .inside{
+        width: 120px;
+    }
+    .contentRight .alteration{
+        min-width: 120px;
+    }
+    .contentRight .alteration .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .alteration .inside{
+        width: 120px;
+    }
+    .contentRight ._geneName{
+        min-width: 120px;
+    }
+    .contentRight ._geneName .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight ._geneName .inside{
+        width: 120px;
+    }
+    .contentRight .geneType{
+        min-width: 120px;
+    }
+    .contentRight .geneType .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .geneType .inside{
+        width: 120px;
+    }
+    .contentRight .aachangeRefgene{
+        min-width: 200px;
+    }
+    .contentRight .aachangeRefgene .mutantInput{
+        float: left;
+        width: 170px;
+    }
+    .contentRight .aachangeRefgene .inside{
+        width: 200px;
+    }
+    .contentRight .level{
+        min-width: 120px;
+    }
+    .contentRight .level .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .level .inside{
+        width: 120px;
     }
 
     .pagewrapper{
