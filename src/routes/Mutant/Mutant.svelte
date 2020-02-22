@@ -103,12 +103,15 @@
             <div class="contentRight">
                 <div class="mutantList">
 
-                    <div class="selectFieldsDiv">
+                    <div class="selectFieldsDiv"
+                         bind:this={selectFields}
+                         on:mouseleave={closeSelectFieldDiv}
+                    >
                         <div class="firstDefaultTitle selectFieldItem"
                              on:click={toggleDefaultFiledsOpen}
                         >
-                            <span>默认显示标题栏</span>
-                            <span class="checkBox {defaultAndSelectShow?'icon-checkbox-checked':'icon-checkbox-unchecked'}"></span>
+                            <span>恢复默认标题栏</span>
+                            <span class="checkBox icon-undo2 {!all_onlyDefaultFieldsOpened[params.type]?'active':''}"></span>
                         </div>
                         {#if  all_selectFieldDisplayList[params.type].length > 0}
                             <div class="contentWrapper">
@@ -122,9 +125,9 @@
                                 {/each}
                             </div>
                         {/if}
-                        <div class="closeWrapper">
-                            <button>关闭</button>
-                        </div>
+<!--                        <div class="closeWrapper">-->
+<!--                            <button on:click={closeSelectFieldDiv}>关闭</button>-->
+<!--                        </div>-->
                     </div>
 
                     <div class="topInsideWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)}>
@@ -337,26 +340,28 @@
                                     </td>
 
                                     {#each allFieldDisplayList as title}
-                                        {#if mutantDispConfDict[title][dict.MODIFY][params.type] && mutant[dict.AVAILABLE_EDIT]}
-                                            <td class="{title}"
-                                                title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}"
-                                            >
-                                                <input class="mutantInput" type={mutantDispConfDict[title].type}
-                                                       value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"
-                                                       on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}
-                                                       disabled="{panal_unable_handle?'disabled':
-                                                       (mutant_submit_dict[mutant.id]?
-                                                       (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
-                                                       (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}"
+                                        {#if mutantDispConfDict[title][dict.NOWDISPLAY][params.type]}
+                                            {#if mutantDispConfDict[title][dict.MODIFY][params.type] && mutant[dict.AVAILABLE_EDIT]}
+                                                <td class="{title}"
+                                                    title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}"
                                                 >
-                                                <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>
-                                            </td>
-                                        {:else}
-                                            <td class="{title}" title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}">
-                                                <div class="inside">{mutant[title]}</div>
-                                            </td>
+                                                    <input class="mutantInput" type={mutantDispConfDict[title].type}
+                                                           value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"
+                                                           on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}
+                                                           disabled="{panal_unable_handle?'disabled':
+                                                           (mutant_submit_dict[mutant.id]?
+                                                           (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                           (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}"
+                                                    >
+                                                    <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>
+                                                </td>
+                                            {:else}
+                                                <td class="{title}" title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}">
+                                                    <div class="inside">{mutant[title]}</div>
+                                                </td>
+                                            {/if}
                                         {/if}
-                                    {/each}}
+                                    {/each}
 
                                 </tr>
                             {/each}
@@ -697,24 +702,28 @@
     let mutantDispConfDict = arrayToDict(mutantDispConfList, 'title')
     // 固定、默认、选择，即所有title名列表
     let allFieldDisplayList = JSON.parse(JSON.stringify(mutantDispConfList.map(item=>item.title)))
-    let defaultAndSelectShow = true
+    let all_onlyDefaultFieldsOpened = {
+        target: true,
+        hereditary: true,
+        TMB: true
+    }
     // 用于生成mutant_submit_dict中前、后值
     let all_modifyFieldLists = {
-        target: mutantDispConfList.reduce((list, item)=>{
+        target: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
             if (item[dict.MODIFY][dict.TARGET]) list.push(item.title)
             return list
-        }, []),
-        hereditary: mutantDispConfList.reduce((list, item)=>{
+        }, []))),
+        hereditary: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
             if (item[dict.MODIFY][dict.HEREDITARY]) list.push(item.title)
             return list
-        }, []),
-        TMB: mutantDispConfList.reduce((list, item)=>{
+        }, []))),
+        TMB: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
             if (item[dict.MODIFY][dict.TMB]) list.push(item.title)
             return list
-        }, [])
+        }, [])))
     }
     // 用于生成selectDisplayDiv中的选择项
-    let all_selectFieldDisplayList = {
+    let  all_selectFieldDisplayList = {
         target: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
                     if (item.selectDisplay[dict.TARGET]){
                         list.push({
@@ -746,9 +755,10 @@
                 }, [])
         ))
     }
+    let selectFields
+
     // let socket = null
-    //突变标题栏右键，选择标题的窗口显示状态
-    let selectFields_show = false
+
 
     async function test(e) {
         // console.log(e, e.shiftKey, e.ctrlKey)
@@ -1849,20 +1859,59 @@
 
     // 处理标题栏菜单中选择或取消选择
     function toggleDefaultFiledsOpen(){
-        let allDefaultOpened = mutantDispConfList.every(item=>{
-            if(item[dict.DEFAULT_DISPLAY][params.type]){
-                return item[dict.NOWDISPLAY][params.type]
-            }
-        })
-        console.log('toggleDefaultFiledsOpen allDefaultOpened', allDefaultOpened)
+       if(!all_onlyDefaultFieldsOpened[params.type]){
+           // 打开所有的默认标题, 关闭其它所有标题
+           mutantDispConfList.forEach(item=>{
+               if(item[dict.DEFAULT_DISPLAY][params.type]){
+                   item[dict.NOWDISPLAY][params.type] = true
+               }else{
+                   item[dict.NOWDISPLAY][params.type] = false
+               }
+           })
+
+           all_onlyDefaultFieldsOpened[params.type] = true
+           // 手动更新菜单列表
+           all_selectFieldDisplayList = all_selectFieldDisplayList
+           // 手动更新标题栏显示
+           allFieldDisplayList = allFieldDisplayList
+       }
     }
     // 单个改变可选标题栏是否打开
     function toggleSelectFieldOpen(field){
         // console.log(field)
+
+        // 先设置点击的值
         let dispItem = mutantDispConfList.find(item=>item[dict.TITLE]===field)
         let value = dispItem[dict.NOWDISPLAY][params.type]
         dispItem[dict.NOWDISPLAY][params.type] = !value
+        // 手动更新菜单列表
         all_selectFieldDisplayList = all_selectFieldDisplayList
+        // console.log(mutantDispConfList, mutantDispConfDict)
+
+        // 检查默认标题是否都打开，其它标题都关闭， 重新设置defaultFieldsOpenedCheck状态
+        let defaultAndSelect = mutantDispConfList.reduce((list, item)=>{
+            if(item[dict.DEFAULT_DISPLAY][params.type]) {
+                list[0].push(item)
+            }else{
+                list[1].push(item)
+            }
+            return list
+        }, [[],[]])
+        // console.log(defaultAndSelect)
+        let allDefaultOpened = defaultAndSelect[0].every(
+            item=>item[dict.NOWDISPLAY][params.type]
+        )
+        let allSelectClosed = defaultAndSelect[1].every(
+                item=>!item[dict.NOWDISPLAY][params.type]
+        )
+        all_onlyDefaultFieldsOpened[params.type] = allDefaultOpened && allSelectClosed? true: false
+
+        // 手动更新标题栏显示, allFieldDisplayList其实一直不变的，更新mutantDispConfDict也可以
+        allFieldDisplayList = allFieldDisplayList
+    }
+    function closeSelectFieldDiv(){
+        selectFields.style.display = 'none'
+        // document.querySelector(".selectFieldsDiv").style.display = 'none'
     }
 
 
@@ -1880,6 +1929,8 @@
         // todo 筛选框值修改，不会触发onChange事件！！
         exonicfuncRefgeneSelection.value = null
         mutant_param_exonicfuncRefgene = null
+
+        // selectFields.style.display = 'none'
     }
 
 
@@ -1921,14 +1972,16 @@
         }
 
         if (document.querySelector('.up').contains(e.target)){
+            console.log(document.body.clientWidth, e.clientX)
 
             let element =getParentNodeByParentClassName(e.target, 'fieldTitle')
-            console.log('element', element.dataset.title)
 
-
-            let selectElement = document.querySelector('.selectFieldsDiv')
-            selectElement.style.left = `${e.clientX-440}px`
-            selectElement.style.display = 'block'
+            let screenWidth = document.body.clientWidth
+            let clientX = e.clientX
+            selectFields.style.left = clientX + 220 < screenWidth ?
+                    `${e.clientX-440}px`:
+                    `${screenWidth-700}px`
+            selectFields.style.display = 'block'
         }
 
     }
@@ -2270,6 +2323,12 @@
     .contentRight .mutantList .selectFieldsDiv .firstDefaultTitle{
         margin: 0 0 0 6px!important;
     }
+    .contentRight .mutantList .selectFieldsDiv .firstDefaultTitle .checkBox{
+        color: #cccccc;
+    }
+    .contentRight .mutantList .selectFieldsDiv .firstDefaultTitle .checkBox.active{
+        color: black;
+    }
     .contentRight .selectFieldsDiv .contentWrapper{
         width: 100%;
         min-height: 26px;
@@ -2277,7 +2336,7 @@
         overflow-y: scroll;
         overflow-x: hidden;
         border-top: 1px solid #cccccc;
-        border-bottom: 1px solid #cccccc;
+        /*border-bottom: 1px solid #cccccc;*/
     }
     .contentRight .selectFieldsDiv .selectFieldItem{
         margin: 3px auto;
@@ -2311,25 +2370,25 @@
     .contentRight .selectFieldsDiv .selectFieldItem .checkBox:hover{
         background: white!important;
     }
-    .contentRight .selectFieldsDiv .closeWrapper{
-        width: 100%;
-        height: 24px;
-        margin: auto 0;
-        line-height: 35px;
-    }
-    .contentRight .selectFieldsDiv .closeWrapper button{
-        display: block;
-        padding: 0;
-        margin: 3px auto;
-        width: 45px;
-        height: 22px;
-        font-size: 14px;
-        text-align: center;
-        border: 1px solid #cccccc;
-    }
-    .contentRight .selectFieldsDiv .closeWrapper button:hover{
-        background: #09c762;
-    }
+    /*.contentRight .selectFieldsDiv .closeWrapper{*/
+    /*    width: 100%;*/
+    /*    height: 24px;*/
+    /*    margin: auto 0;*/
+    /*    line-height: 35px;*/
+    /*}*/
+    /*.contentRight .selectFieldsDiv .closeWrapper button{*/
+    /*    display: block;*/
+    /*    padding: 0;*/
+    /*    margin: 3px auto;*/
+    /*    width: 45px;*/
+    /*    height: 22px;*/
+    /*    font-size: 14px;*/
+    /*    text-align: center;*/
+    /*    border: 1px solid #cccccc;*/
+    /*}*/
+    /*.contentRight .selectFieldsDiv .closeWrapper button:hover{*/
+    /*    background: #09c762;*/
+    /*}*/
 
     .contentRight .rightMutantTable{
         border-collapse: collapse;
