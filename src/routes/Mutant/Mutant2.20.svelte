@@ -1277,7 +1277,7 @@
 
 
     // 处理审核确认事件(附属方法)
-    function __check4FieldEqual (mutant_id, field=null) {
+    function __checkModifyFieldEqual (mutant_id, field=null) {
         let default_field_list = [dict.POSSTART, dict.POSEND, dict.REF, dict.ALT]
         if (field) default_field_list.push(field)
         let equal = true

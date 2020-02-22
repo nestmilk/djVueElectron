@@ -210,7 +210,7 @@
                                             {mutant_submit_dict[mutant.id]?
                                             (mutant_submit_dict[mutant.id][dict.STATUS]===mutant_status_dict.FREE && mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE]?
                                             mutant_status_dict.DELETED:mutant_submit_dict[mutant.id][dict.STATUS]):''}"
-                                    on:click|stopPropagation={()=>handleChangeCurrentMutantId(mutant.id, mutant.sample)}
+                                    on:click|stopPropagation={(e)=>handleChangeCurrentMutantId(mutant.id, mutant.sample, e)}
                                     data-mutantId="{mutant.id}"
                                     data-sampleId="{mutant.sample}"
                                 >
@@ -313,14 +313,8 @@
                                         {/if}
                                     </td>
                                     <td class="recover">
-                                        <button class="{mutant_submit_dict[mutant.id]?
-                                                            (mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE] === mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.PREVALUE] &&
-                                                              mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.NOWVALUE] === mutant_submit_dict[mutant.id][mutant_field_dict.POSSTART][dict.PREVALUE] &&
-                                                              mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.NOWVALUE] === mutant_submit_dict[mutant.id][mutant_field_dict.POSEND][dict.PREVALUE] &&
-                                                              mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.NOWVALUE] === mutant_submit_dict[mutant.id][mutant_field_dict.REF][dict.PREVALUE] &&
-                                                              mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.NOWVALUE] === mutant_submit_dict[mutant.id][mutant_field_dict.ALT][dict.PREVALUE]
-                                                            ?'equal':''):''} icon-undo2"
-                                            on:click={()=>recoverValueForMutSubmits([mutant.id],[dict.POSSTART, dict.POSEND, dict.REF, dict.ALT, dict.DELETE, dict.REASONDESC, dict.REASONTYPE])}
+                                        <button class="{checkModifyFieldValueEqualClass(mutant.id)} icon-undo2"
+                                            on:click={()=>recoverValueForMutSubmits([mutant.id],[...all_modifyFieldLists[params.type], dict.DELETE, dict.REASONDESC, dict.REASONTYPE])}
                                             disabled="{panal_unable_handle?'disabled':
                                                 (mutant_submit_dict[mutant.id]?
                                                 (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
@@ -334,7 +328,11 @@
                                                 (mutant_submit_dict[mutant.id]?
                                                 (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
                                                 (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':
-                                                (mutant[dict.AVAILABLE_EDIT]?'':'disabled'))):'')}">
+                                                (mutant[dict.AVAILABLE_EDIT] ||
+                                                    (mutant_submit_dict[mutant.id]?
+                                                        mutant_submit_dict[mutant.id][dict.DELETE][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][dict.DELETE][dict.PREVALUE]:false
+                                                    )?'':'disabled'
+                                                ))):'')}">
                                         </button>
                                         <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.PREVALUE]?'icon-warning':''):''}"></div>
                                     </td>
@@ -431,7 +429,7 @@
 
     const dispatch = createEventDispatcher()
 
-    import {mutantDisplayConfigList, defaultDisplayLists} from './config'
+    import {mutantDisplayConfigList} from './config'
 
 
     let dict = {BAM: 'bam', BAI: 'bai', TARGET: 'target', HEREDITARY: 'hereditary', TMB: 'TMB', tmb: 'tmb',
@@ -765,6 +763,19 @@
 
     // let socket = null
 
+    // 设置class中的没法子的动态className
+    $: checkModifyFieldValueEqualClass = (mutant_id) => {
+        if (!mutant_submit_dict[mutant_id]) return ''
+
+        for (let field of [...all_modifyFieldLists[params.type], mutant_field_dict.DELETE]) {
+            if (mutant_submit_dict[mutant_id][field][dict.NOWVALUE] !==
+                    mutant_submit_dict[mutant_id][field][dict.PREVALUE]) {
+                return ''
+            }
+        }
+        return 'equal'
+    }
+
 
     async function test(e) {
         // console.log(e, e.shiftKey, e.ctrlKey)
@@ -792,7 +803,7 @@
         // console.log(window.location.href)
         // console.log(mutantDispConfList, mutantDispConfDict, mutantDispConfDict['sampleSn'][dict.NOWDISPLAY])
         // console.log(allFieldDisplayList, allFieldDisplayList.length, mutantDispConfList.length)
-        console.log(all_modifyFieldLists)
+        // console.log(all_modifyFieldLists)
     }
 
     function stopPropagation(event){
@@ -887,7 +898,7 @@
             logsEdit: mutant_param_logsEdit,
             exonicfuncRefgene: mutant_param_exonicfuncRefgene
         }).then((response)=>{
-            console.log('getMutantsList', response.data)
+            // console.log('getMutantsList', response.data)
             __setMutListAndMutantNum(response.data.results, response.data.count)
         }).catch((error)=>{
             console.error('getMutantList', error)
@@ -1011,11 +1022,16 @@
 
 
     // 处理点击mutant行，更好当前选中突变id
-    function handleChangeCurrentMutantId (mutant_id, sample_id) {
+    function handleChangeCurrentMutantId (mutant_id, sample_id, event=null) {
         pre_mutant_id = now_mutant_id
         pre_sample_id = now_sample_id
         now_mutant_id = mutant_id
         now_sample_id = sample_id
+
+        if(event && event.ctrlKey &&
+            mutant_submit_dict[mutant_id][dict.STATUS] === mutant_status_dict.FREE){
+            __changeNowMutantAvailable()
+        }
 
         // 更好染色体位置
         let mutant_posStart = mutant_submit_dict[now_mutant_id][mutant_field_dict.POSSTART][dict.NOWVALUE]
@@ -1367,8 +1383,9 @@
 
 
     // 处理审核确认事件(附属方法)
-    function __check4FieldEqual (mutant_id, field=null) {
-        let default_field_list = [dict.POSSTART, dict.POSEND, dict.REF, dict.ALT]
+    function __checkModifyFieldEqual (mutant_id, field=null) {
+        // todo 此处如果不复制，就是直接往all_modifyFieldLists中添加，影响巨大
+        let default_field_list = JSON.parse(JSON.stringify(all_modifyFieldLists[params.type]))
         if (field) default_field_list.push(field)
         let equal = true
         for (let field of default_field_list) {
@@ -1384,6 +1401,9 @@
 
     // 处理审核确认事件
     function handleAffirmForMutSubmits(mutant_id, sample_id) {
+        //先置于不可编辑状态
+        mutant_list.find(mutant=>mutant.id===mutant_id)[dict.AVAILABLE_EDIT] = false
+
         let status = mutant_submit_dict[mutant_id][dict.STATUS]
         // 永远考虑外一，虽然不可能
         // 处于done状态，直接返回
@@ -1401,7 +1421,7 @@
 
         // 此时必然是 未提交未审核 状态
         // 查看是否有修改，如果有修改，弹出
-        if (__check4FieldEqual(mutant_id, mutant_field_dict.DELETE)) {
+        if (__checkModifyFieldEqual(mutant_id, mutant_field_dict.DELETE)) {
             //此时必然是 未提交未审核 状态，未提交未审核-1, 未提交已审核+1
             __moveCountFromToInSamRecDict(sample_id, dict.US_UAMUT, dict.US_AMUT)
             // 将状态从free设置为checked
@@ -1440,7 +1460,7 @@
 
     //恢复mutant数据，按field列表恢复
     function recoverValueForMutSubmits(mutant_id_list, field_list=[]) {
-        let default_field_list = [dict.POSSTART, dict.POSEND, dict.REF, dict.ALT]
+        let default_field_list = all_modifyFieldLists[params.type]
         if (field_list.length > 0) default_field_list = field_list
         for (let mutant_id of mutant_id_list) {
             for (let field of default_field_list) {
@@ -1450,12 +1470,15 @@
     }
     // 处理mutant属性修改
     function handleValueChangeForMutSubmits(e, mutant_id, field){
-        console.log(e.target.value)
+        // console.log(e.target.value)
 
         if (field === mutant_field_dict.DELETE) {
+            console.log(field, mutant_submit_dict[mutant_id][field][dict.NOWVALUE])
             mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = !mutant_submit_dict[mutant_id][field][dict.NOWVALUE]
+            console.log(field, mutant_submit_dict[mutant_id][field][dict.NOWVALUE])
             // 同时需要将其余已修改的项恢复
             recoverValueForMutSubmits([mutant_id])
+            console.log(field, mutant_submit_dict[mutant_id][field][dict.NOWVALUE])
         }else{
             // 操作前如果将delete置换为false
             mutant_submit_dict[mutant_id][mutant_field_dict.DELETE][dict.NOWVALUE] = false
@@ -1597,7 +1620,7 @@
 
                 if (status === mutant_status_dict.EDITED) {
                     submit = true
-                    if (__check4FieldEqual(mutant_id)) {
+                    if (__checkModifyFieldEqual(mutant_id)) {
                         // 仅仅取消删除
                         await api.updateMutant(mutant_id, {
                             done: true,
@@ -1940,6 +1963,14 @@
     }
 
 
+    function __changeNowMutantAvailable(){
+        for (let mutant of mutant_list) {
+            mutant[dict.AVAILABLE_EDIT] = mutant.id === now_mutant_id? !mutant[dict.AVAILABLE_EDIT] : false
+        }
+
+        mutant_list = mutant_list
+    }
+
     function __handleContextMenu(e){
         // console.log(e.target, document.querySelector('.down'), document.querySelector('.down').contains(e.target))
 
@@ -1954,11 +1985,7 @@
             let editMenuItem = new remote.MenuItem({
                 label: '编辑',
                 click: () => {
-                    for (let mutant of mutant_list) {
-                        mutant[dict.AVAILABLE_EDIT] = mutant.id === now_mutant_id? !mutant[dict.AVAILABLE_EDIT] : false
-                    }
-
-                    mutant_list = mutant_list
+                    __changeNowMutantAvailable()
                 }
             })
             menu.append(editMenuItem)
@@ -2717,6 +2744,9 @@
         color: #cccccc;
     }
     .contentRight tr.edited .icon-undo2{
+        color: #cccccc;
+    }
+    .contentRight tr.deleted .icon-undo2{
         color: #cccccc;
     }
     .contentRight .delete{
