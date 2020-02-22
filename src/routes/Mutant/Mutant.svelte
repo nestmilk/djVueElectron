@@ -341,7 +341,13 @@
 
                                     {#each allFieldDisplayList as title}
                                         {#if mutantDispConfDict[title][dict.NOWDISPLAY][params.type]}
-                                            {#if mutantDispConfDict[title][dict.MODIFY][params.type] && mutant[dict.AVAILABLE_EDIT]}
+                                            {#if mutantDispConfDict[title][dict.MODIFY][params.type] &&
+                                                (mutant[dict.AVAILABLE_EDIT] ||
+                                                    (mutant_submit_dict[mutant.id]?
+                                                        mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]:false
+                                                    )
+                                                )
+                                            }
                                                 <td class="{title}"
                                                     title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}"
                                                 >
