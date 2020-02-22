@@ -104,14 +104,18 @@
                 <div class="mutantList">
 
                     <div class="selectFieldsDiv">
-                        <div class="firstDefaultTitle selectFieldItem">
+                        <div class="firstDefaultTitle selectFieldItem"
+                             on:click={toggleDefaultFiledsOpen}
+                        >
                             <span>默认显示标题栏</span>
                             <span class="checkBox {defaultAndSelectShow?'icon-checkbox-checked':'icon-checkbox-unchecked'}"></span>
                         </div>
                         {#if  all_selectFieldDisplayList[params.type].length > 0}
                             <div class="contentWrapper">
                                 {#each all_selectFieldDisplayList[params.type] as field }
-                                    <div class="selectFieldItem">
+                                    <div class="selectFieldItem"
+                                         on:click={()=>toggleSelectFieldOpen(field.title)}
+                                    >
                                         <span>{field.title + "(" + field.translate + ")"}</span>
                                         <span class="checkBox {mutantDispConfDict[field.title][dict.NOWDISPLAY][params.type]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"></span>
                                     </div>
@@ -1842,6 +1846,25 @@
             errors.detail = '使用igv，请设置"勾选连接igv"、打开igv。'
         }
     }
+
+    // 处理标题栏菜单中选择或取消选择
+    function toggleDefaultFiledsOpen(){
+        let allDefaultOpened = mutantDispConfList.every(item=>{
+            if(item[dict.DEFAULT_DISPLAY][params.type]){
+                return item[dict.NOWDISPLAY][params.type]
+            }
+        })
+        console.log('toggleDefaultFiledsOpen allDefaultOpened', allDefaultOpened)
+    }
+    // 单个改变可选标题栏是否打开
+    function toggleSelectFieldOpen(field){
+        // console.log(field)
+        let dispItem = mutantDispConfList.find(item=>item[dict.TITLE]===field)
+        let value = dispItem[dict.NOWDISPLAY][params.type]
+        dispItem[dict.NOWDISPLAY][params.type] = !value
+        all_selectFieldDisplayList = all_selectFieldDisplayList
+    }
+
 
     function __setDatabyParamsType(){
         mutant_total_num = all_mutant_total_num[params.type]
