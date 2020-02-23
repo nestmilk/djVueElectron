@@ -206,10 +206,10 @@
                         <table class="down rightMutantTable">
                             {#each mutant_list as mutant, index (mutant.id)}
                                 <tr class="mutantItem
-                                            {now_mutant_id===mutant.id?'current':''}
-                                            {mutant_submit_dict[mutant.id]?
-                                            (mutant_submit_dict[mutant.id][dict.STATUS]===mutant_status_dict.FREE && mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE]?
-                                            mutant_status_dict.DELETED:mutant_submit_dict[mutant.id][dict.STATUS]):''}"
+                                    {now_mutant_id===mutant.id?'current':''}
+                                    {mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][dict.STATUS]:''}
+                                    {mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE]?
+                                    'trueDelete':''):''}"
                                     on:click|stopPropagation={(e)=>handleChangeCurrentMutantId(mutant.id, mutant.sample, e)}
                                     data-mutantId="{mutant.id}"
                                     data-sampleId="{mutant.sample}"
@@ -346,7 +346,7 @@
                                                     )
                                                 )
                                             }
-                                                <td class="{title}"
+                                                <td class="{title} content"
                                                     title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}"
                                                 >
                                                     <input class="mutantInput" type={mutantDispConfDict[title].type}
@@ -360,7 +360,7 @@
                                                     <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>
                                                 </td>
                                             {:else}
-                                                <td class="{title}" title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}">
+                                                <td class="{title} content" title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}">
                                                     <div class="inside">{mutant[title]}</div>
                                                 </td>
                                             {/if}
@@ -790,7 +790,7 @@
         // console.log(mutant_list)
         // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
         // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
-        console.log( mutant_submit_dict)
+        // console.log(mutant_submit_dict)
         // console.log(all_mutant_total_num)
         // console.log(all_totalSubmitAndAffirmed, all_totalUnsubmitAndAffirmed, all_totalUnsubmitAndUnaffirmed)
         // console.log(panal_unable_handle)
@@ -804,6 +804,7 @@
         // console.log(mutantDispConfList, mutantDispConfDict, mutantDispConfDict['sampleSn'][dict.NOWDISPLAY])
         // console.log(allFieldDisplayList, allFieldDisplayList.length, mutantDispConfList.length)
         // console.log(all_modifyFieldLists)
+        console.log(JSON.stringify(mutantDispConfList.map(item=>item.title)))
     }
 
     function stopPropagation(event){
@@ -844,18 +845,19 @@
     // 设置mutant列表和mutant总数
     function __setMutListAndMutantNum(list, count) {
         mutant_list = list
+        console.log('__setMutListAndMutantNum', list)
         // 转换logs_details为字典类型
         for (let mutant of mutant_list){
+            console.log(mutant)
             if (mutant.logs.length > 0) {
                 for (let log of mutant.logs) {
-                    log[dict.LOGFIELDDETAIL] = {
-                        done: {nowValue: '', preValue: ''},
-                        delete: {nowValue: '', preValue: ''},
-                        posStart: {nowValue: '', preValue: ''},
-                        posEnd: {nowValue: '', preValue: ''},
-                        ref: {nowValue: '', preValue: ''},
-                        alt: {nowValue: '', preValue: ''}
+                    console.log(log)
+                    log[dict.LOGFIELDDETAIL]={}
+                    for (let field of [...all_modifyFieldLists[params.type], mutant_field_dict.DELETE, mutant_field_dict.DONE]){
+                        console.log(field)
+                        log[dict.LOGFIELDDETAIL][field] = {nowValue: '', preValue: ''}
                     }
+
                     for (let detail of log.log_details) {
                         log[dict.LOGFIELDDETAIL][detail.subject_field_name][dict.NOWVALUE] = detail.new_value
                         log[dict.LOGFIELDDETAIL][detail.subject_field_name][dict.PREVALUE] = detail.old_value
@@ -1504,18 +1506,18 @@
             mutant_submit_dict[mutant_id][field][dict.PREVALUE] = mutant_submit_dict[mutant_id][field][dict.NOWVALUE]
         }
     }
-    // 在mutant_submit_dict中，查看4个域是否相等，返回上传准备数据
+    // 在mutant_submit_dict中，查看modify域是否相等，返回上传准备数据
     function __getUnequalParamsInMutSubDict(mutant_id){
-        let default_field_list = [dict.POSSTART, dict.POSEND, dict.REF, dict.ALT]
-        let params = {done: true}
+        let default_field_list = all_modifyFieldLists[params.type]
+        let uploadParams = {done: true}
         for (let field of default_field_list) {
             if (mutant_submit_dict[mutant_id][field][dict.NOWVALUE] !==
                     mutant_submit_dict[mutant_id][field][dict.PREVALUE]) {
-                    params[field] = mutant_submit_dict[mutant_id][field][dict.NOWVALUE]
+                    uploadParams[field] = mutant_submit_dict[mutant_id][field][dict.NOWVALUE]
             }
         }
-        // console.log(JSON.stringify(params))
-        return params
+        console.log('__getUnequalParamsInMutSubDict uploadParams', uploadParams)
+        return uploadParams
     }
 
     async function checkNOUS_AandUS_UAandCreateOutput(){
@@ -1686,7 +1688,7 @@
                     params[dict.REASONDESC] = reasonDescNowValue
                     await api.updateMutant(mutant_id,
                             params).then((response) => {
-                        // 排开done，4项中有差异的field，preValue替换为nowValue
+                        // 排开done，modify项中有差异的field，preValue替换为nowValue
                         delete params[mutant_field_dict.DONE]
                         for (let field in params) {
                             __substitutePreValueInMutSubDict(mutant_id, [field])
@@ -2448,6 +2450,9 @@
     .contentRight .rightMutantTable tr.done{
         background: #aaaaaa;
         color: #cccccc;
+    }
+    .contentRight .rightMutantTable .trueDelete .content{
+        text-decoration: line-through;
     }
     .contentRight .rightMutantTable .icon-sort-amount-asc{
         position: absolute;
