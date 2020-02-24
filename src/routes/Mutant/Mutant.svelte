@@ -447,8 +447,9 @@
 
     // 数据下载后，创建mutant_submit_dict, 只有done和free状态
     // 修改数据后，状态改为checked， deleted，edited
-    let mutant_status_dict = {'FREE': 'free', 'DONE':'done', 'CHECKED': 'checked', 'DELETED': 'deleted', 'EDITED': 'edited'}
-    let mutant_field_dict = {'POSSTART': 'posStart', 'POSEND': 'posEnd', 'REF': 'ref', 'ALT': 'alt', 'DELETE': 'delete', 'DONE': 'done'}
+    let mutant_status_dict = {FREE: 'free', DONE:'done', CHECKED: 'checked', DELETED: 'deleted', EDITED: 'edited'}
+    let mutant_field_dict = {POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt', DELETE: 'delete',
+        DONE: 'done', FREQ: 'freq'}
     let model_dict = {PANAL: 'panal', MUTANT: 'mutant'}
     let log_reason_type_dict = {false_positive: '假阳性', merge_complex_loci: '复杂位点合并', other: '其它'}
     let log_submit_type_dict = {copy: '拷贝', check: '核查', edit: '编辑', delete: '删除', release: '释放',
@@ -787,10 +788,10 @@
         // console.log(sampleSn_inTrack_list)
         // console.log(params.type)
         // console.log(typeof now_mutant_id)
-        // console.log(mutant_list)
+        console.log(mutant_list)
         // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
         // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
-        // console.log(mutant_submit_dict)
+        console.log(mutant_submit_dict)
         // console.log(all_mutant_total_num)
         // console.log(all_totalSubmitAndAffirmed, all_totalUnsubmitAndAffirmed, all_totalUnsubmitAndUnaffirmed)
         // console.log(panal_unable_handle)
@@ -803,8 +804,8 @@
         // console.log(window.location.href)
         // console.log(mutantDispConfList, mutantDispConfDict, mutantDispConfDict['sampleSn'][dict.NOWDISPLAY])
         // console.log(allFieldDisplayList, allFieldDisplayList.length, mutantDispConfList.length)
-        // console.log(all_modifyFieldLists)
-        console.log(JSON.stringify(mutantDispConfList.map(item=>item.title)))
+        // console.log(all_modifyFieldLists[params.type])
+        // console.log(JSON.stringify(mutantDispConfList.map(item=>item.title)))
     }
 
     function stopPropagation(event){
@@ -845,7 +846,7 @@
     // 设置mutant列表和mutant总数
     function __setMutListAndMutantNum(list, count) {
         mutant_list = list
-        console.log('__setMutListAndMutantNum', list)
+        // console.log('__setMutListAndMutantNum', list)
         // 转换logs_details为字典类型
         for (let mutant of mutant_list){
             console.log(mutant)
@@ -853,7 +854,17 @@
                 for (let log of mutant.logs) {
                     console.log(log)
                     log[dict.LOGFIELDDETAIL]={}
-                    for (let field of [...all_modifyFieldLists[params.type], mutant_field_dict.DELETE, mutant_field_dict.DONE]){
+                    // 此处不能使用每个表特定的all_modifyFieldLists[params.type]，因为log区域展示时候是通用数据
+                    let allModiFieldLists = mutantDispConfList.reduce((list, item)=>{
+                        let modifyStatusList = Object.keys(item[dict.MODIFY]).map(key=>item[dict.MODIFY][key])
+                        // console.log(modifyStatusList)
+                        if (modifyStatusList.some(status=>status)){
+                            list.push(item[dict.TITLE])
+                        }
+                        return list
+                    }, [])
+                    // console.log('__setMutListAndMutantNum', allModiFieldLists)
+                    for (let field of [...allModiFieldLists, mutant_field_dict.DELETE, mutant_field_dict.DONE]){
                         console.log(field)
                         log[dict.LOGFIELDDETAIL][field] = {nowValue: '', preValue: ''}
                     }
@@ -921,26 +932,20 @@
             sampleId: mutant.sample,
             sampleSn: mutant.sampleSn,
             status: mutant.done ? mutant_status_dict.DONE : mutant_status_dict.FREE,
-            delete: {
-                nowValue: mutant.delete,
-                preValue: mutant.delete
-            },
-            reason_type: {
-                nowValue: '',
-                preValue: ''
-            },
-            reason_desc: {
-                nowValue: '',
-                preValue: ''
-            },
             reason_display: false,
             logs_display: false
         }
 
-        for (let field of allFieldDisplayList) {
+        let filedListExceptSampleSn = JSON.parse(JSON.stringify(allFieldDisplayList))
+        let sampleSn_index = filedListExceptSampleSn.indexOf(dict.SAMPLESN)
+        filedListExceptSampleSn.splice(sampleSn_index, 1)
+        // console.log('__setMutantInMutantSubmitDict', allFieldDisplayList, filedListExceptSampleSn)
+
+        // 其中reasonType和reasonDesc是nudefined
+        for (let field of [...filedListExceptSampleSn, dict.DELETE, dict.REASONTYPE, dict.REASONDESC]) {
             mutant_submit_dict[mutant.id][field] = {
-                nowValue: mutant[field],
-                preValue: mutant[field]
+                nowValue: mutant[field]!==undefined?mutant[field]:'',
+                preValue: mutant[field]!==undefined?mutant[field]:''
             }
         }
     }
@@ -1057,7 +1062,7 @@
 
     // 处理切换target，hereditary，tmb
     function handleSelectSubmenu(type){
-        console.log(type, params.type)
+        // console.log(type, params.type)
         if (type===params.type) return
         // console.log('handleSelectSubmenu ' + type)
         let panalId = params.panalId
@@ -1475,19 +1480,25 @@
         // console.log(e.target.value)
 
         if (field === mutant_field_dict.DELETE) {
-            console.log(field, mutant_submit_dict[mutant_id][field][dict.NOWVALUE])
             mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = !mutant_submit_dict[mutant_id][field][dict.NOWVALUE]
-            console.log(field, mutant_submit_dict[mutant_id][field][dict.NOWVALUE])
             // 同时需要将其余已修改的项恢复
             recoverValueForMutSubmits([mutant_id])
-            console.log(field, mutant_submit_dict[mutant_id][field][dict.NOWVALUE])
         }else{
             // 操作前如果将delete置换为false
             mutant_submit_dict[mutant_id][mutant_field_dict.DELETE][dict.NOWVALUE] = false
             // 接着修改field的nowValue
-            if ([dict.POSSTART, dict.POSEND].indexOf(field) !== -1) {
+            if ([mutant_field_dict.POSSTART, mutant_field_dict.POSEND].indexOf(field) !== -1) {
                 mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = parseInt(e.target.value)
-            }else {
+            }else if (field === mutant_field_dict.FREQ){
+                let eValue = e.target.value
+
+                // console.log(eValue, isNaN(eValue), parseFloat(eValue)>=0, parseFloat(eValue)<=1)
+                if(!isNaN(eValue) && parseFloat(eValue)>=0 && parseFloat(eValue)<=1){
+                    mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = eValue
+                }else{
+                    remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
+                }
+            }else{
                 mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = e.target.value
             }
         }
@@ -1516,7 +1527,7 @@
                     uploadParams[field] = mutant_submit_dict[mutant_id][field][dict.NOWVALUE]
             }
         }
-        console.log('__getUnequalParamsInMutSubDict uploadParams', uploadParams)
+        // console.log('__getUnequalParamsInMutSubDict uploadParams', uploadParams)
         return uploadParams
     }
 
@@ -1526,23 +1537,25 @@
 
         // 创建表
         let success = false
-        if (!excel_url && totalUnsubmitAndAffirmed === 0 && totalUnsubmitAndUnaffirmed === 0) {
-           await api.createExcel(params.panalId, params.type).then((response)=>{
-               // console.log(response.data)
-               success = true
+        if (totalUnsubmitAndAffirmed === 0 && totalUnsubmitAndUnaffirmed === 0) {
+            excel_url = null
 
-               let time = getTime()
-               upload_message_list.push(time + ' excel表格创建成功')
-               upload_message_list = upload_message_list
+            await api.createExcel(params.panalId, params.type).then((response)=>{
+                // console.log(response.data)
+                success = true
 
-               // excel_url = response.data.url 这是没有用的最后一级不是地址了，已经就是一份拷贝了
-               all_excel_url[params.type] = response.data.url
-               excel_url = response.data.url
+                let time = getTime()
+                upload_message_list.push(time + ' excel表格创建成功')
+                upload_message_list = upload_message_list
 
-           }).catch((error)=>{
-               console.error('checkS_AMUTandCreateOutput success', error)
-               errors.detail = 'excel表格创建失败：' + error.data?error.data.panal:''
-           })
+                // excel_url = response.data.url 这是没有用的最后一级不是地址了，已经就是一份拷贝了
+                all_excel_url[params.type] = response.data.url
+                excel_url = response.data.url
+
+            }).catch((error)=>{
+                console.error('checkS_AMUTandCreateOutput success', error)
+                errors.detail = 'excel表格创建失败：' + error.data?error.data.panal:''
+            })
         }
         // 将panal设置为 done
         if (success &&

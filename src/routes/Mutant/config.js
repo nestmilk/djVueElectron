@@ -280,7 +280,7 @@ export const mutantDisplayConfigList = [
         type: "text",
         modify: {
             target: true,
-            hereditary: false,
+            hereditary: true,
             TMB: false
         },
         defaultDisplay: {
@@ -417,13 +417,13 @@ export const mutantDisplayConfigList = [
         }
     },
 
-    // 依赖于hgvs变更
+    // 依赖于hgvs变更，先允许修改
     {
         title: "wxz",
         translate: "外显子",
         type: "text",
         modify: {
-            target: false,
+            target: true,
             hereditary: false,
             TMB: false
         },
@@ -443,7 +443,7 @@ export const mutantDisplayConfigList = [
         translate: "转录本",
         type: "text",
         modify: {
-            target: false,
+            target: true,
             hereditary: false,
             TMB: false
         },
@@ -463,7 +463,7 @@ export const mutantDisplayConfigList = [
         translate: "碱基改变",
         type: "text",
         modify: {
-            target: false,
+            target: true,
             hereditary: false,
             TMB: false
         },
@@ -483,7 +483,7 @@ export const mutantDisplayConfigList = [
         translate: "氨基酸改变",
         type: "text",
         modify: {
-            target: false,
+            target: true,
             hereditary: false,
             TMB: false
         },
@@ -503,7 +503,7 @@ export const mutantDisplayConfigList = [
         translate: "基因变异",
         type: "text",
         modify: {
-            target: false,
+            target: true,
             hereditary: false,
             TMB: false
         },
@@ -523,7 +523,7 @@ export const mutantDisplayConfigList = [
         translate: "基因名称",
         type: "text",
         modify: {
-            target: false,
+            target: true,
             hereditary: false,
             TMB: false
         },

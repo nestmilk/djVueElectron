@@ -77,7 +77,9 @@ app.on('ready', ()=>{
     let menu = Menu.buildFromTemplate(menuTemplate)
     Menu.setApplicationMenu(menu)
 
+    let configWindowOpened = false
     ipcMain.on('open-settings-window', ()=>{
+        if (configWindowOpened) return
         // 第一次如果没有则创建location
         if (!settingsStore.get('savedFileLocation')){
             settingsStore.set('savedFileLocation', app.getPath('userData'))
@@ -91,11 +93,14 @@ app.on('ready', ()=>{
         const settingsFileLocation = isDev? `file://${path.join(__dirname, './settings/settings.html')}` : `file://${path.join(__dirname, '../settings/settings.html')}`
         let settingsWindow = new AppWindow(settingWindowConfig, settingsFileLocation)
 
-        // todo 去除settingsWindow和mainWindow一样的菜单,调试时候打开，不然调试界面打不开
+        configWindowOpened = true
+
+        // todo 去除settingsWindow和mainWindow一样的菜单,调试时候打开，不然开发者调试界面打不开
         // settingsWindow.removeMenu()
 
         settingsWindow.on('closed', ()=>{
             settingsWindow = null
+            configWindowOpened = false
         })
     })
 
