@@ -146,7 +146,13 @@ let template = [
                     if (focusedWindow)
                         focusedWindow.toggleDevTools();
                 }
-            },
+            }, {
+                label: '注册',
+                click: ()=>{
+                    // 这里无法在module外使用svelte-route的push
+                    ipcMain.emit('login-caution')
+                }
+            }
         ]
     }
 ]

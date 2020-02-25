@@ -1,4 +1,4 @@
-<Header></Header>
+<!--<Header></Header>-->
 
 <div class="middle">
     <LeftMenus active="Panal信息"></LeftMenus>
@@ -16,7 +16,7 @@
                     on:click={()=>handleSelectSubmenu(dict.TMB)}>
                 TMB突变
             </button>
-            <button on:click={test}>test</button>
+            <button class='test' on:click={test}>test</button>
         </div>
         <div class="middleContent">
             <div class="navLeft">
@@ -101,6 +101,29 @@
 <!--                </div>-->
             </div>
             <div class="contentRight">
+                <div class="editBigInputWrapper">
+                    <span class="abstract">
+                        {#if now_input_mutant_id && now_input_field}
+                            {#if mutant_list.every(mutant=>mutant.id!==now_input_mutant_id)}
+                                突变项不在当前页
+                            {:else}
+                                突变"{now_input_mutant_id}"，标题"{mutantDispConfDict[now_input_field]?mutantDispConfDict[now_input_field][dict.TRANSLATE]:""}"：
+                            {/if}
+                        {:else}
+                            无编辑单元
+                        {/if}
+                    </span>
+                    <input class="bigInput"
+                        value={now_input_field && now_input_mutant_id?mutant_submit_dict[now_input_mutant_id][now_input_field][dict.NOWVALUE]:''}
+                            disabled="{panal_unable_handle?'disabled':
+                                (mutant_submit_dict[now_input_mutant_id]?
+                                (mutant_submit_dict[now_input_mutant_id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                (mutant_submit_dict[now_input_mutant_id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[now_input_mutant_id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':
+                                (mutant_list.every(mutant=>mutant.id!==now_input_mutant_id)?'disabled':
+                                (mutant_list.find(mutant=>mutant.id===now_input_mutant_id)[dict.AVAILABLE_EDIT]?'':'disabled')))):'')}"
+                        on:change={handleValueChangeInBigInput}
+                    />
+                </div>
                 <div class="mutantList">
 
                     <div class="selectFieldsDiv"
@@ -352,10 +375,13 @@
                                                     <input class="mutantInput" type={mutantDispConfDict[title].type}
                                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"
                                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}
+                                                           on:focus={(e)=>focusNowField(e, mutant.id, title, index)}
+
                                                            disabled="{panal_unable_handle?'disabled':
                                                            (mutant_submit_dict[mutant.id]?
                                                            (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
-                                                           (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}"
+                                                           (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':
+                                                           (mutant[dict.AVAILABLE_EDIT]?'':'disabled'))):'')}"
                                                     >
                                                     <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>
                                                 </td>
@@ -384,7 +410,7 @@
     </div>
 </div>
 
-<Footer></Footer>
+<!--<Footer></Footer>-->
 
 {#if loadingShow}
     <Loading></Loading>
@@ -411,8 +437,8 @@
     import {push} from 'svelte-spa-router'
     // import igv from 'igv/dist/igv.min'
 
-    import Header from '../../components/Header/Header.svelte'
-    import Footer from '../../components/Footer/Footer.svelte'
+    // import Header from '../../components/Header/Header.svelte'
+    // import Footer from '../../components/Footer/Footer.svelte'
     import LeftMenus from '../../components/LeftMenus/LeftMenus.svelte'
     import Loading from '../../components/Loading/Loading.svelte'
     import Sure from '../../components/Sure/Sure.svelte'
@@ -791,7 +817,7 @@
         console.log(mutant_list)
         // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
         // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
-        console.log(mutant_submit_dict)
+        // console.log(mutant_submit_dict)
         // console.log(all_mutant_total_num)
         // console.log(all_totalSubmitAndAffirmed, all_totalUnsubmitAndAffirmed, all_totalUnsubmitAndUnaffirmed)
         // console.log(panal_unable_handle)
@@ -849,7 +875,6 @@
         // console.log('__setMutListAndMutantNum', list)
         // 转换logs_details为字典类型
         for (let mutant of mutant_list){
-            console.log(mutant)
             if (mutant.logs.length > 0) {
                 for (let log of mutant.logs) {
                     console.log(log)
@@ -2043,6 +2068,21 @@
 
     }
 
+    // 设定当前修改标题
+    let now_input_field = null
+    let now_input_mutant_id = null
+    let now_index
+    function focusNowField(event, mutant_id, title, index){
+        now_input_field = title
+        now_input_mutant_id = mutant_id
+    }
+    function handleValueChangeInBigInput(event){
+        if(now_input_mutant_id&&now_input_field){
+            mutant_submit_dict[now_input_mutant_id][now_input_field][dict.NOWVALUE] = event.target.value
+        }
+
+    }
+
 
     onMount(async ()=>{
         // console.log('begin onMount')
@@ -2124,8 +2164,7 @@
     .middle{
         width: 100%;
         min-height: 900px;
-        border-left: 1px solid black;
-        border-right: 1px solid black;
+        border: 1px solid black;
         display: flex;
     }
 
@@ -2135,8 +2174,15 @@
         display: flex;
     }
     .subMenu{
-        flex: 0 0 38px;
+        flex: 0 0 35px;
         border-bottom: 1px solid black;
+    }
+    .subMenu .test{
+        padding: 0;
+        margin: 0;
+        width: 60px;
+        height: 30px;
+        line-height: 30px;
     }
     .subMenu .selectedSubMenu{
         box-shadow: 3px 3px 3px black;
@@ -2349,15 +2395,42 @@
 
 
     .contentRight{
-        /*此处必须要加这个0，不然table无法滚动 TODO*/
+        /* TODO 此处必须要加这个0，不然table无法滚动 TODO */
         width: 0;
         flex: 1;
-        /*display: flex;*/
-        /*flex-flow: column;*/
+        display: flex;
+        flex-flow: column;
+    }
+    .contentRight .editBigInputWrapper{
+        padding: 3px;
+        width: 100%;
+        flex: 0 0 31px;
+        box-sizing: border-box;
+        line-height: 31px;
+        font-size: 14px;
+        border-bottom: 1px solid #939393;
+        display: flex;
+    }
+    .contentRight .editBigInputWrapper .abstract{
+        display: block;
+        margin: auto 2px;
+        flex: 0 0 150px;
+        height: 24px;
+        line-height: 24px;
+        text-overflow: ellipsis;
+        white-space:nowrap;
+        float: left;
+    }
+    .contentRight .editBigInputWrapper .bigInput{
+        padding: 0 5px;
+        margin: auto 5px;
+        flex: 1;
+        height: 24px;
+        line-height: 24px;
     }
     .contentRight .mutantList{
         position: relative;
-        /*flex: 0 0 460;*/
+        flex: 1;
         height: 100%;
         padding: 3px;
         border-bottom: 1px solid #cccccc;
@@ -2386,6 +2459,7 @@
     .contentRight .mutantList .selectFieldsDiv .firstDefaultTitle .checkBox.active{
         color: black;
     }
+
     .contentRight .selectFieldsDiv .contentWrapper{
         width: 100%;
         min-height: 26px;

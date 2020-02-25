@@ -4,6 +4,12 @@
     import Router from 'svelte-spa-router'
     import {push, replace, pop} from 'svelte-spa-router'
     import {userInfo} from './store/store'
+
+    const {ipcRenderer} = window.require('electron')
+    ipcRenderer.on('login-activate',()=>{
+        push('/register')
+    })
+
     // 只需要此处注入一次即可全局使用，其它地方只要引入push方法
     import routes from './routes'
 
@@ -13,8 +19,9 @@
         // 打包build的时候只有location: '/secret', name: '', userData: {token: 'nestmilk'}
         // 所以按通用性来说还是使用event.detail.location
         //针对Secret路径
-        console.log('conditionFailed begin: ' + event.detail.location)
-        if (event.detail.location === '/secret') {
+
+        console.log('conditionFailed begin: ' + JSON.stringify(event.detail))
+        if (event.detail.location === '/') {
             replace('/login')
             return
         }

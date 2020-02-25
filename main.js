@@ -157,4 +157,8 @@ app.on('ready', ()=>{
         mainWindow.webContents.send('reset-errors')
     })
 
+    ipcMain.on('login-caution', ()=>{
+        mainWindow.webContents.send('login-activate')
+    })
+
 })

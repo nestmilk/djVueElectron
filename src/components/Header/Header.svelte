@@ -42,7 +42,9 @@
         width: 100%;
         height: 50px;
         background-color: orange;
-        border: 1px solid black;
+        border-left: 1px solid black;
+        border-top: 1px solid black;
+        border-right: 1px solid black;
         font-size: 20px;
         color: #ffffff;
     }
