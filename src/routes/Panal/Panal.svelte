@@ -793,20 +793,12 @@
 
         let success = false
         await  api.excelUpload(form).then((response)=>{
-            console.log(response.data)
+            console.log("upload then", response.data)
             success = true
             errors.panal = response.data.panal ? response.data.panal : ''
         }).catch((error)=>{
-            if( error.data && typeof error.data === 'string'){
-                console.error('load', error.data)
-                errors.detail = "数据不匹配，写入错误！"
-            }else{
-                errors.name = error.data.name ? error.data.name : ""
-                errors.detail = error.data.sheet_names_dict ? error.data.sheet_names_dict : ""
-                errors.unauthorized = error.data.detail? error.data.detail: ""
-            }
-
-
+            console.log("upload catch", error, error.data)
+            errors.detail = '出错了！' + JSON.stringify(error.data?error:error.data)
         })
 
         if (success) {

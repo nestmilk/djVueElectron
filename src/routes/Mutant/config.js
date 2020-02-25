@@ -424,7 +424,7 @@ export const mutantDisplayConfigList = [
         type: "text",
         modify: {
             target: true,
-            hereditary: false,
+            hereditary: true,
             TMB: false
         },
         defaultDisplay: {
@@ -444,7 +444,7 @@ export const mutantDisplayConfigList = [
         type: "text",
         modify: {
             target: true,
-            hereditary: false,
+            hereditary: true,
             TMB: false
         },
         defaultDisplay: {
@@ -464,7 +464,7 @@ export const mutantDisplayConfigList = [
         type: "text",
         modify: {
             target: true,
-            hereditary: false,
+            hereditary: true,
             TMB: false
         },
         defaultDisplay: {
@@ -484,7 +484,7 @@ export const mutantDisplayConfigList = [
         type: "text",
         modify: {
             target: true,
-            hereditary: false,
+            hereditary: true,
             TMB: false
         },
         defaultDisplay: {
@@ -504,7 +504,7 @@ export const mutantDisplayConfigList = [
         type: "text",
         modify: {
             target: true,
-            hereditary: false,
+            hereditary: true,
             TMB: false
         },
         defaultDisplay: {

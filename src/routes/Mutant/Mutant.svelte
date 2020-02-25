@@ -1332,7 +1332,6 @@
                         let mutant_id = sureObjectIdList[0]
                         // 如状态是未完成，则返回
                         if (mutant_submit_dict[mutant_id][dict.STATUS] !== mutant_status_dict.DONE) return
-
                         changeSendSureMessage()
                         // 显示确认界面
                         sureShow = true
@@ -1996,6 +1995,16 @@
             handleChangeCurrentMutantId(parseInt(element.dataset.mutantid), parseInt(element.dataset.sampleid))
 
             let menu = new remote.Menu()
+
+            // let sureMenuItem = new remote.MenuItem({
+            //     label: "确定",
+            //     type: "checkbox",
+            //     checked: [mutant_status_dict.CHECKED, mutant_status_dict.EDITED, mutant_status_dict.DELETED].indexOf(mutant_submit_dict[now_mutant_id][dict.STATUS]) !== -1,
+            //     click: ()=>{
+            //         if (mutant_submit_dict[now_mutant_id][dict.STATUS] === mutant_status_dict.DONE) return
+            //         handleAffirmForMutSubmits(now_mutant_id, now_sample_id)                }
+            // })
+            // menu.append(sureMenuItem)
 
             let editMenuItem = new remote.MenuItem({
                 label: '编辑',

@@ -23,6 +23,7 @@ exports.igvExec = (msg, timestamp) => {
 
     const temp_file_path = path.join(temp_path, `igvSocket_${timestamp}.py`)
     let template = igvSocketTemplate.replace(/\${([A-Za-z0-9_]+)}/g, msg)
+    // dialog.showErrorBox('template', template)
 
     fs.writeFileSync(temp_file_path, template)
 
