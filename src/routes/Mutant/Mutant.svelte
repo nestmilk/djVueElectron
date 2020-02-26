@@ -96,9 +96,9 @@
                     </div>
                 </div>
 
-<!--                <div class="leftButtomWrapper">-->
+                <div class="leftButtomWrapper">
 <!--                    <button class="copy" on:click={()=>handleEventForSure(model_dict.MUTANT, dict.COPY)}>复制突变</button>-->
-<!--                </div>-->
+                </div>
             </div>
             <div class="contentRight">
                 <div class="editBigInputWrapper">
@@ -2028,6 +2028,24 @@
     function __handleContextMenu(e){
         // console.log(e.target, document.querySelector('.down'), document.querySelector('.down').contains(e.target))
 
+        if (document.querySelector('.navLeft').contains(e.target)){
+            let menu = new remote.Menu()
+
+            let retractNavLeftItem = new remote.MenuItem({
+                label: '左侧面板缩进',
+                click: ()=>{
+                    let navLeftElement = document.querySelector('.navLeft')
+                    // 第一次为空
+                    let preFlexStyle = navLeftElement.style.flex
+                    navLeftElement.style.flex = !preFlexStyle || preFlexStyle==='0 0 308px'?'0 0 100px':'0 0 308px'
+
+                    navLeftElement.style.boxShadow='-3px -3px 10px black inset'
+                }
+            })
+            menu.append(retractNavLeftItem)
+
+            menu.popup({window: remote.getCurrentWindow()})
+        }
 
         if (document.querySelector('.down').contains(e.target)){
 
@@ -2261,9 +2279,12 @@
         display: flex;
         flex-flow: column;
         border-right: 1px solid black;
+        overflow-x: scroll;
+        overflow-y: hidden;
     }
     .navLeft .leftMessage{
         flex: 0 0 20px;
+        width: 308px;
         line-height: 20px;
         padding: 5px;
         text-align: left;
@@ -2273,6 +2294,7 @@
     }
     .navLeft .leftTopWrapper{
         flex: 0 0 200px;
+        width: 308px;
         padding: 3px;
         border-bottom: 1px solid black;
     }
@@ -2338,6 +2360,7 @@
 
     .leftTopMidWrapper{
         flex: 0 0 228px;
+        width: 308px;
         border-bottom: 1px solid black;
     }
     .leftTopMidWrapper .messageWrapper{
@@ -2381,12 +2404,13 @@
 
     .leftMidWrapper{
         flex: 0 0 150px;
+        width: 308px;
         border-bottom: 1px solid black;
     }
     .leftMidWrapper .selectFile{
         padding: 3px;
-        width: 300px;
         height: 30px;
+        width: 300px;
         line-height: 30px;
         font-size: 12px;
         border-bottom: 1px solid #cccccc;
@@ -2412,6 +2436,7 @@
     }
     .leftMidWrapper .fileList{
         height: 107px;
+        width: 308px;
         margin: 3px;
         overflow-y: scroll;
     }
@@ -2428,6 +2453,7 @@
 
     .leftButtomWrapper{
         margin: 3px;
+        width: 308px;
         flex: 1;
     }
     .leftButtomWrapper .copy{
