@@ -1,6 +1,9 @@
 <!--<Header></Header>-->
 
-<div class="middle">
+<div class="middle"
+     on:mouseup={handleMiddleMouseUp}
+     on:mousemove={handleMiddleMouseMove}
+>
     <LeftMenus active="Panal信息"></LeftMenus>
     <div class="midRight">
         <div class="subMenu">
@@ -20,6 +23,9 @@
         </div>
         <div class="middleContent">
             <div class="navLeft">
+                <div class="divider"
+                     on:mousedown={handleDividerMouseDown}
+                ></div>
                 <div class="leftMessage">
                     提示：{errors.detail}
                 </div>
@@ -2037,9 +2043,8 @@
                     let navLeftElement = document.querySelector('.navLeft')
                     // 第一次为空
                     let preFlexStyle = navLeftElement.style.flex
-                    navLeftElement.style.flex = !preFlexStyle || preFlexStyle==='0 0 308px'?'0 0 100px':'0 0 308px'
+                    navLeftElement.style.flex = !preFlexStyle || preFlexStyle==='0 0 308px'?'0 0 109px':'0 0 308px'
 
-                    navLeftElement.style.boxShadow='-3px -3px 10px black inset'
                 }
             })
             menu.append(retractNavLeftItem)
@@ -2145,6 +2150,38 @@
             mutant_submit_dict[mutant_id][field][dict.NOWVALUE] =
                     mutant_submit_dict[mutant_id][field][dict.PREVALUE]
             mutant_submit_dict = mutant_submit_dict
+        }
+    }
+
+    // 左侧面板缩进控制
+    let retract_able = false
+    function handleDividerMouseDown(e){
+        // console.log('handleDividerMouseDown')
+        e.stopPropagation()
+        retract_able = true
+    }
+    function handleMiddleMouseUp(e){
+        // console.log('handleMiddleMouseUp')
+        e.stopPropagation()
+        retract_able = false
+    }
+    function handleMiddleMouseMove(e){
+        e.stopPropagation()
+        if(retract_able){
+            // console.log('handleMiddleMouseMove', e.clientX)
+            let navLeftElement = document.querySelector('.navLeft')
+
+            if(e.clientX - 130 < 18){
+                navLeftElement.style.flex = `0 0 18px`
+                return
+            }
+
+            if(e.clientX - 130>308){
+                navLeftElement.style.flex = `0 0 308px`
+                return
+            }
+
+            navLeftElement.style.flex = `0 0 ${e.clientX - 130}px`
         }
     }
 
@@ -2275,12 +2312,22 @@
         display: flex;
     }
     .navLeft{
+        position: relative;
         flex: 0 0 308px;
         display: flex;
         flex-flow: column;
         border-right: 1px solid black;
-        overflow-x: scroll;
+        overflow-x: hidden;
         overflow-y: hidden;
+        /*box-shadow: -3px -3px 8px black inset;*/
+    }
+    .navLeft .divider{
+        position: absolute;
+        top: 0;
+        right: 0px;
+        width: 6px;
+        height: 100%;
+        background: #cccccc;
     }
     .navLeft .leftMessage{
         flex: 0 0 20px;

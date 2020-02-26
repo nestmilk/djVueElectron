@@ -106,6 +106,13 @@ let template = [
                             settingsStore.set('ifNowMutantTop', !settingsStore.get('ifNowMutantTop'))
                         }
                     }, {
+                        label: '勾选base排序',
+                        type: 'checkbox',
+                        checked: settingsStore.get('ifSortBase'),
+                        click: () => {
+                            settingsStore.set('ifSortBase', !settingsStore.get('ifSortBase'))
+                        }
+                    }, {
                         label: '打开igv',
                         accelerator: 'Ctrl+I',
                         click: ()=>{

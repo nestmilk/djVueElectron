@@ -126,7 +126,9 @@ app.on('ready', ()=>{
     ipcMain.on('search-locus', (event, query)=>{
         const timestamp = new Date().getTime()
         if (!igvExec(igvGotoLocus(query), timestamp).success) return
-        if (!igvExec("sort base", timestamp).success) return
+        if(settingsStore.get('ifSortBase')){
+            if (!igvExec("sort base", timestamp).success) return
+        }
     })
 
     ipcMain.on('connect-igv-error', (message)=>{
