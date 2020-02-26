@@ -2666,6 +2666,10 @@
         overflow: hidden;
         text-overflow: ellipsis;
 
+        line-height: 35px;
+        box-sizing: border-box;
+        padding: 0 3px;
+
         /*todo 单元格滚动显示 */
         /*overflow-x: scroll;*/
     }
@@ -2703,10 +2707,10 @@
         min-width: 35px;
     }
     .contentRight .logs button{
-        margin: 0;
+        margin: 1px 0 0 0;
         padding: 0;
         width: 100%;
-        height: 100%;
+        height: 34px;
         background: white;
         border: none;
     }
@@ -2717,10 +2721,10 @@
         min-width: 35px;
     }
     .contentRight .done button{
-        margin: 0;
+        margin: 1px 0 0 0;
         padding: 0;
         width: 100%;
-        height: 100%;
+        height: 34px;
         background: white;
         border: none;
     }
@@ -2737,10 +2741,10 @@
         min-width: 35px;
     }
     .contentRight .affirmed button{
-        margin: 0;
+        margin:  1px 0 0 0;
         padding: 0;
         width: 100%;
-        height: 100%;
+        height: 34px;
         background: white;
         border: none;
     }
@@ -2900,7 +2904,7 @@
         margin: 0;
         padding: 0;
         width: 100%;
-        height: 100%;
+        height: 34px;
         background: white;
         border: none;
     }
@@ -2927,10 +2931,10 @@
         color: #cccccc;
     }
     .contentRight .delete button{
-        margin: 0;
+        margin:  1px 0 0 0;
         padding: 0;
-        width: 30px;
-        height: 100%;
+        width: 35px;
+        height: 34px;
         background: white;
         border: none;
         float: left;
@@ -2953,7 +2957,7 @@
         min-width: 110px;
     }
     .contentRight .sampleSn .inside{
-        width: 110px;
+        width: 109px;
         overflow: hidden;
     }
 
@@ -2961,7 +2965,7 @@
         min-width: 35px;
     }
     .contentRight .projectAbbreviation .inside{
-        width: 35px;
+        width: 34px;
         overflow: hidden;
     }
     .contentRight .chr{
@@ -2973,7 +2977,7 @@
         width: 62px;
     }
     .contentRight .chr .inside{
-        width: 92px;
+        width: 91px;
         overflow: hidden;
     }
     .contentRight .posStart{
@@ -2985,7 +2989,7 @@
         width: 90px;
     }
     .contentRight .posStart .inside{
-        width: 120px;
+        width: 119px;
         overflow: hidden;
     }
     .contentRight .posEnd{
@@ -2997,7 +3001,7 @@
         width: 90px;
     }
     .contentRight .posEnd .inside{
-        width: 120px;
+        width: 119px;
         overflow: hidden;
     }
     .contentRight .ref{
@@ -3008,7 +3012,7 @@
         width: 60px;
     }
     .contentRight .ref .inside{
-        width: 90px;
+        width: 89px;
         overflow: hidden;
     }
     .contentRight .alt{
@@ -3019,7 +3023,7 @@
         width: 60px;
     }
     .contentRight .alt .inside{
-        width: 90px;
+        width: 89px;
         overflow: hidden;
     }
     .contentRight .freq{
@@ -3030,7 +3034,7 @@
         width: 60px;
     }
     .contentRight .freq .inside{
-        width: 90px;
+        width: 89px;
         overflow: hidden;
     }
     .contentRight .exonicfuncRefgene{
@@ -3039,7 +3043,7 @@
     .contentRight .exonicfuncRefgene .inside{
         padding: 0;
         margin: 0;
-        width: 150px;
+        width: 149px;
         height: 100%;
         border: none;
     }
@@ -3052,7 +3056,7 @@
         width: 120px;
     }
     .contentRight .hgvs .inside{
-        width: 150px;
+        width: 149px;
     }
     .contentRight .geneVar{
         min-width: 150px;
@@ -3062,19 +3066,19 @@
         width: 120px;
     }
     .contentRight .geneVar .inside{
-        width: 150px;
+        width: 149px;
     }
     .contentRight .clinsig{
         min-width: 150px;
     }
     .contentRight .clinsig .inside{
-        width: 150px;
+        width: 149px;
     }
     .contentRight .intervarAutomated{
         min-width: 150px;
     }
     .contentRight .intervarAutomated .inside{
-        width: 150px;
+        width: 149px;
     }
     .contentRight .drugLevel{
         min-width: 150px;
@@ -3084,7 +3088,7 @@
         width: 120px;
     }
     .contentRight .drugLevel .inside{
-        width: 150px;
+        width: 149px;
     }
     .contentRight .cancerType{
         min-width: 150px;
@@ -3094,7 +3098,7 @@
         width: 120px;
     }
     .contentRight .cancerType .inside{
-        width: 150px;
+        width: 149px;
     }
     .contentRight .drugs{
         min-width: 150px;
@@ -3104,7 +3108,7 @@
         width: 120px;
     }
     .contentRight .drugs .inside{
-        width: 150px;
+        width: 149px;
     }
 
     .contentRight .NM_ID{
@@ -3115,7 +3119,7 @@
         width: 90px;
     }
     .contentRight .NM_ID .inside{
-        width: 120px;
+        width: 119px;
     }
     .contentRight .GeneName{
         min-width: 120px;
@@ -3125,7 +3129,7 @@
         width: 90px;
     }
     .contentRight .GeneName .inside{
-        width: 120px;
+        width: 119px;
     }
     .contentRight .DNA_change{
          min-width: 120px;
@@ -3135,7 +3139,7 @@
         width: 90px;
     }
     .contentRight .DNA_change .inside{
-        width: 120px;
+        width: 119px;
     }
     .contentRight .AA_change{
         min-width: 120px;
@@ -3145,7 +3149,7 @@
         width: 90px;
     }
     .contentRight .AA_change .inside{
-        width: 120px;
+        width: 119px;
     }
     .contentRight .wxz{
         min-width: 90px;
@@ -3155,7 +3159,7 @@
         width: 60px;
     }
     .contentRight .wxz .inside{
-        width: 90px;
+        width: 89px;
         overflow: hidden;
     }
     .contentRight .zlb{
@@ -3166,7 +3170,7 @@
         width: 90px;
     }
     .contentRight .zlb .inside{
-        width: 120px;
+        width: 119px;
     }
     .contentRight .hgsGb{
         min-width: 120px;
@@ -3176,7 +3180,7 @@
         width: 90px;
     }
     .contentRight .hgsGb .inside{
-        width: 120px;
+        width: 119px;
     }
     .contentRight .ajsGb{
         min-width: 120px;
@@ -3186,7 +3190,7 @@
         width: 90px;
     }
     .contentRight .ajsGb .inside{
-        width: 120px;
+        width: 119px;
     }
     .contentRight .alteration{
         min-width: 120px;
@@ -3196,7 +3200,7 @@
         width: 90px;
     }
     .contentRight .alteration .inside{
-        width: 120px;
+        width: 119px;
     }
     .contentRight ._geneName{
         min-width: 120px;
@@ -3206,7 +3210,7 @@
         width: 90px;
     }
     .contentRight ._geneName .inside{
-        width: 120px;
+        width: 119px;
     }
     .contentRight .geneType{
         min-width: 120px;
@@ -3216,7 +3220,7 @@
         width: 90px;
     }
     .contentRight .geneType .inside{
-        width: 120px;
+        width: 119px;
     }
     .contentRight .aachangeRefgene{
         min-width: 200px;
@@ -3226,7 +3230,7 @@
         width: 170px;
     }
     .contentRight .aachangeRefgene .inside{
-        width: 200px;
+        width: 199px;
     }
     .contentRight .level{
         min-width: 120px;
@@ -3236,7 +3240,7 @@
         width: 90px;
     }
     .contentRight .level .inside{
-        width: 120px;
+        width: 119px;
     }
 
     .pagewrapper{
