@@ -165,7 +165,7 @@
                                     {done_status_list[done_status_selected_index].content}
                                 </th>
                                 <th class="affirmed fieldTitle" data-title="sampleSn">确定审核</th>
-                                <th class="recover fieldTitle" data-title="sampleSn">修改恢复</th>
+<!--                                <th class="recover fieldTitle" data-title="sampleSn">修改恢复</th>-->
                                 <th class="delete fieldTitle" data-title="sampleSn">删除此行</th>
 
                                 {#each allFieldDisplayList as title}
@@ -335,15 +335,15 @@
                                             </div>
                                         {/if}
                                     </td>
-                                    <td class="recover">
-                                        <button class="{checkModifyFieldValueEqualClass(mutant.id)} icon-undo2"
-                                            on:click={()=>recoverValueForMutSubmits([mutant.id],[...all_modifyFieldLists[params.type], dict.DELETE, dict.REASONDESC, dict.REASONTYPE])}
-                                            disabled="{panal_unable_handle?'disabled':
-                                                (mutant_submit_dict[mutant.id]?
-                                                (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
-                                                (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">
-                                        </button>
-                                    </td>
+<!--                                    <td class="recover">-->
+<!--                                        <button class="{checkModifyFieldValueEqualClass(mutant.id)} icon-undo2"-->
+<!--                                            on:click={()=>recoverValueForMutSubmits([mutant.id],[...all_modifyFieldLists[params.type], dict.DELETE, dict.REASONDESC, dict.REASONTYPE])}-->
+<!--                                            disabled="{panal_unable_handle?'disabled':-->
+<!--                                                (mutant_submit_dict[mutant.id]?-->
+<!--                                                (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
+<!--                                                (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
+<!--                                        </button>-->
+<!--                                    </td>-->
                                     <td class="delete" title="实时数据：{mutant.delete?'删除':'保留'}">
                                         <button class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE]?'':'undeleted'):'undeleted'} icon-cross"
                                             on:click={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.DELETE)}
@@ -371,6 +371,8 @@
                                             }
                                                 <td class="{title} content"
                                                     title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}"
+                                                    on:mouseenter={()=>handleMutantTDMouseenter(title, mutant.id)}
+                                                    on:mouseleave={()=>handleMutantTDMouseleave(title, mutant.id)}
                                                 >
                                                     <input class="mutantInput" type={mutantDispConfDict[title].type}
                                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"
@@ -383,7 +385,20 @@
                                                            (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':
                                                            (mutant[dict.AVAILABLE_EDIT]?'':'disabled'))):'')}"
                                                     >
-                                                    <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>
+                                                    <div class="besideInput {mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>
+                                                    <div class="besideInput down icon-undo2
+                                                                {mutant_submit_dict[mutant.id]?
+                                                                (mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?
+                                                                (mutant_submit_dict[mutant.id][title][dict.FIELD_MOUSE_ENTER]?'mouseEnter':''):''):''}
+
+                                                                {panal_unable_handle?'disabled':
+                                                                (mutant_submit_dict[mutant.id]?
+                                                                (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                                (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':
+                                                                (mutant[dict.AVAILABLE_EDIT]?'':'disabled'))):'')}
+                                                                "
+                                                        on:click={()=>handleMutantFieldRecoverInMutSubDict(mutant.id, title)}
+                                                    ></div>
                                                 </td>
                                             {:else}
                                                 <td class="{title} content" title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}">
@@ -468,7 +483,7 @@
         BLANK: 'blank', LOGSDISPLAY: 'logs_display', LOG: 'log', LOGFIELDDETAIL: 'log_field_details',
         COPY: 'copy', MUTANTS: 'mutants', TYPE: 'type', PATH: 'path', AVAILABLE_EDIT: 'availableEdit',
         NOWDISPLAY: "nowDisplay", SELECT_DISPLAY: "selectDisplay", DEFAULT_DISPLAY: "defaultDisplay",
-        TITLE: "title", TRANSLATE: "translate", TYPE: "type"
+        TITLE: "title", TRANSLATE: "translate", TYPE: "type", FIELD_MOUSE_ENTER: "fieldMouseEnter"
     }
 
     // 数据下载后，创建mutant_submit_dict, 只有done和free状态
@@ -2031,6 +2046,16 @@
             // })
             // menu.append(sureMenuItem)
 
+            let recoverMenuItem = new remote.MenuItem({
+                label: '恢复',
+                click: ()=>{
+                    if (!panal_unable_handle &&
+                        mutant_submit_dict[now_mutant_id][dict.STATUS] === mutant_status_dict.FREE)
+                    recoverValueForMutSubmits([now_mutant_id],[...all_modifyFieldLists[params.type], dict.DELETE, dict.REASONDESC, dict.REASONTYPE])
+                }
+            })
+            menu.append(recoverMenuItem)
+
             let editMenuItem = new remote.MenuItem({
                 label: '编辑',
                 click: () => {
@@ -2083,6 +2108,27 @@
 
     }
 
+
+    // 处理鼠标划入突变的td的状态
+    function handleMutantTDMouseenter (field, mutant_id){
+        // console.log(mutant_id)
+        mutant_submit_dict[mutant_id][field][dict.FIELD_MOUSE_ENTER] = true
+        mutant_submit_dict = mutant_submit_dict
+    }
+    function handleMutantTDMouseleave (field, mutant_id){
+        // console.log(mutant_id)
+        mutant_submit_dict[mutant_id][field][dict.FIELD_MOUSE_ENTER] = false
+        mutant_submit_dict = mutant_submit_dict
+    }
+
+    function handleMutantFieldRecoverInMutSubDict(mutant_id, field){
+        if (mutant_list.find(mutant=>mutant.id===mutant_id)[dict.AVAILABLE_EDIT] &&
+                mutant_submit_dict[mutant_id][dict.STATUS] === mutant_status_dict.FREE){
+            mutant_submit_dict[mutant_id][field][dict.NOWVALUE] =
+                    mutant_submit_dict[mutant_id][field][dict.PREVALUE]
+            mutant_submit_dict = mutant_submit_dict
+        }
+    }
 
     onMount(async ()=>{
         // console.log('begin onMount')
@@ -2567,7 +2613,7 @@
     .contentRight .insideWrapper{
         /*height: 370px;*/
         overflow: scroll;
-        flex: 0 0 718px;
+        flex: 0 0 738px;
     }
     .contentRight .rightMutantTable .gray.icon-sort-amount-asc{
         color: #cccccc;
@@ -2598,7 +2644,8 @@
 
 
     .contentRight .rightMutantTable>tr>th, .contentRight .rightMutantTable>tr>td{
-        height: 33px;
+        height: 36px;
+        box-sizing: border-box;
         padding-top: 0;
         padding-bottom: 0;
         border-right: 1px solid #cccccc;
@@ -2607,6 +2654,7 @@
     /*TODO 下面内容很重要*/
     .contentRight .rightMutantTable.down>tr>td{
         white-space: nowrap;
+        position: relative;
         /*overflow: hidden;*/
         /*text-overflow: ellipsis;*/
         /*-moz-text-overflow: ellipsis;*/
@@ -2614,16 +2662,38 @@
 
 
     .contentRight .inside{
-        /*white-space: nowrap;*/
-        /*overflow: hidden;*/
-        /*text-overflow: ellipsis;*/
-        overflow-x: scroll;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        /*todo 单元格滚动显示 */
+        /*overflow-x: scroll;*/
     }
     .contentRight .mutantInput{
-        margin: 0 5px 0 3px;
+        display: block;
+        margin: 1px 0 0 3px;
         border: none;
         font-weight: bold;
         background: #eaffad;
+    }
+    .contentRight .mutantList .content .besideInput{
+        margin-top: 1px;
+        font-size: 14px;
+    }
+    .contentRight .mutantList .content .besideInput.down{
+        position: absolute;
+        bottom: 1px;
+        right: 7px;
+    }
+    .contentRight .mutantList .content .besideInput.icon-undo2{
+        display: none;
+    }
+    .contentRight .mutantList .content .besideInput.icon-undo2.mouseEnter{
+        color: black;
+        display: block;
+    }
+    .contentRight .mutantList .content .besideInput.icon-undo2.disabled{
+        display: none!important;
     }
     /*.contentRight .mutantInput:hover{*/
     /*    background: #09c762;*/
