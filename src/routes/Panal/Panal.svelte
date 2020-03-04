@@ -50,29 +50,32 @@
                                 </div>
                                 <br>
                                 <span>选择模板标题栏为输出excel样式</span>
-                                <table>
-                                    <tr>
-                                        <th class="templateName">模板名称</th>
-                                        <th class="excel">excel文件名</th>
-                                        <th class="sheet">sheet页名</th>
-                                        <th class="select">选择</th>
-                                    </tr>
-                                    {#each Object.keys(up_sheet_value_dict) as sheet_value}
-                                        {#each up_sheet_value_dict[sheet_value] as item, index}
-                                            <tr>
-                                                {#if index === 0}
-                                                    <td class="templateName" rowspan="{up_sheet_value_dict[sheet_value].length}">{sheet_value}</td>
-                                                {/if}
-                                                <td class="excel">{item.excel_name}</td>
-                                                <td class="sheet">{item.sheet_name}</td>
-                                                <td class="select">
-                                                    <button class="{item.status?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
-                                                            on:click={()=>handleSelectTemplate(sheet_value, index)}></button>
-                                                </td>
-                                            </tr>
+                                <div class="templateTableWrapper">
+                                    <table>
+                                        <tr>
+                                            <th class="templateName">模板名称</th>
+                                            <th class="excel">excel文件名</th>
+                                            <th class="sheet">sheet页名</th>
+                                            <th class="select">选择</th>
+                                        </tr>
+                                        {#each Object.keys(up_sheet_title_template_dict) as sheet_value}
+                                            {#each up_sheet_title_template_dict[sheet_value] as item, index}
+                                                <tr>
+                                                    {#if index === 0}
+                                                        <td class="templateName" rowspan="{up_sheet_title_template_dict[sheet_value].length}">{sheet_value}</td>
+                                                    {/if}
+                                                    <td class="excel">{item.excel_name}</td>
+                                                    <td class="sheet">{item.sheet_name}</td>
+                                                    <td class="select">
+                                                        <button class="{item.status?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
+                                                                on:click={()=>handleSelectTemplate(sheet_value, index)}></button>
+                                                    </td>
+                                                </tr>
+                                            {/each}
                                         {/each}
-                                    {/each}
-                                </table>
+                                    </table>
+                                </div>
+
                             </div>
                         </div>
                     {/if}
@@ -238,12 +241,16 @@
         })
     }
 
-    let dict = {DELETE: 'delete', DONE: 'done', PANAL: 'panal', NAME: 'name', FILE: 'file',
-    SHEETDICT: 'sheet_dict', UPSHEETNAMELIST: 'up_sheet_name_LIST', TARGET: 'target',
-    TMB: 'TMB', HEREDITARY: 'hereditary', QC: 'QC', qc: 'qc', STATUS: 'status', SKIP: 'skip', SAMPLEINFO: '样本信息',
-    TARGETCOUNT: 'targetCount', HEREDITARYCOUNT: 'hereditaryCount', TMBCOUNT: 'TMBCount',
-    DEPTH: 'Depth', EFFECTDEPTH: 'effectDepth', COVERAGE: 'coverage', EFFECTCOVERAGE500: 'effectCoverage500',
-    VALUE: 'value'}
+    let dict = {
+        DELETE: 'delete', DONE: 'done', PANAL: 'panal', NAME: 'name', FILE: 'file',
+        SHEETDICT: 'sheet_dict', UPSHEETNAMELIST: 'up_sheet_name_LIST', TARGET: 'target',
+        TMB: 'TMB', HEREDITARY: 'hereditary', QC: 'QC', qc: 'qc', STATUS: 'status', SKIP: 'skip', SAMPLE_INFO: 'sample_info',
+        TARGETCOUNT: 'targetCount', HEREDITARYCOUNT: 'hereditaryCount', TMBCOUNT: 'TMBCount',
+        DEPTH: 'Depth', EFFECTDEPTH: 'effectDepth', COVERAGE: 'coverage', EFFECTCOVERAGE500: 'effectCoverage500',
+        VALUE: 'value',
+        IMMUNE: "immune", TNB: "TNB", HLA: "HLA", FUSION: "fusion", CHEMICAL: "chemical", CNA: "CNA", MSI: "MSI",
+        CLINICAL_TRIALS: "clinicaltrials"
+    }
 
     let dictTranslate = {delete: '删除', done: '完成', panal: 'Panal'}
 
@@ -251,18 +258,40 @@
     let up_sheet_name_dict = {
         target: {value: dict.TARGET, skip: 1},
         靶向: {value: dict.TARGET, skip: 1},
-        TMB: {value: dict.TMB, skip: 1},
         hereditary: {value: dict.HEREDITARY, skip: 1},
         遗传: {value: dict.HEREDITARY, skip: 1},
+        TMB: {value: dict.TMB, skip: 1},
         QC: {value: dict.QC, skip: 0},
-        样本信息: {value: dict.SAMPLEINFO, skip: 1}
+        样本信息: {value: dict.SAMPLE_INFO, skip: 1},
+        immune: {value: dict.IMMUNE, skip: 1},
+        免疫: {value: dict.IMMUNE, skip: 1},
+        TNB: {value: dict.TNB, skip: 1},
+        HLA: {value: dict.HLA, skip: 1},
+        fusion: {value: dict.FUSION, skip: 1},
+        融合: {value: dict.FUSION, skip: 1},
+        chemical: {value: dict.CHEMICAL, skip: 1},
+        化疗: {value: dict.CHEMICAL, skip: 1},
+        CNA: {value: dict.CNA, skip: 1},
+        MSI: {value: dict.MSI, skip: 0},
+        clinicaltrials: {value: dict.CLINICAL_TRIALS, skip: 0}
     }
-    // 用于上传模板选择
-    let up_sheet_value_dict = {
+    // 用于上传标题模板选择, key需要和dict中一致，即和up_sheet_name_dict中的value一致
+    let up_sheet_title_template_dict = {
         target: [],
         hereditary: [],
-        TMB: []
+        TMB: [],
+        QC: [],
+        sample_info: [],
+        immune: [],
+        TNB: [],
+        HLA: [],
+        fusion: [],
+        chemical: [],
+        CNA: [],
+        MSI: [],
+        clinicaltrials: []
     }
+    let up_sheet_title_template_dict_ori = JSON.parse(JSON.stringify(up_sheet_title_template_dict))
 
     let panal_list = []
     let sample_list = []
@@ -609,11 +638,7 @@
         // up_sheet_value_dict重置
         file_list = []
         selected_file_list = []
-        up_sheet_value_dict = {
-            target: [],
-            hereditary: [],
-            TMB: []
-        }
+        up_sheet_title_template_dict = JSON.parse(JSON.stringify(up_sheet_title_template_dict_ori))
     }
     // 文件替换时候
     function load() {
@@ -624,12 +649,13 @@
 
         let name_dict = {}
         for (let file of filewidget.files) {
-            let sampleSn = fileUtil.getKey(file.name)
-            if (name_dict[sampleSn]) {
-                name_dict[sampleSn]++
+            let panalName = fileUtil.getKey(file.name)
+            if (name_dict[panalName]) {
+                name_dict[panalName]++
             }else{
-                name_dict[sampleSn] = 1
+                name_dict[panalName] = 1
             }
+
 
             let file_item = {}
             file_item[dict.NAME] = file.name
@@ -639,6 +665,7 @@
             file_list = [...file_list, file_item]
         }
 
+        // console.log('name_dict', name_dict)
 
         // name字典，按从大到小排列，逆序排列, 名字出现次数最多的作为上传panal的name
         let name_list = Object.keys(name_dict).map(function(key) {
@@ -660,6 +687,7 @@
             return __getJsonFromExcel(file)
         })
         // console.log("jsonGetPromiseArr", jsonGetPromiseArr)
+        // fileJson[0] 即file_list中的单个file
         Promise.all(jsonGetPromiseArr).then((fileJsonList)=>{
             for (let fileJson of fileJsonList) {
                 fileJson[0][dict.SHEETDICT] = fileJson[1]
@@ -667,9 +695,11 @@
             // console.log(file_list)
 
             for (let file of file_list) {
+                // 单个文件的所有"sheet表名称"列表
                 let sheet_name_list = Object.keys(file[dict.SHEETDICT])
 
                 // console.log(sheet_name_list)
+                // excel中真实存在的上传列表名
                 let up_sheet_name_list = []
                 for (let sheet_name of sheet_name_list) {
                     // 在全局上传字典up_sheet_name_dict中能找到，
@@ -698,27 +728,28 @@
             }
             // console.log(file_list)
 
-            // 制作template选择的数据
+            // 制作 "标题模板" 选择的数据
             for (let file of file_list) {
                 for (let sheet_name of file[dict.UPSHEETNAMELIST]) {
                     // console.log(file[dict.NAME], sheet_name[dict.NAME])
 
                     // 判断sheet页是否有内容，有内容就一定有标题栏
+                    // 但是，有标题不一定有内容哦！！！！
                     let num = file[dict.SHEETDICT][sheet_name[dict.NAME]].length
                     // console.log('$: if ', num)
                     if (num===0) continue
 
                     let value = up_sheet_name_dict[sheet_name[dict.NAME]][dict.VALUE]
-                    if (up_sheet_value_dict[value]) {
+                    if (up_sheet_title_template_dict[value]) {
                         // console.log('$: if', value)
                         // 第一项默认选中
-                        let status = up_sheet_value_dict[value].length===0?true:false
+                        let status = up_sheet_title_template_dict[value].length===0?true:false
                         let item = {
                             excel_name: file[dict.NAME],
                             sheet_name: sheet_name[dict.NAME],
                             status: status
                         }
-                        up_sheet_value_dict[value].push(item)
+                        up_sheet_title_template_dict[value].push(item)
                     }
                 }
             }
@@ -774,8 +805,8 @@
             file_dict[file[dict.NAME]] = file[dict.FILE]
         }
         let template_dict = {}
-        for (let type in up_sheet_value_dict){
-            for (let item of up_sheet_value_dict[type]){
+        for (let type in up_sheet_title_template_dict){
+            for (let item of up_sheet_title_template_dict[type]){
                 if (item.status){
                     template_dict[type] = {}
                     template_dict[type] = {excel: item.excel_name, sheet: item.sheet_name}
@@ -823,9 +854,9 @@
     }
     // 选择sheet作为模板
     function handleSelectTemplate(sheet_value, item_index){
-        if (up_sheet_value_dict[sheet_value][item_index] === true) return
+        if (up_sheet_title_template_dict[sheet_value][item_index] === true) return
 
-        up_sheet_value_dict[sheet_value].forEach((item, index)=>{
+        up_sheet_title_template_dict[sheet_value].forEach((item, index)=>{
             // console.log(item, index)
             if (item_index===index){
                 item[dict.STATUS] = true
@@ -834,7 +865,7 @@
             }
         })
 
-        up_sheet_value_dict = up_sheet_value_dict
+        up_sheet_title_template_dict = up_sheet_title_template_dict
         // console.log(up_sheet_value_dict)
     }
 
@@ -1062,10 +1093,21 @@
     }
     .uploadfile .excelDiv .excelContetWrapper{
         min-height: 105px;
+        max-height: 300px;
         border-bottom: 1px solid #cccccc;
+        overflow-x: hidden;
+        overflow-y: scroll;
+    }
+    .uploadfile .excelDiv .templateTableWrapper{
+        max-height: 150px;
+        overflow-x: hidden;
+        overflow-y: scroll;
+    }
+    .uploadfile .excelDiv table th, .uploadfile .excelDiv table td{
+        box-sizing: border-box;
     }
     .uploadfile .excelDiv table .excel{
-        width: 168px;
+        width: 160px;
     }
     .uploadfile .excelDiv table .sheet{
         width: 70px;
@@ -1083,6 +1125,9 @@
         height: 100%;
         text-align: center;
         border: none;
+    }
+    .uploadfile .excelDiv table .templateName{
+        width: 55px;
     }
 
 
