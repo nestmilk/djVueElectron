@@ -244,12 +244,12 @@
     let dict = {
         DELETE: 'delete', DONE: 'done', PANAL: 'panal', NAME: 'name', FILE: 'file',
         SHEETDICT: 'sheet_dict', UPSHEETNAMELIST: 'up_sheet_name_LIST', TARGET: 'target',
-        TMB: 'TMB', HEREDITARY: 'hereditary', QC: 'QC', qc: 'qc', STATUS: 'status', SKIP: 'skip', SAMPLE_INFO: 'sample_info',
+        TMB: 'TMB', HEREDITARY: 'hereditary', QC: 'QC', qc: 'qc', STATUS: 'status', SKIP: 'skip', SAMPLEINFO: 'sampleInfo',
         TARGETCOUNT: 'targetCount', HEREDITARYCOUNT: 'hereditaryCount', TMBCOUNT: 'TMBCount',
         DEPTH: 'Depth', EFFECTDEPTH: 'effectDepth', COVERAGE: 'coverage', EFFECTCOVERAGE500: 'effectCoverage500',
         VALUE: 'value',
         IMMUNE: "immune", TNB: "TNB", HLA: "HLA", FUSION: "fusion", CHEMICAL: "chemical", CNA: "CNA", MSI: "MSI",
-        CLINICAL_TRIALS: "clinicaltrials"
+        CLINICAL_TRIALS: "clinicaltrials", HRR: "HRR"
     }
 
     let dictTranslate = {delete: '删除', done: '完成', panal: 'Panal'}
@@ -262,7 +262,7 @@
         遗传: {value: dict.HEREDITARY, skip: 1},
         TMB: {value: dict.TMB, skip: 1},
         QC: {value: dict.QC, skip: 0},
-        样本信息: {value: dict.SAMPLE_INFO, skip: 1},
+        样本信息: {value: dict.SAMPLEINFO, skip: 1},
         immune: {value: dict.IMMUNE, skip: 1},
         免疫: {value: dict.IMMUNE, skip: 1},
         TNB: {value: dict.TNB, skip: 1},
@@ -273,7 +273,8 @@
         化疗: {value: dict.CHEMICAL, skip: 1},
         CNA: {value: dict.CNA, skip: 1},
         MSI: {value: dict.MSI, skip: 0},
-        clinicaltrials: {value: dict.CLINICAL_TRIALS, skip: 0}
+        clinicaltrials: {value: dict.CLINICAL_TRIALS, skip: 0},
+        HRR: {value: dict.HRR, skip: 0}
     }
     // 用于上传标题模板选择, key需要和dict中一致，即和up_sheet_name_dict中的value一致
     let up_sheet_title_template_dict = {
@@ -281,7 +282,7 @@
         hereditary: [],
         TMB: [],
         QC: [],
-        sample_info: [],
+        sampleInfo: [],
         immune: [],
         TNB: [],
         HLA: [],
@@ -289,7 +290,8 @@
         chemical: [],
         CNA: [],
         MSI: [],
-        clinicaltrials: []
+        clinicaltrials: [],
+        HRR: []
     }
     let up_sheet_title_template_dict_ori = JSON.parse(JSON.stringify(up_sheet_title_template_dict))
 
@@ -776,7 +778,7 @@
         let form = new FormData()
 
         // 添加panal名
-        console.log('upload file_name', name)
+        // console.log('upload file_name', name)
         form.append('name', file_name)
 
         // 添加excel文件，制作上传表名列表文件sheet_names
@@ -818,7 +820,7 @@
                 }
             }
         }
-        console.log('template_dict', template_dict)
+        // console.log('template_dict', template_dict)
         // 添加模板字典json
         form.append('template_dict', JSON.stringify(template_dict))
 
