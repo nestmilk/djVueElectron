@@ -489,7 +489,9 @@
         BLANK: 'blank', LOGSDISPLAY: 'logs_display', LOG: 'log', LOGFIELDDETAIL: 'log_field_details',
         COPY: 'copy', MUTANTS: 'mutants', TYPE: 'type', PATH: 'path', AVAILABLE_EDIT: 'availableEdit',
         NOWDISPLAY: "nowDisplay", SELECT_DISPLAY: "selectDisplay", DEFAULT_DISPLAY: "defaultDisplay",
-        TITLE: "title", TRANSLATE: "translate", TYPE: "type", FIELD_MOUSE_ENTER: "fieldMouseEnter"
+        TITLE: "title", TRANSLATE: "translate", TYPE: "type", FIELD_MOUSE_ENTER: "fieldMouseEnter",
+        SAMPLEINFO: 'sampleInfo', QC: 'QC', IMMUNE: "immune", TNB: "TNB", HLA: "HLA", FUSION: "fusion",
+        CHEMICAL: "chemical", CNA: "CNA", MSI: "MSI", CLINICAL_TRIALS: "clinicaltrials", HRR: "HRR"
     }
 
     // 数据下载后，创建mutant_submit_dict, 只有done和free状态
@@ -812,17 +814,17 @@
     // let socket = null
 
     // 设置class中的没法子的动态className
-    $: checkModifyFieldValueEqualClass = (mutant_id) => {
-        if (!mutant_submit_dict[mutant_id]) return ''
-
-        for (let field of [...all_modifyFieldLists[params.type], mutant_field_dict.DELETE]) {
-            if (mutant_submit_dict[mutant_id][field][dict.NOWVALUE] !==
-                    mutant_submit_dict[mutant_id][field][dict.PREVALUE]) {
-                return ''
-            }
-        }
-        return 'equal'
-    }
+    // $: checkModifyFieldValueEqualClass = (mutant_id) => {
+    //     if (!mutant_submit_dict[mutant_id]) return ''
+    //
+    //     for (let field of [...all_modifyFieldLists[params.type], mutant_field_dict.DELETE]) {
+    //         if (mutant_submit_dict[mutant_id][field][dict.NOWVALUE] !==
+    //                 mutant_submit_dict[mutant_id][field][dict.PREVALUE]) {
+    //             return ''
+    //         }
+    //     }
+    //     return 'equal'
+    // }
 
 
     async function test(e) {
@@ -876,7 +878,7 @@
             panal_unable_handle = response.data.done || response.data.delete ? true:false
 
             // 遍历获取新数组
-            selected_sampleIds_list = sample_list.map((value, index, array)=>{
+            selected_sampleIds_list = sample_list.map((value)=>{
                 return value.id})
 
         }).catch((error) => {
@@ -1871,6 +1873,8 @@
         // if (igvBrowser) {
         //     igvBrowser.removeAllTracks()
         // }
+        
+        bamAndBai_path_dict = {}
         if(settingsStore.get('ifIgvConnect')){
             ipcRenderer.send('remove-tracks')
         }

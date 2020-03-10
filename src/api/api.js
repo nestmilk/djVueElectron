@@ -12,7 +12,7 @@ export const userDetail = () => {return axios.get(`${host()}/users/123/`)}
 // 注册新用户
 export const register = params => {return axios.post(`${host()}/users/`, params)}
 // 获取panal列表
-export const panallist = params => {return axios.get(`${host()}/panals/`,{params: params})}
+export const listPanal = params => {return axios.get(`${host()}/panals/`,{params: params})}
 // 上传panal的excel表
 let config ={headers: {'Content-type': 'multipart/form-data'}}
 // let config = {headers: {'Content-type': '*/*'}}
@@ -23,6 +23,8 @@ export const updatePanal = (id, params) => {return axios.patch(`${host()}/panals
 export const retrievePanal = (id) => {return axios.get(`${host()}/panals/${id}/`)}
 // 获取sample的所有mutant信息
 export const retrieveSample = (id)=>{ return axios.get(`${host()}/samples/${id}/`)}
+// 获取sample的列表
+export const listSample = params => {return axios.get(`${host()}/samples/`, {params: params})}
 // 获取mutant列表
 export const mutantList = params => {return axios.get(`${host()}/mutants/`, {params: params})}
 // 修改mutant的值
@@ -31,3 +33,5 @@ export const updateMutant = (id, params) => {return axios.patch(`${host()}/mutan
 export const createExcel = (id, type) => {return axios.get(`${host()}/excel/${type}/${id}/`)}
 // 复制一条mutant
 export const copyMutant = (mutant_id, user_id) => {return axios.get(`${host()}/copy/${mutant_id}/${user_id}/`)}
+// 获取qc的列表
+export const listQC = params => {return axios.get(`${host()}/qcs/`, {params: params})}

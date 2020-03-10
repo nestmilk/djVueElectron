@@ -38,7 +38,6 @@ exports.igvExec = (msg, timestamp) => {
         if (error.message.includes("ConnectionRefusedError")){
             // 传递到main.js，在那里才有mainWindow发送信号去视窗
             ipcMain.emit('connect-igv-error','与igv通信失败，请重新打开igv！')
-
         }else{
             ipcMain.emit('connect-igv-error','请确保环境变量中已添加Python3！')
         }

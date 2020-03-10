@@ -89,13 +89,13 @@
                 </div>
                 <div class="filterWrapper">
                     <label>已删除</label>
-                    <span on:click={()=>handleFilter(dict.DELETE, true)} class={filterParams.delete===true||filterParams.delete===null?'icon-checkbox-checked ':'icon-checkbox-unchecked'}></span>
+                    <span on:click={()=>handlePanalFilter(dict.DELETE, true)} class={panalsFilterParams.delete===true||panalsFilterParams.delete===null?'icon-checkbox-checked ':'icon-checkbox-unchecked'}></span>
                     <label>未删除</label>
-                    <span on:click={()=>handleFilter(dict.DELETE, false)} class="{filterParams.delete===false||filterParams.delete===null?'icon-checkbox-checked ':'icon-checkbox-unchecked'}"></span>
+                    <span on:click={()=>handlePanalFilter(dict.DELETE, false)} class="{panalsFilterParams.delete===false||panalsFilterParams.delete===null?'icon-checkbox-checked ':'icon-checkbox-unchecked'}"></span>
                     <label>已完成</label>
-                    <span on:click={()=>handleFilter(dict.DONE, true)} class="{filterParams.done===true||filterParams.done===null?'icon-checkbox-checked ':'icon-checkbox-unchecked'}"></span>
+                    <span on:click={()=>handlePanalFilter(dict.DONE, true)} class="{panalsFilterParams.done===true||panalsFilterParams.done===null?'icon-checkbox-checked ':'icon-checkbox-unchecked'}"></span>
                     <label>未完成</label>
-                    <span on:click={()=>handleFilter(dict.DONE, false)} class="{filterParams.done===false||filterParams.done===null?'icon-checkbox-checked ':'icon-checkbox-unchecked'}"></span>
+                    <span on:click={()=>handlePanalFilter(dict.DONE, false)} class="{panalsFilterParams.done===false||panalsFilterParams.done===null?'icon-checkbox-checked ':'icon-checkbox-unchecked'}"></span>
                 </div>
                 <button on:click={test}>test</button>
             </div>
@@ -177,28 +177,28 @@
                         <th class="effectDepth">effectDepth</th>
                         <th class="coverage">coverage</th>
                         <th class="effectCoverage500">effectCoverage500</th>
-                        <th class="targetCount">靶向总数</th>
-                        <th class="hereditaryCount">遗传总数</th>
-                        <th class="tmbCount">TMB总数</th>
+<!--                        <th class="targetCount">靶向总数</th>-->
+<!--                        <th class="hereditaryCount">遗传总数</th>-->
+<!--                        <th class="tmbCount">TMB总数</th>-->
                     </tr>
                     {#each paged_sample_list as sample}
                         <tr>
                             <td class="sampleSn">{sample.sampleSn}</td>
-                            <td class="name">{sample.patient?sample.patient.name:'-'}</td>
-                            <td class="gender">{sample.patient?sample.patient.gender:'-'}</td>
-                            <td class="receiveTime">{sample.patient?sample.patient.receiveTime:'-'}</td>
-                            <td class="Depth">{sample[dict.qc]?sample[dict.qc][dict.DEPTH]:'-'}</td>
-                            <td class="effectDepth">{sample[dict.qc]?sample[dict.qc][dict.EFFECTDEPTH]:'-'}</td>
-                            <td class="coverage">{sample[dict.qc]?sample[dict.qc][dict.COVERAGE]:'-'}</td>
-                            <td class="effectCoverage500">{sample[dict.qc]?sample[dict.qc][dict.EFFECTCOVERAGE500]:'-'}</td>
-                            <td class="targetCount">{sample.targetCount}</td>
-                            <td class="hereditaryCount">{sample.hereditaryCount}</td>
-                            <td class="tmbCount">{sample.TMBCount}</td>
+                            <td class="name">{sample.name?sample.name:'-'}</td>
+                            <td class="gender">{sample.gender?sample.gender:'-'}</td>
+                            <td class="receiveTime">{sample.receiveTime?sample.receiveTime:'-'}</td>
+                            <td class="Depth">{sample[dict.QC]?sample[dict.QC][dict.DEPTH]:'-'}</td>
+                            <td class="effectDepth">{sample[dict.QC]?sample[dict.QC][dict.EFFECTDEPTH]:'-'}</td>
+                            <td class="coverage">{sample[dict.QC]?sample[dict.QC][dict.COVERAGE]:'-'}</td>
+                            <td class="effectCoverage500">{sample[dict.QC]?sample[dict.QC][dict.EFFECTCOVERAGE500]:'-'}</td>
+<!--                            <td class="targetCount">{sample.targetCount}</td>-->
+<!--                            <td class="hereditaryCount">{sample.hereditaryCount}</td>-->
+<!--                            <td class="tmbCount">{sample.TMBCount}</td>-->
                         </tr>
                     {/each}
                 </table>
                 <div class="rightPagewrapper">
-                    <Page2 page={currentPage} totalPage={totalPages} on:changePage={handleChangePage}></Page2>
+                    <Page2 page={currentPage} totalPage={total_pages_of_samples} on:changePage={handleChangePage}></Page2>
                 </div>
             </div>
         </div>
@@ -229,7 +229,7 @@
     import Page2 from '../../components/Page/Page2.svelte'
     import {onMount, createEventDispatcher} from 'svelte'
     import Page from "../../components/Page/Page.svelte";
-    import {getItemByIdandOperateAttr} from "../../utils/arrays";
+    import {arrayToDict, getItemByIdandOperateAttr} from "../../utils/arrays";
 
     const dispatch = createEventDispatcher()
     let excel2json = js2excel.excel2json
@@ -297,7 +297,9 @@
 
     let panal_list = []
     let sample_list = []
-    let mutant_list = []
+    let sample_dict = {}
+    let qc_list = []
+    // let mutant_list = []
     // let target_list = []
     // let hereditary_list = []
     // let tmb_list = []
@@ -416,23 +418,23 @@
     let num = 0
     let totalPagesofPanal = -1
     function setTotalPagesOfPanal () {
-        totalPagesofPanal = Math.ceil(num/filterParams.page_size)
+        totalPagesofPanal = Math.ceil(num/panalsFilterParams.page_size)
     }
 
 
     // 右侧sample的页面参数
     let currentPage = 1
     let pageNum = 20
-    let totalPages = -1
-    function setTotalPages () {
-        totalPages= Math.ceil(sample_list.length/pageNum)
+    let total_pages_of_samples = -1
+    function setTotalPagesOfSamples () {
+        total_pages_of_samples= Math.ceil(sample_list.length/pageNum)
     }
 
     let paged_sample_list = []
     function getPagedSampleList(){
         let start = (currentPage-1)*pageNum
         let end
-        if(currentPage===totalPages){
+        if(currentPage===total_pages_of_samples){
             end = sample_list.length
         }else{
             end = currentPage*pageNum
@@ -441,7 +443,7 @@
     }
 
 
-    let filterParams = {
+    let panalsFilterParams = {
         page: 1,
         page_size: 20,
         delete: false,
@@ -464,20 +466,22 @@
         // console.log(selected_file_list)
         // console.log(up_sheet_value_dict)
         // 使用Promise.all处理
-
+        // console.log(panal_list)
+        console.log(qc_list)
+        console.log(sample_list, sample_dict)
     }
 
-    async function handleFilter(field, selectedStatus) {
+    async function handlePanalFilter(field, selectedStatus) {
         console.log('handleFilter begin')
-        if (filterParams[field] === null) {
-            filterParams[field] = !selectedStatus
+        if (panalsFilterParams[field] === null) {
+            panalsFilterParams[field] = !selectedStatus
 
-            filterParams.page = 1
+            panalsFilterParams.page = 1
             await getPanalList()
-        } else if (filterParams[field] !== selectedStatus) {
-            filterParams[field] = null
+        } else if (panalsFilterParams[field] !== selectedStatus) {
+            panalsFilterParams[field] = null
 
-            filterParams.page = 1
+            panalsFilterParams.page = 1
             await getPanalList()
         }
     }
@@ -553,12 +557,12 @@
         if (success) {
             // console.log(num, filterParams.page_size, totalPagesofPanal)
             // TODO 此处如果删除不是null，即全部显示, 删除panal会缩小，如果刚好在末页需要重新定义page
-            if (filterParams.delete !== null &&
-                    num%filterParams.page_size===1 &&
-                    filterParams.page === totalPagesofPanal &&
+            if (panalsFilterParams.delete !== null &&
+                    num%panalsFilterParams.page_size===1 &&
+                    panalsFilterParams.page === totalPagesofPanal &&
                     totalPagesofPanal !== 1) {
                 totalPagesofPanal--
-                filterParams.page = totalPagesofPanal
+                panalsFilterParams.page = totalPagesofPanal
             }
 
             await getPanalList()
@@ -581,12 +585,12 @@
 
         if (success) {
             // TODO 此处如果完成是true，即全部显示, 撤销panal会缩小，如果刚好在末页需要重新定义page
-            if (filterParams.done === true &&
-                    num%filterParams.page_size===1 &&
-                    filterParams.page === totalPagesofPanal &&
+            if (panalsFilterParams.done === true &&
+                    num%panalsFilterParams.page_size===1 &&
+                    panalsFilterParams.page === totalPagesofPanal &&
                     totalPagesofPanal !== 1) {
                 totalPagesofPanal--
-                filterParams.page = totalPagesofPanal
+                panalsFilterParams.page = totalPagesofPanal
             }
             await getPanalList()
         }
@@ -596,9 +600,9 @@
 
     async function handlePage(i) {
         console.log("handlePage " + totalPagesofPanal )
-        let p = filterParams.page + i
+        let p = panalsFilterParams.page + i
         if (p>totalPagesofPanal || p<1) return
-        filterParams.page = p
+        panalsFilterParams.page = p
         await getPanalList()
     }
 
@@ -837,7 +841,7 @@
         if (success) {
             __resetFileRelated()
             // 置换首页
-            filterParams.page = 1
+            panalsFilterParams.page = 1
             await getPanalList()
         }
 
@@ -880,7 +884,7 @@
 
         let success = false
 
-        await api.panallist(filterParams).then((response) => {
+        await api.listPanal(panalsFilterParams).then((response) => {
             // console.log(response.data)
             panal_list = response.data.results
             num = response.data.count
@@ -908,62 +912,108 @@
     }
 
     // 给sample_list添加每个sample的突变总数
-    function buildTotalMutsforSampleandSetTotalPages(){
-        // 修改总页数
-        setTotalPages()
+    // function buildTotalMutsforSampleandSetTotalPages(){
+    //
+    //     for (let sample of sample_list) {
+    //         sample[dict.TARGETCOUNT] = 0
+    //         sample[dict.HEREDITARYCOUNT] = 0
+    //         sample[dict.TMBCOUNT] = 0
+    //     }
+    //     for (let mutant of mutant_list) {
+    //         // 给sample添加突变总数
+    //         if (mutant.type === dict.TARGET){
+    //             let value  = getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.TARGETCOUNT], 'get')
+    //             getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.TARGETCOUNT], 'modify', value+1)
+    //             continue
+    //         }
+    //         if (mutant.type === dict.HEREDITARY) {
+    //             let value  = getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.HEREDITARYCOUNT], 'get')
+    //             getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.HEREDITARYCOUNT], 'modify', value+1)
+    //             continue
+    //         }
+    //         if (mutant.type === dict.TMB) {
+    //             let value = getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.TMBCOUNT], 'get')
+    //             getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.TMBCOUNT], 'modify', value + 1)
+    //             continue
+    //         }
+    //
+    //     }
+    //     sample_list = sample_list
+    // }
 
-        for (let sample of sample_list) {
-            sample[dict.TARGETCOUNT] = 0
-            sample[dict.HEREDITARYCOUNT] = 0
-            sample[dict.TMBCOUNT] = 0
-        }
-        for (let mutant of mutant_list) {
-            // 给sample添加突变总数
-            if (mutant.type === dict.TARGET){
-                let value  = getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.TARGETCOUNT], 'get')
-                getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.TARGETCOUNT], 'modify', value+1)
-                continue
-            }
-            if (mutant.type === dict.HEREDITARY) {
-                let value  = getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.HEREDITARYCOUNT], 'get')
-                getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.HEREDITARYCOUNT], 'modify', value+1)
-                continue
-            }
-            if (mutant.type === dict.TMB) {
-                let value = getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.TMBCOUNT], 'get')
-                getItemByIdandOperateAttr(sample_list, mutant.sample, [dict.TMBCOUNT], 'modify', value + 1)
-                continue
-            }
 
-        }
-        sample_list = sample_list
+    function __setsampleListQC(){
+        qc_list.forEach(qc=>{
+            sample_dict[qc.sample][dict.QC] = qc
+        })
     }
 
     async function getSamplesList() {
         loadingShow = true
 
-        let success = false
+        let sample_success = false
+        let qc_success = false
         console.log("getSamplesList: " + current_panal_id)
         if (current_panal_id !== -1) {
-            await api.retrievePanal(current_panal_id).then((response) => {
-                sample_list = response.data.samples
-                // console.log(sample_list)
-                mutant_list = response.data.mutants
-                // target_list = response.data.target
-                // hereditary_list = response.data.hereditary
-                // tmb_list = response.data.tmb
-                success = true
-            }).catch((error) => {
-                console.error('getSampleList', error)
+            // page_size写的较大，获取全部样本信息
+            await api.listSample({
+                panalId: current_panal_id,
+                page_size: 1000
+            }).then(response=>{
+                // console.log('listSample: ', response.data)
+                sample_list = response.data.results
+                sample_dict = arrayToDict(sample_list, "id")
+                sample_success = true
+            }).catch(error=>{
+                console.error('getSampleList api.listSample', error)
                 if (error.data) {
                     errors.detail = error.data.detail ? error.data.detail : ''
                 }
             })
+
+            await api.listQC({
+                panalId: current_panal_id,
+                page_size: 1000
+            }).then(response=>{
+                // console.log('listSample: ', response.data)
+                qc_list = response.data.results
+                qc_success = true
+            }).catch(error=>{
+                console.error('getSampleList api.listSample', error)
+                if (error.data) {
+                    errors.detail = error.data.detail ? error.data.detail : ''
+                }
+            })
+
+            // await api.retrievePanal(current_panal_id).then((response) => {
+            //     sample_list = response.data.samples
+            //     // console.log('sample_list', sample_list)
+            //
+            //     sample_dict = arrayToDict(sample_list, "id")
+            //     // console.log('sample_dict', sample_dict)
+            //     qc_list = response.data.qcs
+            //     // console.log(sample_list)
+            //     // mutant_list = response.data.mutants
+            //     // target_list = response.data.target
+            //     // hereditary_list = response.data.hereditary
+            //     // tmb_list = response.data.tmb
+            //     success = true
+            // }).catch((error) => {
+            //     console.error('getSampleList', error)
+            //     if (error.data) {
+            //         errors.detail = error.data.detail ? error.data.detail : ''
+            //     }
+            // })
         }
 
-        if (success) {
+        if (sample_success && qc_success) {
             getPagedSampleList()
-            buildTotalMutsforSampleandSetTotalPages()
+            // 修改总页数
+            setTotalPagesOfSamples()
+
+            __setsampleListQC()
+
+            // buildTotalMutsforSampleandSetTotalPages()
             setTotalPagesOfPanal()
         }
 

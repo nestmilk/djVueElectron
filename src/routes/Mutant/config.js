@@ -592,7 +592,7 @@ export const mutantDisplayConfigList = [
         },
         defaultDisplay: {
             target: false,
-            hereditary: false,
+            hereditary: true,
             TMB: false
         },
         selectDisplay: {
