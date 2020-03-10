@@ -7,19 +7,29 @@
     <LeftMenus active="Panal信息"></LeftMenus>
     <div class="midRight">
         <div class="subMenu">
-            <button class="submenuBtn {params.type===dict.TARGET?'selectedSubMenu':''}"
-                    on:click={()=>handleSelectSubmenu(dict.TARGET)}>
-                靶向突变
-            </button>
-            <button class="submenuBtn {params.type===dict.HEREDITARY?'selectedSubMenu':''}"
-                    on:click={()=>handleSelectSubmenu(dict.HEREDITARY)}>
-                遗传突变
-            </button>
-            <button class="submenuBtn {params.type===dict.TMB?'selectedSubMenu':''}"
-                    on:click={()=>handleSelectSubmenu(dict.TMB)}>
-                TMB突变
-            </button>
-            <button class='test' on:click={test}>test</button>
+            <div class="subMenuWrapper">
+                {#each submenu_list as submenu}
+                    <button class="submenuBtn {params.type===submenu?'selectedSubMenu':''}"
+                            on:click={()=>handleSelectSubmenu(submenu)}>
+                        {submenu_translate_dict[submenu][dict.SUBMENU_TRANSLATE]}
+                    </button>
+                {/each}
+                <button class='test' on:click={test}>test</button>
+            </div>
+
+<!--            <button class="submenuBtn {params.type===dict.TARGET?'selectedSubMenu':''}"-->
+<!--                    on:click={()=>handleSelectSubmenu(dict.TARGET)}>-->
+<!--                靶向突变-->
+<!--            </button>-->
+<!--            <button class="submenuBtn {params.type===dict.HEREDITARY?'selectedSubMenu':''}"-->
+<!--                    on:click={()=>handleSelectSubmenu(dict.HEREDITARY)}>-->
+<!--                遗传突变-->
+<!--            </button>-->
+<!--            <button class="submenuBtn {params.type===dict.TMB?'selectedSubMenu':''}"-->
+<!--                    on:click={()=>handleSelectSubmenu(dict.TMB)}>-->
+<!--                TMB突变-->
+<!--            </button>-->
+
         </div>
         <div class="middleContent">
             <div class="navLeft">
@@ -477,6 +487,7 @@
     const dispatch = createEventDispatcher()
 
     import {mutantDisplayConfigList} from './config'
+    import {sheetDisplayConfigList} from './config1'
 
 
     let dict = {BAM: 'bam', BAI: 'bai', TARGET: 'target', HEREDITARY: 'hereditary', TMB: 'TMB', tmb: 'tmb',
@@ -491,8 +502,14 @@
         NOWDISPLAY: "nowDisplay", SELECT_DISPLAY: "selectDisplay", DEFAULT_DISPLAY: "defaultDisplay",
         TITLE: "title", TRANSLATE: "translate", TYPE: "type", FIELD_MOUSE_ENTER: "fieldMouseEnter",
         SAMPLEINFO: 'sampleInfo', QC: 'QC', IMMUNE: "immune", TNB: "TNB", HLA: "HLA", FUSION: "fusion",
-        CHEMICAL: "chemical", CNA: "CNA", MSI: "MSI", CLINICAL_TRIALS: "clinicaltrials", HRR: "HRR"
+        CHEMICAL: "chemical", CNA: "CNA", MSI: "MSI", CLINICAL_TRIALS: "clinicaltrials", HRR: "HRR",
+        SAMPLEINFO_IN_PANAL: "sampleInfoInPanal", SUBMENU_TRANSLATE: "submenu_translate",
+        SHEET: 'sheet', TITLE_LIST: 'title_list', ONLY_DEFAULT_FIELD_OPEND: 'onlyDefaultFieldsOpened',
+        ALL_FIELD_DISPLAY_LIST: "all_FieldDisplayList", TITLE_DICT: 'title_dict',
+        ALL_SELECT_FIELD_DISPLAY_LIST: "all_selectFieldDisplayList", ALL_MODIFY_FIelD_LISt: "all_modifyFieldLists",
     }
+
+
 
     // 数据下载后，创建mutant_submit_dict, 只有done和free状态
     // 修改数据后，状态改为checked， deleted，edited
@@ -743,6 +760,51 @@
         }
     }
 
+    // 导航栏
+    let submenu_list = sheetDisplayConfigList.map(item=>item.sheet)
+    let submenu_translate_dict = arrayToDict(sheetDisplayConfigList, 'sheet')
+
+    // 标题栏相关参数（所有表）
+    let sheetDispConfList = JSON.parse(JSON.stringify(
+        sheetDisplayConfigList.map(sheet=>{
+            sheet[dict.TITLE_LIST].map(item=>{
+                item[dict.NOWDISPLAY] = item[dict.DEFAULT_DISPLAY]
+                return item
+            })
+            // 默认标题是否打开的状态
+            sheet[dict.ONLY_DEFAULT_FIELD_OPEND] = true
+            // 固定、默认、选择，即所有title名列表
+            sheet[dict.ALL_FIELD_DISPLAY_LIST] = sheet[dict.TITLE_LIST].map(item=> {
+                return {
+                    title: item[dict.TITLE],
+                    translate: item[dict.TRANSLATE]
+                }
+            })
+            // 用于生成selectDisplayDiv中的选择项
+            sheet[dict.ALL_SELECT_FIELD_DISPLAY_LIST] = sheet[dict.TITLE_LIST].reduce((list, item)=>{
+                if (item.selectDisplay){
+                    list.push({
+                        title: item.title,
+                        translate: item.translate
+                    })
+                }
+                return list
+            }, [])
+            // 用于生成mutant_submit_dict中前、后值
+            sheet[dict.ALL_MODIFY_FIelD_LISt] = sheet[dict.TITLE_LIST].reduce((list, item)=>{
+                if (item[dict.MODIFY]) list.push(item.title)
+                return list
+            }, [])
+
+            return sheet
+        })
+    ))
+    // 添加一份title_list的字典，便于访问
+    for (let sheet of sheetDispConfList){
+        sheet[dict.TITLE_DICT] = arrayToDict(sheet[dict.TITLE_LIST], 'title')
+    }
+    let sheetDispConfDict = arrayToDict(sheetDispConfList, "sheet")
+
 
     // 标题栏相关参数
     let mutantDispConfList = JSON.parse(JSON.stringify(mutantDisplayConfigList.map(item=>{
@@ -837,7 +899,7 @@
         // console.log(sampleSn_inTrack_list)
         // console.log(params.type)
         // console.log(typeof now_mutant_id)
-        console.log(mutant_list)
+        // console.log(mutant_list)
         // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
         // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
         // console.log(mutant_submit_dict)
@@ -855,6 +917,10 @@
         // console.log(allFieldDisplayList, allFieldDisplayList.length, mutantDispConfList.length)
         // console.log(all_modifyFieldLists[params.type])
         // console.log(JSON.stringify(mutantDispConfList.map(item=>item.title)))
+        // console.log(submenu_translate_dict, submenu_list)
+        // 查看sheetDispConfDict和sheetDispConfList中title_dict和title_list对应是否都修改了！！
+        // sheetDispConfDict['target'][dict.TITLE_DICT]['NM_ID'][dict.NOWDISPLAY] = true
+        console.log(sheetDispConfList, sheetDispConfDict)
     }
 
     function stopPropagation(event){
@@ -2274,13 +2340,20 @@
     }
 
     .midRight{
+        /* todo 这里必须填写 width: 0;，不然下面submenu无法左右移动了 */
+        width: 0;
         flex: 1;
-        flex-flow: column;
         display: flex;
+        flex-flow: column;
     }
     .subMenu{
-        flex: 0 0 35px;
+        flex: 0 0 55px;
         border-bottom: 1px solid black;
+        overflow-x: scroll;
+        overflow-y: hidden;
+    }
+    .subMenu .subMenuWrapper{
+        min-width: 1500px;
     }
     .subMenu .test{
         padding: 0;
@@ -2295,10 +2368,10 @@
     .subMenu .submenuBtn{
         margin: 5px 3px;
         padding: 0;
-        width: 80px;
+        width: 85px;
         height: 26px;
         line-height: 26px;
-        font-size: 16px;
+        font-size: 15px;
         color: white;
         text-align: center;
         background: orange;
