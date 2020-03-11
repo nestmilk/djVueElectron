@@ -488,7 +488,7 @@
 
     function handleEnter(panal_id){
         // console.log(panal_id)
-        push(`/target/${panal_id}`)
+        push(`/sampleInfoInPanal/${panal_id}`)
     }
 
     async function changePanal(panal_id) {

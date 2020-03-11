@@ -1,0 +1,3406 @@
+<!--<Header></Header>-->
+
+<div class="middle"
+     on:mouseup={handleMiddleMouseUp}
+     on:mousemove={handleMiddleMouseMove}
+>
+    <LeftMenus active="Panal信息"></LeftMenus>
+    <div class="midRight">
+        <div class="subMenu">
+            <div class="subMenuWrapper">
+                {#each submenu_list as submenu}
+                    <button class="submenuBtn {params.type===submenu?'selectedSubMenu':''}"
+                            on:click={()=>handleSelectSubmenu(submenu)}>
+                        {submenu_translate_dict[submenu][dict.SUBMENU_TRANSLATE]}
+                    </button>
+                {/each}
+                <button class='test' on:click={test}>test</button>
+            </div>
+
+<!--            <button class="submenuBtn {params.type===dict.TARGET?'selectedSubMenu':''}"-->
+<!--                    on:click={()=>handleSelectSubmenu(dict.TARGET)}>-->
+<!--                靶向突变-->
+<!--            </button>-->
+<!--            <button class="submenuBtn {params.type===dict.HEREDITARY?'selectedSubMenu':''}"-->
+<!--                    on:click={()=>handleSelectSubmenu(dict.HEREDITARY)}>-->
+<!--                遗传突变-->
+<!--            </button>-->
+<!--            <button class="submenuBtn {params.type===dict.TMB?'selectedSubMenu':''}"-->
+<!--                    on:click={()=>handleSelectSubmenu(dict.TMB)}>-->
+<!--                TMB突变-->
+<!--            </button>-->
+
+        </div>
+        <div class="middleContent">
+            <div class="navLeft">
+                <div class="divider"
+                     on:mousedown={handleDividerMouseDown}
+                ></div>
+                <div class="leftMessage">
+                    提示：{errors.detail}
+                </div>
+                <div class="leftTopWrapper">
+                    <table class="sampleTable">
+                        <tr>
+                            <th class="sampleSn">样本名称</th>
+                            <th class="total">条目总数</th>
+                            <th class="submitedAndAffirmed">已提已审</th>
+                            <th class="unsubmitedAndAffirmed">未提已审</th>
+                            <th class="unsubmitedAndUnaffirmed">未提未审</th>
+                            <th class="tick">
+                                <button class="selectALL" on:click={handleSelectAllSample}>
+                                    {selected_sampleIds_list.length === sample_list.length? '取消':'全选'}
+                                </button>
+                            </th>
+                        </tr>
+                    </table>
+                    <div class="tableContent">
+                        <table class="sampleTable ">
+                            {#each sample_list as sample}
+                                <tr on:click={()=>handleSelectSample(sample.id)}>
+                                    <td class="sampleSn">{sample.sampleSn}</td>
+                                    <td class="total">{sample_record_dict[sample.id]?sample_record_dict[sample.id][dict.ALLMUT]:''}</td>
+                                    <td class="submitedAndAffirmed">{sample_record_dict[sample.id]?sample_record_dict[sample.id][dict.S_AMUT]:''}</td>
+                                    <td class="unsubmitedAndAffirmed">{sample_record_dict[sample.id]?sample_record_dict[sample.id][dict.US_AMUT]:''}</td>
+                                    <td class="unsubmitedAndUnaffirmed">{sample_record_dict[sample.id]?sample_record_dict[sample.id][dict.US_UAMUT]:''}</td>
+                                    <td class="tick">
+                                        <span class="{selected_sampleIds_list.indexOf(sample.id)>-1?'icon-checkbox-checked':
+                                        'icon-checkbox-unchecked'}"></span>
+                                    </td>
+                                </tr>
+                            {/each}
+                        </table>
+                    </div>
+                </div>
+                <div class="leftTopMidWrapper">
+                    <div class="messageWrapper">
+                        <div class="title">
+                            {totalSubmitAndAffirmed}条已提交，{totalUnsubmitAndAffirmed}条待提交，{totalUnsubmitAndUnaffirmed}条待审核
+                        </div>
+                        <div class="uploadButtomWrapper">
+                            <div class="uploadMessage" bind:this={uploadMessageDiv}>
+                                {#each upload_message_list as message}
+                                    {message}<br>
+                                {/each}
+                            </div>
+                            <div class="uploadBnWrapper">
+                                <button class="icon-cloud-upload {panal_unable_handle || totalUnsubmitAndAffirmed === 0?'disabled':''}"
+                                        disabled="{panal_unable_handle || totalUnsubmitAndAffirmed === 0?'disabled':''}"
+                                        on:click={()=>uploadAffirmedMutant()}>&nbsp;提交</button>
+                                <button class="icon-file-excel {totalUnsubmitAndUnaffirmed !== 0 || totalUnsubmitAndAffirmed !== 0 || panal_unable_handle ?'disabled':''}"
+                                        disabled="{totalUnsubmitAndUnaffirmed !== 0 || totalUnsubmitAndAffirmed !== 0 || panal_unable_handle ?'disabled':''}"
+                                        on:click={()=>checkNOUS_AandUS_UAandCreateOutput()}>&nbsp;建表</button>
+                                <button class="icon-download {excel_url?'':'disabled'}"
+                                        disabled="{excel_url?'':'disabled'}"
+                                        on:click={()=>download()}>&nbsp;下载</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="leftMidWrapper">
+                    <div class="selectFile">
+                        <input class="fileInput" id="fileWidget" type="file"
+                               multiple="true" accept=".bam,.bai" on:change={()=>loadFiles()}/>
+                        共{sampleSn_inTrack_list.length}对Bam/Bai文件
+                        <button class="clear" on:click={()=>clearTracks()}>取消</button>
+                    </div>
+                    <div class="fileList">
+                        {#each sampleSn_inTrack_list as sampleSn}
+                            <div class="sampleSn">{sampleSn}</div>
+                        {/each}
+                    </div>
+                </div>
+
+                <div class="leftButtomWrapper">
+<!--                    <button class="copy" on:click={()=>handleEventForSure(model_dict.MUTANT, dict.COPY)}>复制突变</button>-->
+                </div>
+            </div>
+            <div class="contentRight">
+                <div class="editBigInputWrapper">
+                    <span class="abstract">
+                        {#if now_input_mutant_id && now_input_field}
+                            {#if mutant_list.every(mutant=>mutant.id!==now_input_mutant_id)}
+                                突变项不在当前页
+                            {:else}
+                                突变"{now_input_mutant_id}"，标题"{mutantDispConfDict[now_input_field]?mutantDispConfDict[now_input_field][dict.TRANSLATE]:""}"：
+                            {/if}
+                        {:else}
+                            无编辑单元
+                        {/if}
+                    </span>
+                    <input class="bigInput"
+                        value={now_input_field && now_input_mutant_id?mutant_submit_dict[now_input_mutant_id][now_input_field][dict.NOWVALUE]:''}
+                            disabled="{panal_unable_handle?'disabled':
+                                (mutant_submit_dict[now_input_mutant_id]?
+                                (mutant_submit_dict[now_input_mutant_id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                (mutant_submit_dict[now_input_mutant_id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[now_input_mutant_id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':
+                                (mutant_list.every(mutant=>mutant.id!==now_input_mutant_id)?'disabled':
+                                (mutant_list.find(mutant=>mutant.id===now_input_mutant_id)[dict.AVAILABLE_EDIT]?'':'disabled')))):'')}"
+                        on:change={handleValueChangeInBigInput}
+                    />
+                </div>
+                <div class="mutantList">
+
+                    <div class="selectFieldsDiv"
+                         bind:this={selectFields}
+                         on:mouseleave={closeSelectFieldDiv}
+                    >
+                        <div class="firstDefaultTitle selectFieldItem"
+                             on:click={toggleDefaultFiledsOpen}
+                        >
+                            <span>恢复默认标题栏</span>
+                            <span class="checkBox icon-undo2 {!all_onlyDefaultFieldsOpened[params.type]?'active':''}"></span>
+                        </div>
+                        {#if  all_selectFieldDisplayList[params.type].length > 0}
+                            <div class="contentWrapper">
+                                {#each all_selectFieldDisplayList[params.type] as field }
+                                    <div class="selectFieldItem"
+                                         on:click={()=>toggleSelectFieldOpen(field.title)}
+                                    >
+                                        <span>{field.title + "(" + field.translate + ")"}</span>
+                                        <span class="checkBox {mutantDispConfDict[field.title][dict.NOWDISPLAY][params.type]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"></span>
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
+<!--                        <div class="closeWrapper">-->
+<!--                            <button on:click={closeSelectFieldDiv}>关闭</button>-->
+<!--                        </div>-->
+                    </div>
+
+                    <div class="topInsideWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)}>
+                        <table class="up rightMutantTable">
+                            <tr>
+                                <th class="logs fieldTitle" data-title="sampleSn"
+                                    on:click={()=>handleSubmenuFilter(dict.LOG)}>
+                                    {log_status_list[log_status_selected_index].content}
+                                </th>
+                                <th class="done fieldTitle" data-title="sampleSn"
+                                    on:click={()=>handleSubmenuFilter(mutant_status_dict.DONE)}>
+                                    {done_status_list[done_status_selected_index].content}
+                                </th>
+                                <th class="affirmed fieldTitle" data-title="sampleSn">确定审核</th>
+<!--                                <th class="recover fieldTitle" data-title="sampleSn">修改恢复</th>-->
+                                <th class="delete fieldTitle" data-title="sampleSn">删除此行</th>
+
+                                {#each allFieldDisplayList as title}
+                                    {#if mutantDispConfDict[title][dict.NOWDISPLAY][params.type]}
+                                        {#if title=== 'sampleSn'}
+                                            <th class="sampleSn fieldTitle" data-title="sampleSn"
+                                                on:click={()=>handleOrderEVENT(dict.SAMPLEID2UNDERLINE)}>{mutantDispConfDict[title].translate}
+                                                <div class="icon-sort-amount-asc {order_query_dict[dict.SAMPLEID2UNDERLINE][sampleId_status_selected_index].status !== dict.SAMPLEID2UNDERLINE?
+                                            'gray':''}"></div>
+                                            </th>
+                                        {:else if title==="chr"}
+                                            <th class="chr fieldTitle" data-title="chr"
+                                                on:click={()=>handleOrderEVENT(dict.CHR)}>{mutantDispConfDict[title].translate}
+                                                <div class="icon-sort-amount-asc {order_query_dict[dict.CHR][chr_status_selected_index].status !== dict.CHR?
+                                            'gray':''}"></div>
+                                            </th>
+                                        {:else if title==="posStart"}
+                                            <th class="posStart fieldTitle" data-title="posStart"
+                                                on:click={()=>handleOrderEVENT(dict.POSSTART)}>{mutantDispConfDict[title].translate}
+                                                <div class="icon-sort-amount-asc {order_query_dict[dict.POSSTART][posStart_status_selected_index].status !== dict.POSSTART?
+                                            'gray':''}"></div>
+                                            </th>
+                                        {:else if title==="posEnd"}
+                                            <th class="posEnd fieldTitle" data-title="posEnd"
+                                                on:click={()=>handleOrderEVENT(dict.POSEND)}>{mutantDispConfDict[title].translate}
+                                                <div class="icon-sort-amount-asc {order_query_dict[dict.POSEND][posEnd_status_selected_index].status !== dict.POSEND?
+                                            'gray':''}"></div>
+                                            </th>
+                                        {:else if title==="exonicfuncRefgene"}
+                                            <th class="exonicfuncRefgene fieldTitle" data-title="exonicfuncRefgene">
+                                                <select bind:this={exonicfuncRefgeneSelection}
+                                                        on:change="{(e) => changeMutantParamExonicfuncRefgene(e.target.value)}"
+                                                        class="inside"
+                                                >
+                                                    {#each all_exonicfuncRefgene_type_list[params.type] as type}
+                                                        <option value={type.value}>
+                                                            {type.name}
+                                                        </option>
+                                                    {/each}
+                                                </select>
+                                            </th>
+                                        {:else}
+                                            <th class="{title} fieldTitle" data-title="{title}">
+                                                {mutantDispConfDict[title].translate}
+                                            </th>
+                                        {/if}
+                                    {/if}
+                                {/each}
+<!--                                <th class="ref">参考序列</th>-->
+<!--                                <th class="alt">突变序列</th>-->
+<!--                                <th class="freq">频率</th>-->
+<!--                                <th class="projectAbbreviation">项目简称</th>-->
+<!--                                <th class="hgvs">hgvs命名</th>-->
+<!--                                <th class="geneVar">位点解析</th>-->
+<!--                                <th class="clinsig">突变分类</th>-->
+<!--                                <th class="intervarAutomated">突变分类2</th>-->
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="insideWrapper" bind:this={insideScroll} on:scroll={()=>handleScroll(dict.INSIDESCROLL)}>
+                        <table class="down rightMutantTable">
+                            {#each mutant_list as mutant, index (mutant.id)}
+                                <tr class="mutantItem
+                                    {now_mutant_id===mutant.id?'current':''}
+                                    {mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][dict.STATUS]:''}
+                                    {mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE]?
+                                    'trueDelete':''):''}"
+                                    on:click|stopPropagation={(e)=>handleChangeCurrentMutantId(mutant.id, mutant.sample, e)}
+                                    data-mutantId="{mutant.id}"
+                                    data-sampleId="{mutant.sample}"
+                                >
+                                    <td class="logs">
+                                        <button class="{mutant.copy?'icon-copy':(mutant.logs.length!==0?'icon-calendar':'icon-info')}"
+                                            disabled="{mutant.logs.length==0?'disabled':''}"
+                                            on:click={()=>handleLogsDisplay(mutant.id)}></button>
+                                        {#if mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][dict.LOGSDISPLAY]:false }
+                                            <div class="logsWrapper">
+                                                <table class="logTable">
+                                                    <tr>
+                                                        <th class="editTime">修改时间</th>
+                                                        <th class="editer">操作人员</th>
+                                                        <th class="done">完成</th>
+                                                        <th class="delete">删除</th>
+                                                        <th class="posStart">起始位置</th>
+                                                        <th class="posEnd">终止位置</th>
+                                                        <th class="ref">参考序列</th>
+                                                        <th class="alt">突变序列</th>
+                                                        <th class="reason_type">修改原因</th>
+                                                        <th class="submit_type">操作类型</th>
+                                                    </tr>
+                                                </table>
+                                                <div class="logTableWraper">
+                                                    <table class="logTable">
+                                                        {#each mutant_list[index].logs as log}
+                                                            <tr>
+                                                                <td class="editTime">{log.add_time}</td>
+                                                                <td class="editer">{log.editor.username}</td>
+                                                                <td class="done" title="修改前：{log[dict.LOGFIELDDETAIL][mutant_field_dict.DONE][dict.PREVALUE]}">
+                                                                    {log[dict.LOGFIELDDETAIL][mutant_field_dict.DONE][dict.NOWVALUE]==="True"?'是':'否'}
+                                                                </td>
+                                                                <td class="delete" title="修改前：{log[dict.LOGFIELDDETAIL][mutant_field_dict.DELETE][dict.PREVALUE]}">
+                                                                    {log[dict.LOGFIELDDETAIL][mutant_field_dict.DELETE][dict.NOWVALUE]===''?'':(log[dict.LOGFIELDDETAIL][mutant_field_dict.DELETE][dict.NOWVALUE]==="True"?'是':'否')}
+                                                                </td>
+                                                                <td class="posStart" title="修改前：{log[dict.LOGFIELDDETAIL][mutant_field_dict.POSSTART][dict.PREVALUE]}">
+                                                                    {log[dict.LOGFIELDDETAIL][mutant_field_dict.POSSTART][dict.NOWVALUE]}
+                                                                </td>
+                                                                <td class="posEnd" title="修改前：{log[dict.LOGFIELDDETAIL][mutant_field_dict.POSEND][dict.PREVALUE]}">
+                                                                    {log[dict.LOGFIELDDETAIL][mutant_field_dict.POSEND][dict.NOWVALUE]}
+                                                                </td>
+                                                                <td class="ref" title="修改前：{log[dict.LOGFIELDDETAIL][mutant_field_dict.REF][dict.PREVALUE]}">
+                                                                    {log[dict.LOGFIELDDETAIL][mutant_field_dict.REF][dict.NOWVALUE]}
+                                                                </td>
+                                                                <td class="alt" title="修改前：{log[dict.LOGFIELDDETAIL][mutant_field_dict.ALT][dict.PREVALUE]}">
+                                                                    {log[dict.LOGFIELDDETAIL][mutant_field_dict.ALT][dict.NOWVALUE]}
+                                                                </td>
+                                                                <td class="reason_type" title="{log.reason_desc}">{log_reason_type_dict[log.reason_type]?log_reason_type_dict[log.reason_type]:''}</td>
+                                                                <td class="submit_type">{log_submit_type_dict[log.submit_type]?log_submit_type_dict[log.submit_type]:''}</td>
+                                                            </tr>
+                                                        {/each}
+                                                    </table>
+                                                </div>
+                                                <div class="bnWrapper">
+                                                    <button on:click={()=>handleLogsDisplay(mutant.id)}>关闭</button>
+                                                </div>
+                                            </div>
+                                        {/if}
+                                    </td>
+                                    <td class="done">
+                                        <button class="{mutant_submit_dict[mutant.id]?
+                                                            (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?
+                                                            'icon-lock':'icon-unlocked'):'icon-unlocked'}"
+                                            on:click={()=>handleEventForSure(model_dict.MUTANT, mutant_status_dict.DONE, [mutant.id, mutant.sample])}
+                                            disabled="{panal_unable_handle?'disabled':''}">
+                                        </button>
+                                    </td>
+                                    <td class="affirmed">
+                                        <button class="{mutant_submit_dict[mutant.id]?
+                                                            ([mutant_status_dict.CHECKED, mutant_status_dict.EDITED, mutant_status_dict.DELETED].indexOf(mutant_submit_dict[mutant.id][dict.STATUS]) !== -1?
+                                                            'icon-checkbox-checked':'icon-checkbox-unchecked'):''}"
+                                            on:click={()=>handleAffirmForMutSubmits(mutant.id, mutant.sample)}
+                                            disabled="{panal_unable_handle?'disabled':
+                                                (mutant_submit_dict[mutant.id]?
+                                                (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':''):'')}">
+                                        </button>
+                                        {#if mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][dict.REASONDISPLAY]:false}
+                                            <div class="reasonWrapper">
+                                                <div class="selectWrapper">
+                                                    修改类型：
+                                                    <select value="{mutant_submit_dict[mutant.id]?
+                                                                mutant_submit_dict[mutant.id][dict.REASONTYPE][dict.NOWVALUE]:''}"
+                                                            on:change={(e)=>handleAddReason(e, mutant.id, dict.REASONTYPE)}>
+                                                        {#each reason_type_list as reason_type}
+                                                            <option value="{reason_type.type}">{reason_type.context}</option>
+                                                        {/each}
+                                                    </select>
+                                                </div>
+                                                <div class="textareaWrapper">
+                                                    原因描述：
+                                                    <textarea value="{mutant_submit_dict[mutant.id]?
+                                                                    mutant_submit_dict[mutant.id][dict.REASONDESC][dict.NOWVALUE]:''}"
+                                                              on:input={(e)=>handleAddReason(e, mutant.id, dict.REASONDESC)}></textarea>
+                                                </div>
+                                                <div class="reasaonBnWrapper">
+                                                    <button on:click|stopPropagation={()=>handleAddReasonSure(mutant.id, mutant.sample)}>确定</button>
+                                                    <button on:click|stopPropagation={()=>handleAddReasonCancel(mutant.id)}>取消</button>
+                                                </div>
+                                            </div>
+                                        {/if}
+                                    </td>
+<!--                                    <td class="recover">-->
+<!--                                        <button class="{checkModifyFieldValueEqualClass(mutant.id)} icon-undo2"-->
+<!--                                            on:click={()=>recoverValueForMutSubmits([mutant.id],[...all_modifyFieldLists[params.type], dict.DELETE, dict.REASONDESC, dict.REASONTYPE])}-->
+<!--                                            disabled="{panal_unable_handle?'disabled':-->
+<!--                                                (mutant_submit_dict[mutant.id]?-->
+<!--                                                (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':-->
+<!--                                                (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':'')):'')}">-->
+<!--                                        </button>-->
+<!--                                    </td>-->
+                                    <td class="delete" title="实时数据：{mutant.delete?'删除':'保留'}">
+                                        <button class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE]?'':'undeleted'):'undeleted'} icon-cross"
+                                            on:click={(e)=>handleValueChangeForMutSubmits(e, mutant.id, dict.DELETE)}
+                                                disabled="{panal_unable_handle?'disabled':
+                                                (mutant_submit_dict[mutant.id]?
+                                                (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':
+                                                (mutant[dict.AVAILABLE_EDIT] ||
+                                                    (mutant_submit_dict[mutant.id]?
+                                                        mutant_submit_dict[mutant.id][dict.DELETE][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][dict.DELETE][dict.PREVALUE]:false
+                                                    )?'':'disabled'
+                                                ))):'')}">
+                                        </button>
+                                        <div class="{mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][mutant_field_dict.DELETE][dict.PREVALUE]?'icon-warning':''):''}"></div>
+                                    </td>
+
+                                    {#each allFieldDisplayList as title}
+                                        {#if mutantDispConfDict[title][dict.NOWDISPLAY][params.type]}
+                                            {#if mutantDispConfDict[title][dict.MODIFY][params.type] &&
+                                                (mutant[dict.AVAILABLE_EDIT] ||
+                                                    (mutant_submit_dict[mutant.id]?
+                                                        mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]:false
+                                                    )
+                                                )
+                                            }
+                                                <td class="{title} content"
+                                                    title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}"
+                                                    on:mouseenter={()=>handleMutantTDMouseenter(title, mutant.id)}
+                                                    on:mouseleave={()=>handleMutantTDMouseleave(title, mutant.id)}
+                                                >
+                                                    <input class="mutantInput" type={mutantDispConfDict[title].type}
+                                                           value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"
+                                                           on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}
+                                                           on:focus={(e)=>focusNowField(e, mutant.id, title, index)}
+
+                                                           disabled="{panal_unable_handle?'disabled':
+                                                           (mutant_submit_dict[mutant.id]?
+                                                           (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                           (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':
+                                                           (mutant[dict.AVAILABLE_EDIT]?'':'disabled'))):'')}"
+                                                    >
+                                                    <div class="besideInput {mutant_submit_dict[mutant.id]?(mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?'icon-warning':''):''}"></div>
+                                                    <div class="besideInput down icon-undo2
+                                                                {mutant_submit_dict[mutant.id]?
+                                                                (mutant_submit_dict[mutant.id][title][dict.NOWVALUE] !== mutant_submit_dict[mutant.id][title][dict.PREVALUE]?
+                                                                (mutant_submit_dict[mutant.id][title][dict.FIELD_MOUSE_ENTER]?'mouseEnter':''):''):''}
+
+                                                                {panal_unable_handle?'disabled':
+                                                                (mutant_submit_dict[mutant.id]?
+                                                                (mutant_submit_dict[mutant.id][dict.STATUS] === mutant_status_dict.DONE?'disabled':
+                                                                (mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.FREE && mutant_submit_dict[mutant.id][dict.STATUS] !== mutant_status_dict.DONE?'disabled':
+                                                                (mutant[dict.AVAILABLE_EDIT]?'':'disabled'))):'')}
+                                                                "
+                                                        on:click={()=>handleMutantFieldRecoverInMutSubDict(mutant.id, title)}
+                                                    ></div>
+                                                </td>
+                                            {:else}
+                                                <td class="{title} content" title="实时数据：{mutant[title]}{title==='sampleSn'?' '+mutant.id:''}">
+                                                    <div class="inside">{mutant[title]}</div>
+                                                </td>
+                                            {/if}
+                                        {/if}
+                                    {/each}
+
+                                </tr>
+                            {/each}
+                        </table>
+                    </div>
+                    <div class="pagewrapper">
+                        <Page page={mutant_param_page} totalPage={mutant_totalPage}
+                              on:changePageSize={handleChangePageSizeForMutant} on:changePage={handleChangePageForMutant}></Page>
+                    </div>
+                </div>
+<!--                <div class="igvWrapper">-->
+<!--                    <div class="igvBind" bind:this={igv_bind}></div>-->
+<!--                </div>-->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--<Footer></Footer>-->
+
+{#if loadingShow}
+    <Loading></Loading>
+{/if}
+{#if sureShow}
+    <Sure message={sendSureMessage} on:sureMessage={handleSureMessage}></Sure>
+{/if}
+<script>
+    // import io from 'socket.io-client'
+    import {onMount, onDestroy, createEventDispatcher, beforeUpdate, afterUpdate} from 'svelte'
+
+    import api from '../../api'
+    import fileUtil from '../../utils/file'
+    import {
+        getItemById,
+        getItemById2,
+        getItemByIdandOperateAttr,
+        removeFromUniqueArray,
+        ifContentEqualArrays,
+        arrayToDict
+    } from '../../utils/arrays'
+    import {userInfo} from '../../store/store'
+
+    import {push} from 'svelte-spa-router'
+    // import igv from 'igv/dist/igv.min'
+
+    // import Header from '../../components/Header/Header.svelte'
+    // import Footer from '../../components/Footer/Footer.svelte'
+    import LeftMenus from '../../components/LeftMenus/LeftMenus.svelte'
+    import Loading from '../../components/Loading/Loading.svelte'
+    import Sure from '../../components/Sure/Sure.svelte'
+    import Page from '../../components/Page/Page3.svelte'
+
+    import {dict_translate} from "../../utils/dict";
+    import {getTime, getParentNodeByParentClassName} from "../../utils/common";
+
+    const { ipcRenderer, remote } =window.require('electron')
+    const {exec, execSync} = window.require('child_process')
+    const iconv = window.require('iconv-lite');
+    const Store = window.require('electron-store')
+    const settingsStore = new Store({name: 'Settings'})
+
+    const dispatch = createEventDispatcher()
+
+    import {mutantDisplayConfigList} from './config'
+    import {sheetDisplayConfigList} from './config1'
+
+
+    let dict = {BAM: 'bam', BAI: 'bai', TARGET: 'target', HEREDITARY: 'hereditary', TMB: 'TMB', tmb: 'tmb',
+        CONTENT: 'content', GET: 'get', ADD: 'add', MODIFY: 'modify', DELETE: 'delete',
+        TOPSCROLL: 'topScroll', INSIDESCROLL: 'insideScroll', NOWVALUE: 'nowValue', PREVALUE: 'preValue',
+        SAMPLEID2UNDERLINE: 'sample__id', DONE: 'done', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
+        ALLMUT: 'allMut', S_AMUT: "subAndAffMut", US_AMUT: 'unsubAndAffMut', US_UAMUT: 'unsubAndUnaffMut',
+        STATUS: 'status', SAMPLEID: 'sampleId', SAMPLESN: 'sampleSn', AFFIRMED: 'affirmed', RECOVER: 'recover',
+        REASONTYPE: 'reason_type', REASONDESC: 'reason_desc', REASONDISPLAY: 'reason_display',
+        BLANK: 'blank', LOGSDISPLAY: 'logs_display', LOG: 'log', LOGFIELDDETAIL: 'log_field_details',
+        COPY: 'copy', MUTANTS: 'mutants', TYPE: 'type', PATH: 'path', AVAILABLE_EDIT: 'availableEdit',
+        NOWDISPLAY: "nowDisplay", SELECT_DISPLAY: "selectDisplay", DEFAULT_DISPLAY: "defaultDisplay",
+        TITLE: "title", TRANSLATE: "translate", TYPE: "type", FIELD_MOUSE_ENTER: "fieldMouseEnter",
+        SAMPLEINFO: 'sampleInfo', QC: 'QC', IMMUNE: "immune", TNB: "TNB", HLA: "HLA", FUSION: "fusion",
+        CHEMICAL: "chemical", CNA: "CNA", MSI: "MSI", CLINICAL_TRIALS: "clinicaltrials", HRR: "HRR",
+        SAMPLEINFO_IN_PANAL: "sampleInfoInPanal", SUBMENU_TRANSLATE: "submenu_translate",
+        SHEET: 'sheet', TITLE_LIST: 'title_list', ONLY_DEFAULT_FIELD_OPEND: 'onlyDefaultFieldsOpened',
+        ALL_FIELD_DISPLAY_LIST: "all_FieldDisplayList", TITLE_DICT: 'title_dict',
+        ALL_SELECT_FIELD_DISPLAY_LIST: "all_selectFieldDisplayList", ALL_MODIFY_FIelD_LISt: "all_modifyFieldLists",
+    }
+
+
+
+    // 数据下载后，创建mutant_submit_dict, 只有done和free状态
+    // 修改数据后，状态改为checked， deleted，edited
+    let mutant_status_dict = {FREE: 'free', DONE:'done', CHECKED: 'checked', DELETED: 'deleted', EDITED: 'edited'}
+    let mutant_field_dict = {POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt', DELETE: 'delete',
+        DONE: 'done', FREQ: 'freq'}
+    let model_dict = {PANAL: 'panal', MUTANT: 'mutant'}
+    let log_reason_type_dict = {false_positive: '假阳性', merge_complex_loci: '复杂位点合并', other: '其它'}
+    let log_submit_type_dict = {copy: '拷贝', check: '核查', edit: '编辑', delete: '删除', release: '释放',
+    undelete: '撤销删除', undelete_edit: '撤销删除再编辑'}
+
+
+    // 控制右侧的标题和下面mutant内容的联动
+    let topScroll
+    let insideScroll
+
+    // 绑定上传信息的div
+    let uploadMessageDiv
+    let autoscroll
+
+    let errors = {
+        data: '',
+        detail: ''
+    }
+    let errors_ori = JSON.parse(JSON.stringify(errors))
+    function reset_errors(){
+        errors = JSON.parse(JSON.stringify(errors_ori))
+    }
+
+    let loadingShow = false
+    let sureShow = false
+
+    //igv控制参数
+    // let igv_bind
+    // let igvBrowser
+
+    // panal的done状态
+    let panal_unable_handle = false
+    let all_excel_url = {target: null, hereditary: null, TMB: null}
+    let excel_url = all_excel_url[dict.TARGET]
+
+
+    // sample列表相关参数
+    let sample_list = []
+    let sampleSn_dict = {}
+    let selected_sampleIds_list = []
+    let pre_selected_sampleIds_list = []
+    let all_sample_record_dict = {target:{}, hereditary:{}, TMB:{}}
+    let sample_record_dict = all_sample_record_dict[dict.TARGET]
+
+
+
+    // 以下参数，在__moveCountFromToInSamRecDict的样本单独统计中，同时进行处理
+    // 未提交已审核 总数 US_AMUT
+    let all_totalUnsubmitAndAffirmed = {target: 0, hereditary: 0, TMB: 0}
+    let totalUnsubmitAndAffirmed = all_totalUnsubmitAndAffirmed[dict.TARGET]
+    // 未提交未审核 总数 US_UAMUT
+    let all_totalUnsubmitAndUnaffirmed = {target: 0, hereditary: 0, TMB: 0}
+    let totalUnsubmitAndUnaffirmed = all_totalUnsubmitAndUnaffirmed[dict.TARGET]
+    // 已提交已审核 总数 S_AMUT
+    let all_totalSubmitAndAffirmed = {target: 0, hereditary: 0, TMB: 0}
+    let totalSubmitAndAffirmed = all_totalSubmitAndAffirmed[dict.TARGET]
+
+
+
+    // mutant列表相关
+    let mutant_list = []
+    // 用作校验和计算每个sample的突变总数
+    let mutant_list_whole_panal = []
+    // let target_list_whole_panal = []
+    // let hereditary_list_whole_panal = []
+    // let tmb_list_whole_panal = []
+
+    let all_mutant_total_num = {target: 0, hereditary: 0, TMB: 0}
+    let mutant_total_num = all_mutant_total_num[dict.TARGET]
+
+    //处理mutant数据修改相关参数
+    let mutant_submit_dict = {}
+
+
+    // 目前的mutant的id，sample的id
+    let now_mutant_id = -1
+    let now_sample_id = -1
+    let pre_mutant_id = -1
+    let pre_sample_id = -1
+
+    // 当前筛选条件下的突变总数
+    let mutant_num
+    // mutant的总页数
+    let mutant_totalPage
+    function changeMutantTotalPage() {
+        mutant_totalPage = Math.ceil(mutant_num/mutant_param_page_size)
+    }
+
+
+    // 其中sampleIds根据selected_sample_ids内容变动
+    let mutant_param_page = 1
+    let mutant_param_page_size = 20
+
+
+    // 筛选mutant完成情况
+    let done_status_list = [
+        {status: false,
+            content: '尚未提交'},
+        {status: true,
+            content: '已经提交'},
+        {status: null,
+            content: '全部'}
+    ]
+    let done_status_selected_index = 0
+    let mutant_param_done = done_status_list[0].status
+    function changeMutantParamDone(index=null) {
+        if (index!==null){
+            done_status_selected_index = index
+        }
+        mutant_param_done = done_status_list[done_status_selected_index].status
+    }
+
+    // 筛选是否存在编辑或删除的记录
+    let log_status_list = [{
+            status: null,
+            content: '全部记录'
+        }, {
+            status: 'True',
+            content: '修改记录'
+        }]
+    let log_status_selected_index = 0
+    let mutant_param_logsEdit = log_status_list[0].status
+    function changeMutantParamLogsEdit(index=null) {
+        if (index!==null){
+            log_status_selected_index = index
+        }
+        mutant_param_logsEdit = log_status_list[log_status_selected_index].status
+    }
+
+    // 处理mutant排序相关事宜参数
+    let order_query_dict = {
+        sample__id: [{status: dict.SAMPLEID2UNDERLINE,
+                      content: 'sampleId顺序'},
+                     {status: null,
+                      content: 'SampleId无序'}],
+        chr: [{status: dict.CHR,
+               content: 'chr顺序'},
+              {status: null,
+               content: 'chr无序'}],
+        posStart: [{status: dict.POSSTART,
+                    content: 'posStart顺序'},
+                   {status: null,
+                    content: 'posStart无序'}],
+        posEnd: [{status: dict.POSEND,
+                  content: 'posEnd顺序'},
+                 {status: null,
+                  content: 'posEnd无序'}]
+    }
+    let sampleId_status_selected_index = 0
+    let chr_status_selected_index = 0
+    let posStart_status_selected_index = 0
+    let posEnd_status_selected_index = 0
+    // 初始化ordering=的参数
+    let mutant_param_order = [
+        order_query_dict[dict.SAMPLEID2UNDERLINE][0].status,
+        order_query_dict[dict.CHR][0].status,
+        order_query_dict[dict.POSSTART][0].status,
+        order_query_dict[dict.POSEND][0].status].join(',')
+
+    // TODO 用于上述的动态更新，svelte无真computed，不想报错，只能人工改改改！！！
+    function changeMutantParamOrder() {
+        mutant_param_order = [
+            order_query_dict[dict.SAMPLEID2UNDERLINE][sampleId_status_selected_index].status,
+            order_query_dict[dict.CHR][chr_status_selected_index].status,
+            order_query_dict[dict.POSSTART][posStart_status_selected_index].status,
+            order_query_dict[dict.POSEND][posEnd_status_selected_index].status
+        ].join(',')
+    }
+
+    // exonicfuncRefgene筛选相关参数
+    let all_exonicfuncRefgene_type_list ={
+        target: [{name: "突变方式(全选)", value: null}],
+        hereditary: [{name: "突变方式(全选)", value: null}],
+        TMB: [{name: "突变方式(全选)", value: null}]
+    }
+    let mutant_param_exonicfuncRefgene = null
+    let exonicfuncRefgeneSelection
+    function changeMutantParamExonicfuncRefgene(value){
+        // value为null时候，返回的是"null"字符串
+        // console.log(mutant_param_exonicfuncRefgene, value)
+        mutant_param_exonicfuncRefgene = value==='null' ? null: value
+        getMutantslist()
+    }
+
+    // 用于sure组件通信使用
+    let sureModel
+    let sureEvent
+    let sureObjectIdList = []
+    let sureObjectValueList = []
+    let sendSureMessage = ''
+    function changeSendSureMessage() {
+        sendSureMessage = "是否对" + dict_translate[sureModel] + "进行" + dict_translate[sureEvent] + "相关操作"
+    }
+
+
+    // 上传数据的结果信息列表
+    let upload_message_list = []
+
+    // track的configs库
+    let track_configs_dict = {}
+    let bamAndBai_path_dict = {}
+    let sampleSn_inTrack_list = []
+
+    //编辑理由相关参数
+    let reason_type_list = [{'type': '',
+                             'context': '请选择'},
+                            {'type': 'false_positive',
+                             'context': '假阳性'},
+                            {'type': 'merge_complex_loci',
+                            'context': '复杂位点合并'},
+                            {'type': 'other',
+                             'context': '其它'}]
+
+    // 获取路径中的：值
+    export let params = {}
+    $: if (params.type === dict.TARGET) {
+        // 先是页面拿数据渲染，接着这个过程，然后才是onMount begin
+        if (sample_record_dict !==  all_sample_record_dict[dict.TARGET]){
+            // console.log('params.type sample_record_dict 对象不一致，更新开始')
+            __setDatabyParamsType()
+
+            mutant_param_page = 1
+            getMutantslist()
+        }
+
+    }
+    $: if (params.type === dict.HEREDITARY) {
+        if (sample_record_dict !==  all_sample_record_dict[dict.HEREDITARY]){
+            __setDatabyParamsType()
+
+            mutant_param_page = 1
+            getMutantslist()
+        }
+
+    }
+    $: if (params.type === dict.TMB) {
+        if (sample_record_dict !==  all_sample_record_dict[dict.TMB]){
+            __setDatabyParamsType()
+
+            mutant_param_page = 1
+            getMutantslist()
+        }
+    }
+
+    // 导航栏
+    let submenu_list = sheetDisplayConfigList.map(item=>item.sheet)
+    let submenu_translate_dict = arrayToDict(sheetDisplayConfigList, 'sheet')
+
+    // 标题栏相关参数（所有表）
+    let sheetDispConfList = JSON.parse(JSON.stringify(
+        sheetDisplayConfigList.map(sheet=>{
+            sheet[dict.TITLE_LIST].map(item=>{
+                item[dict.NOWDISPLAY] = item[dict.DEFAULT_DISPLAY]
+                return item
+            })
+            // 默认标题是否打开的状态
+            sheet[dict.ONLY_DEFAULT_FIELD_OPEND] = true
+            // 固定、默认、选择，即所有title名列表
+            sheet[dict.ALL_FIELD_DISPLAY_LIST] = sheet[dict.TITLE_LIST].map(item=> {
+                return {
+                    title: item[dict.TITLE],
+                    translate: item[dict.TRANSLATE]
+                }
+            })
+            // 用于生成selectDisplayDiv中的选择项
+            sheet[dict.ALL_SELECT_FIELD_DISPLAY_LIST] = sheet[dict.TITLE_LIST].reduce((list, item)=>{
+                if (item.selectDisplay){
+                    list.push({
+                        title: item.title,
+                        translate: item.translate
+                    })
+                }
+                return list
+            }, [])
+            // 用于生成mutant_submit_dict中前、后值
+            sheet[dict.ALL_MODIFY_FIelD_LISt] = sheet[dict.TITLE_LIST].reduce((list, item)=>{
+                if (item[dict.MODIFY]) list.push(item.title)
+                return list
+            }, [])
+
+            return sheet
+        })
+    ))
+    // 添加一份title_list的字典，便于访问
+    for (let sheet of sheetDispConfList){
+        sheet[dict.TITLE_DICT] = arrayToDict(sheet[dict.TITLE_LIST], 'title')
+    }
+    let sheetDispConfDict = arrayToDict(sheetDispConfList, "sheet")
+
+
+    // 标题栏相关参数
+    let mutantDispConfList = JSON.parse(JSON.stringify(mutantDisplayConfigList.map(item=>{
+        item[dict.NOWDISPLAY] = {
+            target: item.defaultDisplay[dict.TARGET] ? true: false,
+            hereditary: item.defaultDisplay[dict.HEREDITARY] ? true: false,
+            TMB: item.defaultDisplay[dict.TMB] ? true: false
+        }
+        return item
+    })))
+    let mutantDispConfDict = arrayToDict(mutantDispConfList, 'title')
+    // 固定、默认、选择，即所有title名列表
+    let allFieldDisplayList = JSON.parse(JSON.stringify(mutantDispConfList.map(item=>item.title)))
+    let all_onlyDefaultFieldsOpened = {
+        target: true,
+        hereditary: true,
+        TMB: true
+    }
+    // 用于生成mutant_submit_dict中前、后值
+    let all_modifyFieldLists = {
+        target: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+            if (item[dict.MODIFY][dict.TARGET]) list.push(item.title)
+            return list
+        }, []))),
+        hereditary: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+            if (item[dict.MODIFY][dict.HEREDITARY]) list.push(item.title)
+            return list
+        }, []))),
+        TMB: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+            if (item[dict.MODIFY][dict.TMB]) list.push(item.title)
+            return list
+        }, [])))
+    }
+    // 用于生成selectDisplayDiv中的选择项
+    let  all_selectFieldDisplayList = {
+        target: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+                    if (item.selectDisplay[dict.TARGET]){
+                        list.push({
+                            title: item.title,
+                            translate: item.translate
+                        })
+                    }
+                    return list
+                }, [])
+        )),
+        hereditary: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+                    if (item.selectDisplay[dict.HEREDITARY]){
+                        list.push({
+                            title: item.title,
+                            translate: item.translate
+                        })
+                    }
+                    return list
+                }, [])
+        )),
+        TMB: JSON.parse(JSON.stringify(mutantDispConfList.reduce((list, item)=>{
+                    if (item.selectDisplay[dict.TMB]){
+                        list.push({
+                            title: item.title,
+                            translate: item.translate
+                        })
+                    }
+                    return list
+                }, [])
+        ))
+    }
+    let selectFields
+
+    // let socket = null
+
+    // 设置class中的没法子的动态className
+    // $: checkModifyFieldValueEqualClass = (mutant_id) => {
+    //     if (!mutant_submit_dict[mutant_id]) return ''
+    //
+    //     for (let field of [...all_modifyFieldLists[params.type], mutant_field_dict.DELETE]) {
+    //         if (mutant_submit_dict[mutant_id][field][dict.NOWVALUE] !==
+    //                 mutant_submit_dict[mutant_id][field][dict.PREVALUE]) {
+    //             return ''
+    //         }
+    //     }
+    //     return 'equal'
+    // }
+
+
+    async function test(e) {
+        // console.log(e, e.shiftKey, e.ctrlKey)
+        // getItemByIdandOperateAttr(list, 2, ['content'], 'delete')
+        // console.log(sample_list)
+        // console.log(selected_sampleIds_list)
+        // console.log(JSON.stringify(mutant_submit_dict[2466]))
+        // console.log(sample_record_dict)
+        // console.log(sampleSn_inTrack_list)
+        // console.log(params.type)
+        // console.log(typeof now_mutant_id)
+        // console.log(mutant_list)
+        // console.log(getItemByIdandOperateAttr(list, 2, ['content'], 'get'))
+        // getItemByIdandOperateAttr(list, 2, ['content', 'a', 'b'], 'modify', 1234)
+        // console.log(mutant_submit_dict)
+        // console.log(all_mutant_total_num)
+        // console.log(all_totalSubmitAndAffirmed, all_totalUnsubmitAndAffirmed, all_totalUnsubmitAndUnaffirmed)
+        // console.log(panal_unable_handle)
+        // console.log(all_excel_url)
+        // console.log(sampleSn_dict)
+        // console.log(track_configs_dict, Object.keys(track_configs_dict))
+        // console.log(bamAndBai_path_dict)
+        // console.log(remote.app.getPath('userData'))
+        // console.log('store', settingsStore.get('ifIgvConnect'))
+        // console.log(window.location.href)
+        // console.log(mutantDispConfList, mutantDispConfDict, mutantDispConfDict['sampleSn'][dict.NOWDISPLAY])
+        // console.log(allFieldDisplayList, allFieldDisplayList.length, mutantDispConfList.length)
+        // console.log(all_modifyFieldLists[params.type])
+        // console.log(JSON.stringify(mutantDispConfList.map(item=>item.title)))
+        // console.log(submenu_translate_dict, submenu_list)
+        // 查看sheetDispConfDict和sheetDispConfList中title_dict和title_list对应是否都修改了！！
+        // sheetDispConfDict['target'][dict.TITLE_DICT]['NM_ID'][dict.NOWDISPLAY] = true
+        console.log(sheetDispConfList, sheetDispConfDict)
+    }
+
+    function stopPropagation(event){
+        event.stopPropagation()
+    }
+
+    // 获取sample列表， 获取整个panal的mutant列表，仅一次用于初始化页面时
+    async function getSamplesList(panal_id) {
+        // console.log('begin getSamplesList')
+        loadingShow = true
+
+        await api.retrievePanal(panal_id).then((response) => {
+            sample_list = response.data.samples
+
+            mutant_list_whole_panal = response.data[dict.MUTANTS]
+
+            all_excel_url[dict.TARGET] = response.data.target_url
+            all_excel_url[dict.HEREDITARY] = response.data.hereditary_url
+            all_excel_url[dict.TMB] = response.data.tmb_url
+
+            panal_unable_handle = response.data.done || response.data.delete ? true:false
+
+            // 遍历获取新数组
+            selected_sampleIds_list = sample_list.map((value)=>{
+                return value.id})
+
+        }).catch((error) => {
+            console.error("getSamplesList", error)
+            if (error.data) {
+                errors.detail = error.data.detail ? error.data.detail : error.data
+            }
+        })
+
+        loadingShow = false
+        // console.log('end getSamplesList')
+    }
+
+    // 设置mutant列表和mutant总数
+    function __setMutListAndMutantNum(list, count) {
+        mutant_list = list
+        // console.log('__setMutListAndMutantNum', list)
+        // 转换logs_details为字典类型
+        for (let mutant of mutant_list){
+            if (mutant.logs.length > 0) {
+                for (let log of mutant.logs) {
+                    console.log(log)
+                    log[dict.LOGFIELDDETAIL]={}
+                    // 此处不能使用每个表特定的all_modifyFieldLists[params.type]，因为log区域展示时候是通用数据
+                    let allModiFieldLists = mutantDispConfList.reduce((list, item)=>{
+                        let modifyStatusList = Object.keys(item[dict.MODIFY]).map(key=>item[dict.MODIFY][key])
+                        // console.log(modifyStatusList)
+                        if (modifyStatusList.some(status=>status)){
+                            list.push(item[dict.TITLE])
+                        }
+                        return list
+                    }, [])
+                    // console.log('__setMutListAndMutantNum', allModiFieldLists)
+                    for (let field of [...allModiFieldLists, mutant_field_dict.DELETE, mutant_field_dict.DONE]){
+                        console.log(field)
+                        log[dict.LOGFIELDDETAIL][field] = {nowValue: '', preValue: ''}
+                    }
+
+                    for (let detail of log.log_details) {
+                        log[dict.LOGFIELDDETAIL][detail.subject_field_name][dict.NOWVALUE] = detail.new_value
+                        log[dict.LOGFIELDDETAIL][detail.subject_field_name][dict.PREVALUE] = detail.old_value
+                    }
+                }
+            }
+            mutant[dict.AVAILABLE_EDIT] = false
+        }
+        mutant_list = mutant_list
+        // 此筛选条件下的mutant总数，用于总页数计算
+        mutant_num = count
+        changeMutantTotalPage()
+    }
+
+    // 获取mutant列表(2)
+    async function getMutantslist(){
+        // console.log('begin getMutantsList')
+        // 获取mutant列表
+        // 如果没有选中任何sample，将mutant_list置空
+        // console.log('getMutantList begin')
+        loadingShow = true
+
+        // TODO 这个正好避免第一次加载时候，$: params.type 执行一次getMutantList
+        // $: params.type 也设置了判断，第一次执行getMutantList的判断
+        if (selected_sampleIds_list.length===0) {
+            __setMutListAndMutantNum([], 0)
+            loadingShow = false
+            // console.log('getMutantList 中 selected_sampleIds_list 长度为0， 退出执行！')
+            return
+        }
+
+        await api.mutantList({
+            search: params.type,
+            page: mutant_param_page,
+            page_size: mutant_param_page_size,
+            done: mutant_param_done,
+            ordering: mutant_param_order,
+            sampleIds: selected_sampleIds_list.join(','),
+            panalId: params.panalId,
+            logsEdit: mutant_param_logsEdit,
+            exonicfuncRefgene: mutant_param_exonicfuncRefgene
+        }).then((response)=>{
+            // console.log('getMutantsList', response.data)
+            __setMutListAndMutantNum(response.data.results, response.data.count)
+        }).catch((error)=>{
+            console.error('getMutantList', error)
+            if(error.data){
+                errors.detail = error.data.detail?error.data.detail: ''
+            }
+        })
+
+
+        loadingShow = false
+        // console.log('end getMutantsList')
+    }
+
+
+    function __setMutantInMutantSubmitDict(mutant){
+        mutant_submit_dict[mutant.id] = {
+            type: mutant.type,
+            sampleId: mutant.sample,
+            sampleSn: mutant.sampleSn,
+            status: mutant.done ? mutant_status_dict.DONE : mutant_status_dict.FREE,
+            reason_display: false,
+            logs_display: false
+        }
+
+        let filedListExceptSampleSn = JSON.parse(JSON.stringify(allFieldDisplayList))
+        let sampleSn_index = filedListExceptSampleSn.indexOf(dict.SAMPLESN)
+        filedListExceptSampleSn.splice(sampleSn_index, 1)
+        // console.log('__setMutantInMutantSubmitDict', allFieldDisplayList, filedListExceptSampleSn)
+
+        // 其中reasonType和reasonDesc是nudefined
+        for (let field of [...filedListExceptSampleSn, dict.DELETE, dict.REASONTYPE, dict.REASONDESC]) {
+            mutant_submit_dict[mutant.id][field] = {
+                nowValue: mutant[field]!==undefined?mutant[field]:'',
+                preValue: mutant[field]!==undefined?mutant[field]:''
+            }
+        }
+    }
+
+    // 给sample_list添加每个sample的突变总数
+    function buildMutantSubmitDictandAllSampleRecordDictandAllMutantTotalNum(){
+
+        // console.log('begin build mutant_submit_dict')
+        // 构建sample_record_dict(id为key)，构建sampleSn_dict(sampleSn为key)
+        for (let sample of sample_list) {
+            for (let type of [dict.TARGET, dict.HEREDITARY, dict.TMB]){
+                all_sample_record_dict[type][sample.id] = {
+                    sampleSn: sample.sampleSn,
+                    allMut: 0,
+                    subAndAffMut: 0,
+                    unsubAndAffMut: 0,
+                    unsubAndUnaffMut: 0
+                }
+            }
+
+            sampleSn_dict[sample.sampleSn] = {
+                sampleId: sample.id
+            }
+        }
+
+        // 构造mutant_submit_dict
+        for (let mutant of mutant_list_whole_panal) {
+            // 制作mutant修改的提交列表
+            __setMutantInMutantSubmitDict(mutant)
+            all_sample_record_dict[mutant.type][mutant.sample][dict.ALLMUT]++
+            if (mutant.done) {
+                all_sample_record_dict[mutant.type][mutant.sample][dict.S_AMUT]++
+                all_totalSubmitAndAffirmed[mutant.type]++
+            }else{
+                all_sample_record_dict[mutant.type][mutant.sample][dict.US_UAMUT]++
+                all_totalUnsubmitAndUnaffirmed[mutant.type]++
+            }
+
+
+            switch (mutant.type) {
+                case dict.TARGET:
+                    all_mutant_total_num[dict.TARGET]++
+                    break
+                case dict.HEREDITARY:
+                    all_mutant_total_num[dict.HEREDITARY]++
+                    break
+                case dict.TMB:
+                    all_mutant_total_num[dict.TMB]++
+                    break
+            }
+
+            // 添加筛选mutant.exonicfuncRefgene的项目
+            if(all_exonicfuncRefgene_type_list[mutant.type].every(type=>type.name!==mutant.exonicfuncRefgene)){
+                all_exonicfuncRefgene_type_list[mutant.type].push({
+                    name: mutant.exonicfuncRefgene,
+                    value: mutant.exonicfuncRefgene
+                })
+            }
+            all_exonicfuncRefgene_type_list = all_exonicfuncRefgene_type_list
+        }
+
+        // console.log(all_mutant_total_num)
+        // TODO 必须左赋值一次啊，不然就是打开页面，无法获取数据
+        // sample_list = sample_list
+        mutant_submit_dict = mutant_submit_dict
+
+        // console.log('end build mutant_submit_dict')
+    }
+
+
+
+    //处理mutant列表头和身体滑动联动问题
+    function handleScroll(object){
+        // console.log(topScroll.scrollLeft)
+        if (object === dict.TOPSCROLL) {
+            insideScroll.scrollTo(topScroll.scrollLeft, 0)
+        }else if (object === dict.INSIDESCROLL) {
+            topScroll.scrollTo(insideScroll.scrollLeft, 0)
+        }
+    }
+
+
+    // 处理点击mutant行，更好当前选中突变id
+    function handleChangeCurrentMutantId (mutant_id, sample_id, event=null) {
+        pre_mutant_id = now_mutant_id
+        pre_sample_id = now_sample_id
+        now_mutant_id = mutant_id
+        now_sample_id = sample_id
+
+        if(event && event.ctrlKey &&
+            mutant_submit_dict[mutant_id][dict.STATUS] === mutant_status_dict.FREE){
+            __changeNowMutantAvailable()
+        }
+
+        // 更好染色体位置
+        let mutant_posStart = mutant_submit_dict[now_mutant_id][mutant_field_dict.POSSTART][dict.NOWVALUE]
+        let mutant_posEnd = mutant_submit_dict[now_mutant_id][mutant_field_dict.POSEND][dict.NOWVALUE]
+        // console.log(mutant_posStart, mutant_posEnd)
+        if (!mutant_posStart && !mutant_posEnd) return
+
+        // 非同一sample 或者 样本选中的有改变， 都需要重新加载
+        let ifEqual = ifContentEqualArrays(selected_sampleIds_list, pre_selected_sampleIds_list)
+        if (settingsStore.get('ifNowMutantTop')){
+            if (pre_sample_id !== now_sample_id  || !ifEqual) loadTracks()
+        }else{
+            if(!ifEqual) loadTracks()
+        }
+
+        // 非同一mutant， 进入后再判断位置是否有变化
+        if (pre_mutant_id !== now_mutant_id) changeLocus()
+
+
+    }
+
+    // 处理切换target，hereditary，tmb
+    function handleSelectSubmenu(type){
+        // console.log(type, params.type)
+        if (type===params.type) return
+        // console.log('handleSelectSubmenu ' + type)
+        let panalId = params.panalId
+        // 只切换路由，数据没有自动刷新啊！！
+        push(`/${type}/${panalId}`)
+    }
+
+    // 处理sample样品全选、取消全选
+    async function handleSelectAllSample() {
+        // console.log('handleAll' + selected_sampleIds_list.length + " " + sample_list.length)
+        loadingShow = true
+
+        if (selected_sampleIds_list.length !== sample_list.length) {
+            selected_sampleIds_list =  sample_list.map((value, index, array) => {return value.id})
+        }else{
+            selected_sampleIds_list = []
+        }
+
+        mutant_param_page = 1
+        // loadTracks()
+        await getMutantslist()
+
+        loadingShow = false
+    }
+
+    // 处理sample样品单独选择
+    async function handleSelectSample(sample_id) {
+        // console.log('handleSelectSample ' + sample_id)
+        loadingShow = true
+
+        if (selected_sampleIds_list.indexOf(sample_id)===-1) {
+            selected_sampleIds_list.push(sample_id)
+            selected_sampleIds_list = selected_sampleIds_list.sort((a, b)=>{return(a-b)})
+        }else{
+            selected_sampleIds_list = removeFromUniqueArray(selected_sampleIds_list, sample_id)
+        }
+
+        mutant_param_page = 1
+        // loadTracks()
+        await getMutantslist()
+
+        loadingShow = false
+    }
+
+
+    // 处理muatant列表中false/true类过滤问题
+    async function handleSubmenuFilter(object_event) {
+        switch (object_event) {
+            case mutant_status_dict.DONE:
+                done_status_selected_index = (done_status_selected_index+1)%(done_status_list.length)
+                // 更新mutant_param_done
+                changeMutantParamDone()
+                break
+            case dict.LOG:
+                log_status_selected_index = (log_status_selected_index+1)%(log_status_list.length)
+                changeMutantParamLogsEdit()
+                break
+        }
+
+        mutant_param_page = 1
+        await getMutantslist()
+
+    }
+
+    // 处理mutant排序问题
+    async function handleOrderEVENT(event_type){
+        loadingShow = true
+
+        // console.log(event_type)
+        switch (event_type) {
+            case dict.SAMPLEID2UNDERLINE:
+                sampleId_status_selected_index = (sampleId_status_selected_index +1)%
+                        (order_query_dict[dict.SAMPLEID2UNDERLINE].length)
+                break
+            case dict.CHR:
+                chr_status_selected_index = (chr_status_selected_index + 1)%
+                        (order_query_dict[dict.CHR].length)
+                break
+            case dict.POSSTART:
+                posStart_status_selected_index = (posStart_status_selected_index + 1)%
+                        (order_query_dict[dict.POSSTART].length)
+                break
+            case dict.POSEND:
+                posEnd_status_selected_index = (posEnd_status_selected_index + 1)%
+                        (order_query_dict[dict.POSEND].length)
+                break
+        }
+
+        //改变ordering的参数
+        changeMutantParamOrder()
+
+        mutant_param_page = 1
+        await getMutantslist()
+
+        loadingShow = false
+    }
+
+    // 处理每页显示数量
+    function handleChangePageSizeForMutant(event){
+        mutant_param_page_size = event.detail.pageSize
+        changeMutantTotalPage()
+
+        mutant_param_page = 1
+        getMutantslist()
+    }
+    // 处理翻页
+    function handleChangePageForMutant(event){
+        mutant_param_page = event.detail.page
+
+        getMutantslist()
+    }
+
+    // 将sample_record_dict记录中某sample的from项总数-1，然后+1到to项总数
+    function __moveCountFromToInSamRecDict (sample_id, from , to) {
+        // 处理三项的panal层面的总数统计
+        switch (from) {
+            case dict.S_AMUT:
+                totalSubmitAndAffirmed--
+                all_totalSubmitAndAffirmed[params.type]--
+                break
+            case dict.US_AMUT:
+                totalUnsubmitAndAffirmed--
+                all_totalUnsubmitAndAffirmed[params.type]--
+                break
+            case dict.US_UAMUT:
+                totalUnsubmitAndUnaffirmed--
+                all_totalUnsubmitAndUnaffirmed[params.type]--
+                break
+        }
+        switch (to) {
+            case dict.S_AMUT:
+                totalSubmitAndAffirmed++
+                all_totalSubmitAndAffirmed[params.type]++
+                break
+            case dict.US_AMUT:
+                totalUnsubmitAndAffirmed++
+                all_totalUnsubmitAndAffirmed[params.type]++
+                break
+            case dict.US_UAMUT:
+                totalUnsubmitAndUnaffirmed++
+                all_totalUnsubmitAndUnaffirmed[params.type]++
+                break
+        }
+
+        sample_record_dict[sample_id][from]--
+        sample_record_dict[sample_id][to]++
+    }
+
+    // 将mutant_submit_dict中某mutant的status进行改变
+    function __changeMutantStatusInMutSubDict(mutant_id, status) {
+
+        mutant_submit_dict[mutant_id][dict.STATUS] = status
+    }
+
+    // 查看mutant修改历史
+    function handleLogsDisplay(mutant_id) {
+        // console.log('logdisplay')
+        mutant_submit_dict[mutant_id][dict.LOGSDISPLAY] = !mutant_submit_dict[mutant_id][dict.LOGSDISPLAY]
+    }
+
+    // 处理撤销mutant完成事物
+    async function changeMutantDone(mutant_sample_ids, mutant_done_status) {
+        loadingShow = true
+
+        let mutant_id = mutant_sample_ids[0]
+        let sample_id = mutant_sample_ids[1]
+        // console.log(mutant_id + " " + sample_id)
+        await api.updateMutant(mutant_id, {
+            done: mutant_done_status
+        }).then((response)=>{
+            // console.log(response.data)
+            // 修改成功后，将对应的mutant，status修改为free
+            __changeMutantStatusInMutSubDict(mutant_id, mutant_status_dict.FREE)
+            // 修改对应sample的，已提交已修改-1，未提交未修改+1
+            __moveCountFromToInSamRecDict(sample_id, dict.S_AMUT, dict.US_UAMUT)
+        }).catch((error)=>{
+            console.error('changeMutantDone', error)
+            if (error.data) errors.data = error.data?error.data:''
+        })
+
+        loadingShow = false
+    }
+
+
+    // 处理复制突变拷贝
+    async function handleCopyMutant(){
+        // console.log('handlecopymutant ' + now_mutant_id)
+
+        loadingShow = true
+
+        let success = false
+        await api.copyMutant(now_mutant_id, 1).then((response)=>{
+            // console.log(response.data)
+            success = true
+            // 现在的突变id需要更换
+            now_mutant_id = response.data.mutant
+        }).catch((error)=>{
+            console.error('handleCopyMutant', error)
+            errors.detail = error.data?error.data.mutant:''
+        })
+
+        if (success){
+            // 获取新拷贝的突变的所在页
+            //done为全部
+            changeMutantParamDone(2)
+            // logEdit为全部
+            changeMutantParamLogsEdit(0)
+            // 设置页面size为全部突变总数
+            let pre_mutant_param_page_size = mutant_param_page_size
+
+            mutant_total_num++
+            all_mutant_total_num[params.type]++
+
+            mutant_param_page_size = mutant_total_num
+            mutant_param_page = 1
+            // 更新一次页面
+            await getMutantslist()
+
+            let i = 1
+            let copy_mutant = null
+            for (let mutant of mutant_list) {
+                if (mutant.id === now_mutant_id) {
+                    copy_mutant = JSON.parse(JSON.stringify(mutant))
+                    break
+                }
+                i++
+            }
+
+            // 获取所在新突变的页码
+            mutant_param_page = Math.ceil(i/pre_mutant_param_page_size)
+            mutant_param_page_size = pre_mutant_param_page_size
+            // console.log(i + " " + mutant_param_page + " " + mutant_param_page_size)
+
+            // 更新mutant_record_dict
+            sample_record_dict[now_sample_id][dict.ALLMUT]++
+            sample_record_dict[now_sample_id][dict.US_UAMUT]++
+            // 更新总数
+            totalUnsubmitAndUnaffirmed++
+            all_totalUnsubmitAndUnaffirmed[params.type]++
+
+            // 更新mutant_submit_dict
+            __setMutantInMutantSubmitDict(copy_mutant)
+
+            // 再次更新
+            await getMutantslist()
+        }
+
+        loadingShow = false
+    }
+
+    // TODO 此处确定对象类型，事件类型，对象id，对象目的值
+    function handleEventForSure(model, event, object_id_list=[], object_value_list=[]) {
+        reset_errors()
+
+        sureModel = model
+        sureEvent = event
+        sureObjectIdList = object_id_list
+        sureObjectValueList = object_value_list
+
+        //针对不同模型处理
+        switch (sureModel) {
+            case model_dict.MUTANT:
+                // 针对不同的事项处理
+                switch (sureEvent) {
+                    case mutant_status_dict.DONE:
+                        // console.log('mutant done')
+                        let mutant_id = sureObjectIdList[0]
+                        // 如状态是未完成，则返回
+                        if (mutant_submit_dict[mutant_id][dict.STATUS] !== mutant_status_dict.DONE) return
+                        changeSendSureMessage()
+                        // 显示确认界面
+                        sureShow = true
+                        break
+                    case dict.COPY:
+                        // console.log(now_mutant_id + " " + now_sample_id)
+                        if (panal_unable_handle) {
+                            errors.detail = '请先撤销panal完成，再来复制突变！'
+                            return
+                        }
+                        if (now_mutant_id === -1){
+                            errors.detail = '请先选择一条需要复制的突变！'
+                            return
+                        }
+                        if (mutant_submit_dict[now_mutant_id][dict.STATUS] !== mutant_status_dict.FREE ){
+                            errors.detail = '请先释放或解除锁定此条突变后，再复制！'
+                            return
+                        }
+
+                        changeSendSureMessage()
+                        sureShow = true
+                        break
+                }
+                break
+
+        }
+
+    }
+
+    // TODO 此处接受Sure组件的信息，然后对应不同实践进行分类处理
+    async function handleSureMessage(e) {
+        loadingShow = true
+        sureShow = false
+
+        if (e.detail.status) {
+            //针对不同模型处理
+            switch (sureModel) {
+                case model_dict.MUTANT:
+                    // 针对不同的事项处理
+                    switch (sureEvent) {
+                        case mutant_status_dict.DONE:
+                            await changeMutantDone(sureObjectIdList, false)
+                            await getMutantslist()
+                            break
+                        case dict.COPY:
+                            await handleCopyMutant()
+                            break
+                    }
+                    break
+            }
+        }
+
+        loadingShow = false
+    }
+
+
+    // 处理审核确认事件(附属方法)
+    function __checkModifyFieldEqual (mutant_id, field=null) {
+        // todo 此处如果不复制，就是直接往all_modifyFieldLists中添加，影响巨大
+        let default_field_list = JSON.parse(JSON.stringify(all_modifyFieldLists[params.type]))
+        if (field) default_field_list.push(field)
+        let equal = true
+        for (let field of default_field_list) {
+            if (mutant_submit_dict[mutant_id][field][dict.NOWVALUE] !==
+                    mutant_submit_dict[mutant_id][field][dict.PREVALUE]) {
+                equal = false
+                break
+            }
+        }
+        return equal
+    }
+
+
+    // 处理审核确认事件
+    function handleAffirmForMutSubmits(mutant_id, sample_id) {
+        //先置于不可编辑状态
+        mutant_list.find(mutant=>mutant.id===mutant_id)[dict.AVAILABLE_EDIT] = false
+
+        let status = mutant_submit_dict[mutant_id][dict.STATUS]
+        // 永远考虑外一，虽然不可能
+        // 处于done状态，直接返回
+        if (status === mutant_status_dict.DONE) return
+
+        // 如果处于3个已审阅状态，则撤回到未审核
+        if ([mutant_status_dict.CHECKED, mutant_status_dict.DELETED, mutant_status_dict.EDITED].
+        indexOf(status) !== -1) {
+            // 修改状态为free
+            __changeMutantStatusInMutSubDict(mutant_id, mutant_status_dict.FREE)
+            // 此时必然是 未提交已审核 状态，则未提交已审核-1, 未提交未审核+1
+            __moveCountFromToInSamRecDict(sample_id, dict.US_AMUT, dict.US_UAMUT)
+            return
+        }
+
+        // 此时必然是 未提交未审核 状态
+        // 查看是否有修改，如果有修改，弹出
+        if (__checkModifyFieldEqual(mutant_id, mutant_field_dict.DELETE)) {
+            //此时必然是 未提交未审核 状态，未提交未审核-1, 未提交已审核+1
+            __moveCountFromToInSamRecDict(sample_id, dict.US_UAMUT, dict.US_AMUT)
+            // 将状态从free设置为checked
+            __changeMutantStatusInMutSubDict(mutant_id, mutant_status_dict.CHECKED)
+            // 另外将reason_type, reason_desc恢复
+            recoverValueForMutSubmits([mutant_id], [dict.REASONTYPE, dict.REASONDESC])
+            return
+        }else{
+            mutant_submit_dict[mutant_id][dict.REASONDISPLAY] = true
+        }
+    }
+    // 处理添加编辑原因
+    function handleAddReason(event, mutant_id, type) {
+        // console.log(event.target.value)
+        mutant_submit_dict[mutant_id][type][dict.NOWVALUE] = event.target.value
+
+    }
+    // 添加reason对话框，选择取消
+    function handleAddReasonCancel(mutant_id){
+        mutant_submit_dict[mutant_id][dict.REASONDISPLAY] = false
+    }
+    // 添加reason对话框，选择确定
+    function handleAddReasonSure(mutant_id, sample_id) {
+        // 此时必然是 未提交未审核 状态，则未提交未审核-1, 未提交已审核+1
+        __moveCountFromToInSamRecDict(sample_id, dict.US_UAMUT, dict.US_AMUT)
+
+        // 判断是删除，还是修改
+        if (mutant_submit_dict[mutant_id][dict.DELETE][dict.NOWVALUE]) {
+            __changeMutantStatusInMutSubDict(mutant_id, mutant_status_dict.DELETED)
+        }else{
+            __changeMutantStatusInMutSubDict(mutant_id, mutant_status_dict.EDITED)
+        }
+        mutant_submit_dict[mutant_id][dict.REASONDISPLAY] = false
+    }
+
+
+    //恢复mutant数据，按field列表恢复
+    function recoverValueForMutSubmits(mutant_id_list, field_list=[]) {
+        let default_field_list = all_modifyFieldLists[params.type]
+        if (field_list.length > 0) default_field_list = field_list
+        for (let mutant_id of mutant_id_list) {
+            for (let field of default_field_list) {
+                mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = mutant_submit_dict[mutant_id][field][dict.PREVALUE]
+            }
+        }
+    }
+    // 处理mutant属性修改
+    function handleValueChangeForMutSubmits(e, mutant_id, field){
+        // console.log(e.target.value)
+
+        if (field === mutant_field_dict.DELETE) {
+            mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = !mutant_submit_dict[mutant_id][field][dict.NOWVALUE]
+            // 同时需要将其余已修改的项恢复
+            recoverValueForMutSubmits([mutant_id])
+        }else{
+            // 操作前如果将delete置换为false
+            mutant_submit_dict[mutant_id][mutant_field_dict.DELETE][dict.NOWVALUE] = false
+            // 接着修改field的nowValue
+            if ([mutant_field_dict.POSSTART, mutant_field_dict.POSEND].indexOf(field) !== -1) {
+                mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = parseInt(e.target.value)
+            }else if (field === mutant_field_dict.FREQ){
+                let eValue = e.target.value
+
+                // console.log(eValue, isNaN(eValue), parseFloat(eValue)>=0, parseFloat(eValue)<=1)
+                if(!isNaN(eValue) && parseFloat(eValue)>=0 && parseFloat(eValue)<=1){
+                    mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = eValue
+                }else{
+                    remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
+                }
+            }else{
+                mutant_submit_dict[mutant_id][field][dict.NOWVALUE] = e.target.value
+            }
+        }
+
+    }
+
+
+    function download() {
+        if (excel_url) window.location.href = excel_url
+    }
+
+
+    // 在mutant_submit_dict中，将某mutant的preValue使用nowValue进行替换
+    function __substitutePreValueInMutSubDict(mutant_id, field_list) {
+        for (let field of field_list) {
+            mutant_submit_dict[mutant_id][field][dict.PREVALUE] = mutant_submit_dict[mutant_id][field][dict.NOWVALUE]
+        }
+    }
+    // 在mutant_submit_dict中，查看modify域是否相等，返回上传准备数据
+    function __getUnequalParamsInMutSubDict(mutant_id){
+        let default_field_list = all_modifyFieldLists[params.type]
+        let uploadParams = {done: true}
+        for (let field of default_field_list) {
+            if (mutant_submit_dict[mutant_id][field][dict.NOWVALUE] !==
+                    mutant_submit_dict[mutant_id][field][dict.PREVALUE]) {
+                    uploadParams[field] = mutant_submit_dict[mutant_id][field][dict.NOWVALUE]
+            }
+        }
+        // console.log('__getUnequalParamsInMutSubDict uploadParams', uploadParams)
+        return uploadParams
+    }
+
+    async function checkNOUS_AandUS_UAandCreateOutput(){
+        // console.log('开始生成excel')
+        loadingShow = true
+
+        // 创建表
+        let success = false
+        if (totalUnsubmitAndAffirmed === 0 && totalUnsubmitAndUnaffirmed === 0) {
+            excel_url = null
+
+            await api.createExcel(params.panalId, params.type).then((response)=>{
+                // console.log(response.data)
+                success = true
+
+                let time = getTime()
+                upload_message_list.push(time + ' excel表格创建成功')
+                upload_message_list = upload_message_list
+
+                // excel_url = response.data.url 这是没有用的最后一级不是地址了，已经就是一份拷贝了
+                all_excel_url[params.type] = response.data.url
+                excel_url = response.data.url
+
+            }).catch((error)=>{
+                console.error('checkS_AMUTandCreateOutput success', error)
+                errors.detail = 'excel表格创建失败：' + error.data?error.data.panal:''
+            })
+        }
+        // 将panal设置为 done
+        if (success &&
+                all_totalUnsubmitAndUnaffirmed[dict.TARGET] === 0 &&
+                all_totalUnsubmitAndUnaffirmed[dict.HEREDITARY] === 0 &&
+                all_totalUnsubmitAndUnaffirmed[dict.TMB] === 0 &&
+                all_totalUnsubmitAndAffirmed[dict.TARGET] === 0 &&
+                all_totalUnsubmitAndAffirmed[dict.HEREDITARY] === 0 &&
+                all_totalUnsubmitAndAffirmed[dict.TMB] === 0 &&
+                all_excel_url[dict.TARGET] &&
+                all_excel_url[dict.HEREDITARY] &&
+                all_excel_url[dict.TMB]
+        ) {
+            await api.updatePanal(params.panalId, {
+                done: true
+            }).then((response) => {
+                let panal = response.data
+                panal_unable_handle = true
+
+                let time = getTime()
+                upload_message_list.push(time + ' Panal ' + panal.name + '已经设置为完成！')
+                upload_message_list = upload_message_list
+            }).catch((error) => {
+                console.error('checkS_AMUTandCreateOutput panal done', error)
+                errors.detail = 'Panal设置为完成失败'
+            })
+        }
+
+        loadingShow = false
+    }
+
+    async function uploadAffirmedMutant() {
+        // console.log('uploadAffirmedMutant begin')
+
+        loadingShow = true
+
+        if (totalUnsubmitAndAffirmed===0){
+            errors.detail = '没有已审核的mutant需要提交'
+            return
+        }
+        if (panal_unable_handle) {
+            errors.detail = 'panal已经审核完成，请先撤回'
+            return
+        }
+
+
+        let success_num = 0
+        let fail_num = 0
+
+        for (let mutant_id in mutant_submit_dict) {
+            // 先判断是不是type类型为params.type
+            if (mutant_submit_dict[mutant_id][dict.TYPE] !== params.type) continue
+
+            let status = mutant_submit_dict[mutant_id][dict.STATUS]
+            let sample_id = mutant_submit_dict[mutant_id][dict.SAMPLEID]
+            let sampleSn = mutant_submit_dict[mutant_id][dict.SAMPLESN]
+            let submit = false
+            let success = false
+            let deleteNowValue = mutant_submit_dict[mutant_id][mutant_field_dict.DELETE][dict.NOWVALUE]
+            let deletePreValue = mutant_submit_dict[mutant_id][mutant_field_dict.DELETE][dict.PREVALUE]
+            let reasonTypeNowValue = mutant_submit_dict[mutant_id][dict.REASONTYPE][dict.NOWVALUE]
+            let reasonDescNowValue = mutant_submit_dict[mutant_id][dict.REASONDESC][dict.NOWVALUE]
+
+            if (deletePreValue) {
+
+                // 已删除提交后的撤回状态
+                if (status === mutant_status_dict.CHECKED) {
+                    submit = true
+                    // 保持删除，只需修改done为true
+                    await api.updateMutant(mutant_id, {
+                        done: true
+                    }).then((response) => {
+                        success = true
+                    }).catch((error) => {
+                    })
+                }
+
+                if (status === mutant_status_dict.EDITED) {
+                    submit = true
+                    if (__checkModifyFieldEqual(mutant_id)) {
+                        // 仅仅取消删除
+                        await api.updateMutant(mutant_id, {
+                            done: true,
+                            delete: deleteNowValue,
+                            reason_type: reasonTypeNowValue,
+                            reason_desc: reasonDescNowValue
+                        }).then((response) => {
+                            //delete的preValue改为nowValue，即false
+                            __substitutePreValueInMutSubDict(mutant_id, [mutant_field_dict.DELETE])
+                            success = true
+                        }).catch((error) => {
+                        })
+                    }else{
+                        // 取消删除，并且进行了修改
+                        let params = __getUnequalParamsInMutSubDict(mutant_id)
+                        params[mutant_field_dict.DELETE] = deleteNowValue
+                        params[dict.REASONTYPE] = reasonTypeNowValue
+                        params[dict.REASONDESC] = reasonDescNowValue
+                        await api.updateMutant(mutant_id,
+                                params).then((response) => {
+                            // 排开done，4项有差异的field，外加delete，preValue替换为nowValue
+                            delete params[mutant_field_dict.DONE]
+                            for (let field in params) {
+                                __substitutePreValueInMutSubDict(mutant_id, [field])
+                            }
+                            success = true
+                        }).catch((error) => {
+                        })
+                    }
+                }
+            } else {
+                // 非已删除提交后的撤回状态
+                if (status === mutant_status_dict.CHECKED) {
+                    submit = true
+                    await api.updateMutant(mutant_id, {
+                        done: true
+                    }).then((response) => {
+                        success = true
+                    }).catch((error) => {
+                    })
+                }
+
+                if (status === mutant_status_dict.DELETED) {
+                    submit = true
+                    await api.updateMutant(mutant_id, {
+                        done: true,
+                        delete: deleteNowValue,
+                        reason_type: reasonTypeNowValue,
+                        reason_desc: reasonDescNowValue
+                    }).then((response) => {
+                        //delete的preValue改为nowValue, 即true
+                        __substitutePreValueInMutSubDict(mutant_id, [mutant_field_dict.DELETE])
+                        success = true
+                    }).catch((error) => {
+                        console.error('api.updateMutant', error)
+                    })
+                }
+
+                if (status === mutant_status_dict.EDITED) {
+                    submit = true
+                    let params = __getUnequalParamsInMutSubDict(mutant_id)
+                    params[dict.REASONTYPE] = reasonTypeNowValue
+                    params[dict.REASONDESC] = reasonDescNowValue
+                    await api.updateMutant(mutant_id,
+                            params).then((response) => {
+                        // 排开done，modify项中有差异的field，preValue替换为nowValue
+                        delete params[mutant_field_dict.DONE]
+                        for (let field in params) {
+                            __substitutePreValueInMutSubDict(mutant_id, [field])
+                        }
+                        success = true
+                    }).catch((error) => {
+                    })
+                }
+            }
+
+            if (submit) {
+                let time = getTime()
+                if (success) {
+                    // 如果成功 mutant项需要把状态改为done
+                    __changeMutantStatusInMutSubDict(mutant_id, mutant_status_dict.DONE)
+                    // sample_record_dict中未提交已审核-1，已提交已审核+1
+                    __moveCountFromToInSamRecDict(sample_id, dict.US_AMUT, dict.S_AMUT)
+                    success_num++
+                    upload_message_list.push(time + " " + sampleSn + " " + mutant_id + " 已处理。")
+                } else {
+                    fail_num++
+                    upload_message_list.push(time + " " + sampleSn + " " + mutant_id + " 上传失败！")
+                }
+                upload_message_list = upload_message_list
+            }
+        }
+
+
+        let time = getTime()
+        upload_message_list.push(time + " 提交成功" + success_num + "条, 失败" + fail_num + "条。")
+        mutant_param_page = 1
+        await  getMutantslist()
+
+        loadingShow = false
+
+        // console.log('uploadAffirmedMutant end')
+    }
+
+
+    // 为track_configs_dict添加track信息
+    function addTrackConfigs(files){
+        let bamFiles = fileUtil.getFilesDictBySuffix(files, '.bam')
+        let baiFiles = fileUtil.getFilesDictBySuffix(files, '.bai')
+        let paired_Files = {}
+        // 循环bamfiles文件
+        for (let bam_name in bamFiles) {
+            let find = false
+            // 循环bai_name文件，把匹配的找出来
+            for (let bai_name in baiFiles) {
+                if (bam_name === bai_name) {
+                    find = true
+                    break
+                }
+            }
+            if (find) {
+                let sampleSn
+                let find = false
+                for (let sample of sample_list) {
+                    // bam_name样子为NGS200111-53DJ，如果sampleSn为NGS200111-5使用indexOf就会错误配对！！
+                    // 没找到包含的就跳过
+                    let index = bam_name.indexOf(sample.sampleSn)
+                    if (index === -1) continue
+
+                    // 匹配了剩余部分如果还有数字，就不是完全匹配
+                    let substr = bam_name.replace(sample.sampleSn, '')
+                    // console.log('addtrackconfig', substr)
+                    if (substr.match(/\d+/g)) continue
+
+                    sampleSn = sample[dict.SAMPLESN]
+                    find = true
+                    break
+                }
+                paired_Files[sampleSn] = {"bam": bamFiles[bam_name], "bai": baiFiles[bam_name]}
+            }
+        }
+        for (let sampleSn in paired_Files) {
+            if (sampleSn_dict[sampleSn] === undefined) continue
+            track_configs_dict[sampleSn_dict[sampleSn][dict.SAMPLEID]] = {
+                name: sampleSn,
+                type: "alignment",
+                format: 'bam',
+                samplingDepth: 100,
+                alignmentRowHeight: 10,
+                // 不显示remove按钮
+                removable: false,
+                //track高度
+                height: 170,
+                // 突变频率大于1%颜色显示
+                alleleFreqThreshold: 0.01,
+                url: paired_Files[sampleSn][dict.BAM],
+                indexURL: paired_Files[sampleSn][dict.BAI]
+            }
+
+            bamAndBai_path_dict[sampleSn_dict[sampleSn][dict.SAMPLEID]] = [
+                    paired_Files[sampleSn][dict.BAM][dict.PATH].replace(/\\/g,'/'),
+                    paired_Files[sampleSn][dict.BAI][dict.PATH].replace(/\\/g,'/')
+                ]
+
+            // 刷新 sampleSn_inTrack_list
+            if (sampleSn_inTrack_list.indexOf(sampleSn) === -1) {
+                sampleSn_inTrack_list.push(sampleSn)
+            }
+        }
+        sampleSn_inTrack_list = sampleSn_inTrack_list
+
+    }
+
+    // 加载bam，bai文件
+    function loadFiles() {
+        let fileWidget = document.getElementById('fileWidget')
+        let files = fileWidget.files
+        addTrackConfigs(files)
+        fileWidget.value = ''
+        loadTracks()
+    }
+
+    // 取消所有track信息
+    function
+    clearTracks () {
+        track_configs_dict = {}
+        sampleSn_inTrack_list = []
+        // if (igvBrowser) {
+        //     igvBrowser.removeAllTracks()
+        // }
+        
+        bamAndBai_path_dict = {}
+        if(settingsStore.get('ifIgvConnect')){
+            ipcRenderer.send('remove-tracks')
+        }
+
+    }
+
+
+    // 加载igv的tracks
+    function loadTracks() {
+        // console.log('loadtracks begin')
+
+        // 先移除所有的tracks
+        // igvBrowser.removeAllTracks()
+
+        let reordered_sampleIds_list = []
+        // console.log(now_sample_id + " " + selected_sampleIds_list)
+        if (now_sample_id && selected_sampleIds_list.indexOf(now_sample_id)!== -1) {
+            // console.log(now_sample_id)
+            reordered_sampleIds_list = [].concat([now_sample_id], removeFromUniqueArray(selected_sampleIds_list, now_sample_id))
+        }else{
+            reordered_sampleIds_list = selected_sampleIds_list
+        }
+        // console.log(reordered_sampleIds_list)
+
+        // 按now_sample_id为第一位的tracks列表，重新加载
+        // if(igvBrowser){
+        //     for (let sampleId of reordered_sampleIds_list) {
+        //         if (track_configs_dict[sampleId]) {
+        //             igvBrowser.loadTrack(track_configs_dict[sampleId])
+        //         }
+        //     }
+        // }
+        if(settingsStore.get('ifIgvConnect')){
+            ipcRenderer.send("load-tracks",
+                reordered_sampleIds_list.reduce((result, sampleId)=>{
+                    if(bamAndBai_path_dict.hasOwnProperty(sampleId)){
+                        result.push(bamAndBai_path_dict[sampleId])
+                    }
+                    return result
+                },[])
+            )
+        }
+
+        pre_selected_sampleIds_list = JSON.parse(JSON.stringify(selected_sampleIds_list))
+    }
+
+
+    // 编写染色体位置
+    function __calculateScope (chr, start, end) {
+        let new_start = start?start-30:end-30
+        let new_end = end?end + 30:start + 30
+
+        let scope = chr + ":" + new_start +"-" + new_end
+        // console.log("scope: " + scope)
+        return scope
+    }
+    // 更好染色体位置
+    function changeLocus() {
+        console.log('change Locus begin')
+
+
+        let mutant = mutant_submit_dict[now_mutant_id]
+        let query = __calculateScope(mutant[dict.CHR][dict.NOWVALUE], mutant[mutant_field_dict.POSSTART][dict.NOWVALUE], mutant[mutant_field_dict.POSEND][dict.NOWVALUE])
+        // console.log(query)
+
+        // if (igvBrowser) {
+        //     igvBrowser.search(query)
+        // }
+        if(settingsStore.get('ifIgvConnect')){
+            ipcRenderer.send('search-locus', query)
+        }else{
+            errors.detail = '使用igv，请设置"勾选连接igv"、打开igv。'
+        }
+    }
+
+    // 处理标题栏菜单中选择或取消选择
+    function toggleDefaultFiledsOpen(){
+       if(!all_onlyDefaultFieldsOpened[params.type]){
+           // 打开所有的默认标题, 关闭其它所有标题
+           mutantDispConfList.forEach(item=>{
+               if(item[dict.DEFAULT_DISPLAY][params.type]){
+                   item[dict.NOWDISPLAY][params.type] = true
+               }else{
+                   item[dict.NOWDISPLAY][params.type] = false
+               }
+           })
+
+           all_onlyDefaultFieldsOpened[params.type] = true
+           // 手动更新菜单列表
+           all_selectFieldDisplayList = all_selectFieldDisplayList
+           // 手动更新标题栏显示
+           allFieldDisplayList = allFieldDisplayList
+       }
+    }
+    // 单个改变可选标题栏是否打开
+    function toggleSelectFieldOpen(field){
+        // console.log(field)
+
+        // 先设置点击的值
+        let dispItem = mutantDispConfList.find(item=>item[dict.TITLE]===field)
+        let value = dispItem[dict.NOWDISPLAY][params.type]
+        dispItem[dict.NOWDISPLAY][params.type] = !value
+        // 手动更新菜单列表
+        all_selectFieldDisplayList = all_selectFieldDisplayList
+        // console.log(mutantDispConfList, mutantDispConfDict)
+
+        // 检查默认标题是否都打开，其它标题都关闭， 重新设置defaultFieldsOpenedCheck状态
+        let defaultAndSelect = mutantDispConfList.reduce((list, item)=>{
+            if(item[dict.DEFAULT_DISPLAY][params.type]) {
+                list[0].push(item)
+            }else{
+                list[1].push(item)
+            }
+            return list
+        }, [[],[]])
+        // console.log(defaultAndSelect)
+        let allDefaultOpened = defaultAndSelect[0].every(
+            item=>item[dict.NOWDISPLAY][params.type]
+        )
+        let allSelectClosed = defaultAndSelect[1].every(
+                item=>!item[dict.NOWDISPLAY][params.type]
+        )
+        all_onlyDefaultFieldsOpened[params.type] = allDefaultOpened && allSelectClosed? true: false
+
+        // 手动更新标题栏显示, allFieldDisplayList其实一直不变的，更新mutantDispConfDict也可以
+        allFieldDisplayList = allFieldDisplayList
+    }
+    function closeSelectFieldDiv(){
+        selectFields.style.display = 'none'
+        // document.querySelector(".selectFieldsDiv").style.display = 'none'
+    }
+
+
+    function __setDatabyParamsType(){
+        mutant_total_num = all_mutant_total_num[params.type]
+
+        sample_record_dict = all_sample_record_dict[params.type]
+
+        totalSubmitAndAffirmed = all_totalSubmitAndAffirmed[params.type]
+        totalUnsubmitAndAffirmed = all_totalUnsubmitAndAffirmed[params.type]
+        totalUnsubmitAndUnaffirmed = all_totalUnsubmitAndUnaffirmed[params.type]
+
+        excel_url = all_excel_url[params.type]
+
+        // todo 筛选框值修改，不会触发onChange事件！！
+        exonicfuncRefgeneSelection.value = null
+        mutant_param_exonicfuncRefgene = null
+
+        // selectFields.style.display = 'none'
+    }
+
+
+    function __changeNowMutantAvailable(){
+        for (let mutant of mutant_list) {
+            mutant[dict.AVAILABLE_EDIT] = mutant.id === now_mutant_id? !mutant[dict.AVAILABLE_EDIT] : false
+        }
+
+        mutant_list = mutant_list
+    }
+
+    function __handleContextMenu(e){
+        // console.log(e.target, document.querySelector('.down'), document.querySelector('.down').contains(e.target))
+
+        if (document.querySelector('.navLeft').contains(e.target)){
+            let menu = new remote.Menu()
+
+            let retractNavLeftItem = new remote.MenuItem({
+                label: '左侧面板缩进',
+                click: ()=>{
+                    let navLeftElement = document.querySelector('.navLeft')
+                    // 第一次为空
+                    let preFlexStyle = navLeftElement.style.flex
+                    navLeftElement.style.flex = !preFlexStyle || preFlexStyle==='0 0 308px'?'0 0 109px':'0 0 308px'
+
+                }
+            })
+            menu.append(retractNavLeftItem)
+
+            menu.popup({window: remote.getCurrentWindow()})
+        }
+
+        if (document.querySelector('.down').contains(e.target)){
+
+            let element =getParentNodeByParentClassName(e.target, 'mutantItem')
+            handleChangeCurrentMutantId(parseInt(element.dataset.mutantid), parseInt(element.dataset.sampleid))
+
+            let menu = new remote.Menu()
+
+            // let sureMenuItem = new remote.MenuItem({
+            //     label: "确定",
+            //     type: "checkbox",
+            //     checked: [mutant_status_dict.CHECKED, mutant_status_dict.EDITED, mutant_status_dict.DELETED].indexOf(mutant_submit_dict[now_mutant_id][dict.STATUS]) !== -1,
+            //     click: ()=>{
+            //         if (mutant_submit_dict[now_mutant_id][dict.STATUS] === mutant_status_dict.DONE) return
+            //         handleAffirmForMutSubmits(now_mutant_id, now_sample_id)                }
+            // })
+            // menu.append(sureMenuItem)
+
+            let recoverMenuItem = new remote.MenuItem({
+                label: '恢复',
+                click: ()=>{
+                    if (!panal_unable_handle &&
+                        mutant_submit_dict[now_mutant_id][dict.STATUS] === mutant_status_dict.FREE)
+                    recoverValueForMutSubmits([now_mutant_id],[...all_modifyFieldLists[params.type], dict.DELETE, dict.REASONDESC, dict.REASONTYPE])
+                }
+            })
+            menu.append(recoverMenuItem)
+
+            let editMenuItem = new remote.MenuItem({
+                label: '编辑',
+                click: () => {
+                    __changeNowMutantAvailable()
+                }
+            })
+            menu.append(editMenuItem)
+
+            let deleteMenuItem = new remote.MenuItem({
+                label: '复制',
+                // enabled: mutant_submit_dict[element.dataset.mutantid][dict.STATUS] === mutant_status_dict.FREE,
+                click: ()=>{
+                    // todo dataset中data-后面大写没用，全部转为小写了, 类型是字符串了
+                    // console.log(element, element.dataset, element.dataset.mutantid, element.dataset.sampleid)
+                    handleEventForSure(model_dict.MUTANT, dict.COPY)
+                }
+            })
+            menu.append(deleteMenuItem)
+
+            menu.popup({window: remote.getCurrentWindow()})
+        }
+
+        if (document.querySelector('.up').contains(e.target)){
+            console.log(document.body.clientWidth, e.clientX)
+
+            let element =getParentNodeByParentClassName(e.target, 'fieldTitle')
+
+            let screenWidth = document.body.clientWidth
+            let clientX = e.clientX
+            selectFields.style.left = clientX + 220 < screenWidth ?
+                    `${e.clientX-440}px`:
+                    `${screenWidth-700}px`
+            selectFields.style.display = 'block'
+        }
+
+    }
+
+    // 设定当前修改标题
+    let now_input_field = null
+    let now_input_mutant_id = null
+    let now_index
+    function focusNowField(event, mutant_id, title, index){
+        now_input_field = title
+        now_input_mutant_id = mutant_id
+    }
+    function handleValueChangeInBigInput(event){
+        if(now_input_mutant_id&&now_input_field){
+            mutant_submit_dict[now_input_mutant_id][now_input_field][dict.NOWVALUE] = event.target.value
+        }
+
+    }
+
+
+    // 处理鼠标划入突变的td的状态
+    function handleMutantTDMouseenter (field, mutant_id){
+        // console.log(mutant_id)
+        mutant_submit_dict[mutant_id][field][dict.FIELD_MOUSE_ENTER] = true
+        mutant_submit_dict = mutant_submit_dict
+    }
+    function handleMutantTDMouseleave (field, mutant_id){
+        // console.log(mutant_id)
+        mutant_submit_dict[mutant_id][field][dict.FIELD_MOUSE_ENTER] = false
+        mutant_submit_dict = mutant_submit_dict
+    }
+
+    function handleMutantFieldRecoverInMutSubDict(mutant_id, field){
+        if (mutant_list.find(mutant=>mutant.id===mutant_id)[dict.AVAILABLE_EDIT] &&
+                mutant_submit_dict[mutant_id][dict.STATUS] === mutant_status_dict.FREE){
+            mutant_submit_dict[mutant_id][field][dict.NOWVALUE] =
+                    mutant_submit_dict[mutant_id][field][dict.PREVALUE]
+            mutant_submit_dict = mutant_submit_dict
+        }
+    }
+
+    // 左侧面板缩进控制
+    let retract_able = false
+    function handleDividerMouseDown(e){
+        // console.log('handleDividerMouseDown')
+        e.stopPropagation()
+        retract_able = true
+    }
+    function handleMiddleMouseUp(e){
+        // console.log('handleMiddleMouseUp')
+        e.stopPropagation()
+        retract_able = false
+    }
+    function handleMiddleMouseMove(e){
+        e.stopPropagation()
+        if(retract_able){
+            // console.log('handleMiddleMouseMove', e.clientX)
+            let navLeftElement = document.querySelector('.navLeft')
+
+            if(e.clientX - 130 < 18){
+                navLeftElement.style.flex = `0 0 18px`
+                return
+            }
+
+            if(e.clientX - 130>308){
+                navLeftElement.style.flex = `0 0 308px`
+                return
+            }
+
+            navLeftElement.style.flex = `0 0 ${e.clientX - 130}px`
+        }
+    }
+
+    onMount(async ()=>{
+        // console.log('begin onMount')
+        //开启loading层
+        loadingShow = true
+
+        // socket = io.connect("http://localhost:60151");
+        // socket.on('connect', function() {
+        //     console.log('igv已连接');
+        // })
+        // socket.on('error', function() {
+        //     console.log('igv报错');
+        // })
+
+
+        // let options =
+        //         {
+        //             reference:
+        //                     {
+        //                         id: "hg19",
+        //                         fastaURL: "/database/ucsc.hg19.fasta",
+        //                         indexURL: "/database/ucsc.hg19.fasta.fai"
+        //                     },
+        //             locus: 'chr1:1983-2020'
+        //         };
+        //
+        // await igv.createBrowser(igv_bind, options).then((browser)=>{
+        //     igvBrowser = browser
+        // })
+
+        await getSamplesList(params.panalId)
+
+        await getMutantslist()
+
+        buildMutantSubmitDictandAllSampleRecordDictandAllMutantTotalNum()
+
+        __setDatabyParamsType()
+
+        ipcRenderer.on('connect-igv-error-caution',(event, message)=>{
+            errors.detail = message
+        })
+
+        ipcRenderer.on('reset-errors', ()=>{
+            reset_errors()
+        })
+
+        document.addEventListener('contextmenu', __handleContextMenu)
+
+        // console.log('onMount end')
+        loadingShow = false
+    })
+
+    onDestroy(()=>{
+        document.removeEventListener('contextmenu', __handleContextMenu)
+    })
+
+    beforeUpdate(()=>{
+        // TODO offsetHeight为含边框的div高度，scrollTop为元素被上边框遮住的部分，scrollHeight为内容高度
+        autoscroll = uploadMessageDiv && (uploadMessageDiv.offsetHeight + uploadMessageDiv.scrollTop) < uploadMessageDiv.scrollHeight
+    })
+
+    afterUpdate(()=>{
+        if (autoscroll) uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
+    })
+
+
+
+</script>
+
+
+
+
+
+
+
+<style>
+
+    /*TODO 高度需要好LeftMenus中高度一致 */
+    .middle{
+        width: 100%;
+        min-height: 900px;
+        border: 1px solid black;
+        display: flex;
+    }
+
+    .midRight{
+        /* todo 这里必须填写 width: 0;，不然下面submenu无法左右移动了 */
+        width: 0;
+        flex: 1;
+        display: flex;
+        flex-flow: column;
+    }
+    .subMenu{
+        flex: 0 0 55px;
+        border-bottom: 1px solid black;
+        overflow-x: scroll;
+        overflow-y: hidden;
+    }
+    .subMenu .subMenuWrapper{
+        min-width: 1500px;
+    }
+    .subMenu .test{
+        padding: 0;
+        margin: 0;
+        width: 60px;
+        height: 30px;
+        line-height: 30px;
+    }
+    .subMenu .selectedSubMenu{
+        box-shadow: 3px 3px 3px black;
+    }
+    .subMenu .submenuBtn{
+        margin: 5px 3px;
+        padding: 0;
+        width: 85px;
+        height: 26px;
+        line-height: 26px;
+        font-size: 15px;
+        color: white;
+        text-align: center;
+        background: orange;
+        border: 1px solid black;
+    }
+    .subMenu button:hover{
+        color: black;
+    }
+    .subMenu .selectedSubMenu:hover{
+        color: white;
+    }
+
+    .middleContent{
+        flex: 1;
+        display: flex;
+    }
+    .navLeft{
+        position: relative;
+        flex: 0 0 308px;
+        display: flex;
+        flex-flow: column;
+        border-right: 1px solid black;
+        overflow-x: hidden;
+        overflow-y: hidden;
+        /*box-shadow: -3px -3px 8px black inset;*/
+    }
+    .navLeft .divider{
+        position: absolute;
+        top: 0;
+        right: 0px;
+        width: 6px;
+        height: 100%;
+        background: #cccccc;
+    }
+    .navLeft .leftMessage{
+        flex: 0 0 20px;
+        width: 308px;
+        line-height: 20px;
+        padding: 5px;
+        text-align: left;
+        font-size: 12px;
+        color: orangered;
+        border-bottom: 1px solid black;
+    }
+    .navLeft .leftTopWrapper{
+        flex: 0 0 200px;
+        width: 308px;
+        padding: 3px;
+        border-bottom: 1px solid black;
+    }
+
+    .sampleTable{
+        border-collapse: collapse;
+        border: 1px solid #cccccc;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        /*固定td宽度*/
+        table-layout:fixed;
+        /*这个用于强制换行*/
+        word-break: break-all;
+    }
+    .sampleTable th{
+        height: 32px;
+        border-left: 1px solid #cccccc;
+        border-bottom: 3px solid #cccccc;
+    }
+    .sampleTable td{
+        height: 30px;
+        border-bottom: 1px solid #cccccc;
+    }
+    .sampleTable .sampleSn{
+        width: 105px;
+    }
+    .sampleTable .total{
+        width: 35px;
+    }
+    .sampleTable .submitedAndAffirmed, .sampleTable .unsubmitedAndAffirmed, .sampleTable .unsubmitedAndUnaffirmed {
+        width: 35px;
+    }
+    .sampleTable .tick{
+        width: 35px;
+    }
+
+    .sampleTable .selectALL{
+        margin: 0;
+        padding: 0;
+        width: 35px;
+        height: 32px;
+        line-height: 32px;
+        border: none;
+        background: white;
+        font-weight: bold;
+    }
+    .sampleTable .selectALL:hover{
+        background: #09c762;
+        color: white;
+    }
+
+    .tableContent{
+        height: 165px;
+        overflow-y: scroll;
+    }
+    .tableContent .tick{
+        width: 38px;
+    }
+    .tableContent tr:hover{
+        background: #09c762;
+    }
+
+    .leftTopMidWrapper{
+        flex: 0 0 228px;
+        width: 308px;
+        border-bottom: 1px solid black;
+    }
+    .leftTopMidWrapper .messageWrapper{
+        margin: 3px;
+    }
+    .leftTopMidWrapper .messageWrapper .title{
+        padding: 5px;
+        height: 20px;
+        line-height: 20px;
+        font-size: 14px;
+        border-bottom: 1px solid #cccccc;
+    }
+    .leftTopMidWrapper .messageWrapper .uploadButtomWrapper{
+        height: 182px
+    }
+
+    .leftTopMidWrapper .messageWrapper .uploadMessage{
+        height: 190px;
+        width: 240px;
+        font-size: 12px;
+        overflow-y: scroll;
+        float: left;
+    }
+    .leftTopMidWrapper .messageWrapper .uploadBnWrapper{
+        width: 62px;
+        float: left;
+    }
+    .leftTopMidWrapper .messageWrapper .uploadBnWrapper button{
+        margin: 3px 3px 0 3px;
+        padding: 0px;
+        height: 30px;
+        line-height: 30px;
+        width: 54px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .leftTopMidWrapper .messageWrapper .uploadBnWrapper button.disabled{
+        color: #cccccc;
+        font-weight: normal;
+    }
+
+    .leftMidWrapper{
+        flex: 0 0 150px;
+        width: 308px;
+        border-bottom: 1px solid black;
+    }
+    .leftMidWrapper .selectFile{
+        padding: 3px;
+        height: 30px;
+        width: 300px;
+        line-height: 30px;
+        font-size: 12px;
+        border-bottom: 1px solid #cccccc;
+    }
+    .leftMidWrapper input{
+        padding: 0;
+        width: 72px;
+        height: 30px;
+        line-height: 30px;
+        font-size: 14px;
+        border: none;
+    }
+    .leftMidWrapper .selectFile button{
+          padding: 0;
+          margin: 3px;
+          width: 40px;
+          height: 24px;
+          line-height: 24px;
+          float: right;
+    }
+    .leftMidWrapper .selectFile button:hover{
+        background: #09c762;
+    }
+    .leftMidWrapper .fileList{
+        height: 107px;
+        width: 308px;
+        margin: 3px;
+        overflow-y: scroll;
+    }
+    .leftMidWrapper .fileList .sampleSn{
+        margin: 3px 4px;
+        width: 130px;
+        height: 25px;
+        line-height: 25px;
+        border: 1px solid #cccccc;
+        font-size: 12px;
+        text-align: center;
+        float: left;
+    }
+
+    .leftButtomWrapper{
+        margin: 3px;
+        width: 308px;
+        flex: 1;
+    }
+    .leftButtomWrapper .copy{
+        margin: 0;
+        padding: 0;
+        height: 30px;
+        line-height: 30px;
+        width: 60px;
+        font-size: 12px;
+    }
+
+
+    .contentRight{
+        /* TODO 此处必须要加这个0，不然table无法滚动 TODO */
+        width: 0;
+        flex: 1;
+        display: flex;
+        flex-flow: column;
+    }
+    .contentRight .editBigInputWrapper{
+        padding: 3px;
+        width: 100%;
+        flex: 0 0 31px;
+        box-sizing: border-box;
+        line-height: 31px;
+        font-size: 14px;
+        border-bottom: 1px solid #939393;
+        display: flex;
+    }
+    .contentRight .editBigInputWrapper .abstract{
+        display: block;
+        margin: auto 2px;
+        flex: 0 0 150px;
+        height: 24px;
+        line-height: 24px;
+        text-overflow: ellipsis;
+        white-space:nowrap;
+        float: left;
+    }
+    .contentRight .editBigInputWrapper .bigInput{
+        padding: 0 5px;
+        margin: auto 5px;
+        flex: 1;
+        height: 24px;
+        line-height: 24px;
+    }
+    .contentRight .mutantList{
+        position: relative;
+        flex: 1;
+        height: 100%;
+        padding: 3px;
+        border-bottom: 1px solid #cccccc;
+        display: flex;
+        flex-flow: column;
+        box-sizing: border-box;
+    }
+    .contentRight .mutantList .selectFieldsDiv{
+        position: absolute;
+        top: 40px;
+        left: 3px;
+        z-index: 30;
+        width: 220px;
+        background: white;
+        border: 1px solid #939393;
+        box-shadow: 3px 3px 3px #cccccc;
+        display: none;
+        font-size: 14px;
+    }
+    .contentRight .mutantList .selectFieldsDiv .firstDefaultTitle{
+        margin: 0 0 0 6px!important;
+    }
+    .contentRight .mutantList .selectFieldsDiv .firstDefaultTitle .checkBox{
+        color: #cccccc;
+    }
+    .contentRight .mutantList .selectFieldsDiv .firstDefaultTitle .checkBox.active{
+        color: black;
+    }
+
+    .contentRight .selectFieldsDiv .contentWrapper{
+        width: 100%;
+        min-height: 26px;
+        max-height: 273px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        border-top: 1px solid #cccccc;
+        /*border-bottom: 1px solid #cccccc;*/
+    }
+    .contentRight .selectFieldsDiv .selectFieldItem{
+        margin: 3px auto;
+        width: 191px;
+        height: 20px;
+        cursor: pointer;
+    }
+    .contentRight .selectFieldsDiv .selectFieldItem span{
+        display: block;
+        box-sizing: border-box;
+        padding: 0 10px;
+        width: 170px;
+        height: 20px;
+        line-height: 20px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space:nowrap;
+        float: left;
+    }
+    .contentRight .selectFieldsDiv .selectFieldItem span:hover{
+        background: #09c762;
+    }
+    .contentRight .selectFieldsDiv .selectFieldItem .checkBox{
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        text-align: center;
+        float: right;
+    }
+    .contentRight .selectFieldsDiv .selectFieldItem .checkBox:hover{
+        background: white!important;
+    }
+    /*.contentRight .selectFieldsDiv .closeWrapper{*/
+    /*    width: 100%;*/
+    /*    height: 24px;*/
+    /*    margin: auto 0;*/
+    /*    line-height: 35px;*/
+    /*}*/
+    /*.contentRight .selectFieldsDiv .closeWrapper button{*/
+    /*    display: block;*/
+    /*    padding: 0;*/
+    /*    margin: 3px auto;*/
+    /*    width: 45px;*/
+    /*    height: 22px;*/
+    /*    font-size: 14px;*/
+    /*    text-align: center;*/
+    /*    border: 1px solid #cccccc;*/
+    /*}*/
+    /*.contentRight .selectFieldsDiv .closeWrapper button:hover{*/
+    /*    background: #09c762;*/
+    /*}*/
+
+    .contentRight .rightMutantTable{
+        border-collapse: collapse;
+        border: 1px solid #cccccc;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        /*固定td宽度*/
+        table-layout: fixed;
+        /*word-break: break-all;*/
+    }
+    .contentRight .rightMutantTable tr.current{
+        border: 2px solid black;
+    }
+    .contentRight .rightMutantTable tr.checked{
+        background: #c3fff0;
+    }
+    .contentRight .rightMutantTable tr.deleted{
+        background: #ff7f70
+    }
+    .contentRight .rightMutantTable tr.edited{
+        background: #ff8bd7;
+    }
+    .contentRight .rightMutantTable tr.done{
+        background: #aaaaaa;
+        color: #cccccc;
+    }
+    .contentRight .rightMutantTable .trueDelete .content{
+        text-decoration: line-through;
+    }
+    .contentRight .rightMutantTable .icon-sort-amount-asc{
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-size: 22px;
+    }
+    .contentRight .rightMutantTable .icon-sort-amount-asc:hover{
+        color: #09c762;
+    }
+    .contentRight .topInsideWrapper{
+        overflow: scroll;
+        flex: 0 0 54px;
+    }
+
+    .contentRight .insideWrapper{
+        /*height: 370px;*/
+        overflow: scroll;
+        flex: 0 0 738px;
+    }
+    .contentRight .rightMutantTable .gray.icon-sort-amount-asc{
+        color: #cccccc;
+    }
+
+    .contentRight .rightMutantTable td .icon-warning{
+        font-size: 16px;
+        color: indianred;
+    }
+    .contentRight .rightMutantTable th.logs:hover{
+        background: #09c762;
+    }
+    .contentRight .rightMutantTable th.done:hover{
+        background: #09c762;
+    }
+    .contentRight .rightMutantTable th.sampleSn:hover{
+        background: #09c762;
+    }
+    .contentRight .rightMutantTable th.chr:hover{
+        background: #09c762;
+    }
+    .contentRight .rightMutantTable th.posStart:hover{
+        background: #09c762;
+    }
+    .contentRight .rightMutantTable th.posEnd:hover{
+        background: #09c762;
+    }
+
+
+    .contentRight .rightMutantTable>tr>th, .contentRight .rightMutantTable>tr>td{
+        height: 36px;
+        box-sizing: border-box;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-right: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+    }
+    /*TODO 下面内容很重要*/
+    .contentRight .rightMutantTable.down>tr>td{
+        white-space: nowrap;
+        position: relative;
+        /*overflow: hidden;*/
+        /*text-overflow: ellipsis;*/
+        /*-moz-text-overflow: ellipsis;*/
+    }
+
+
+    .contentRight .inside{
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        line-height: 35px;
+        box-sizing: border-box;
+        padding: 0 3px;
+
+        /*todo 单元格滚动显示 */
+        /*overflow-x: scroll;*/
+    }
+    .contentRight .mutantInput{
+        display: block;
+        margin: 1px 0 0 3px;
+        border: none;
+        font-weight: bold;
+        background: #eaffad;
+    }
+    .contentRight .mutantList .content .besideInput{
+        margin-top: 1px;
+        font-size: 14px;
+    }
+    .contentRight .mutantList .content .besideInput.down{
+        position: absolute;
+        bottom: 1px;
+        right: 7px;
+    }
+    .contentRight .mutantList .content .besideInput.icon-undo2{
+        display: none;
+    }
+    .contentRight .mutantList .content .besideInput.icon-undo2.mouseEnter{
+        color: black;
+        display: block;
+    }
+    .contentRight .mutantList .content .besideInput.icon-undo2.disabled{
+        display: none!important;
+    }
+    /*.contentRight .mutantInput:hover{*/
+    /*    background: #09c762;*/
+    /*}*/
+    /*此处必须用min-width，不然table会在div宽度内自己调整，无法溢出实现scroll TODO*/
+    .contentRight .logs{
+        min-width: 35px;
+    }
+    .contentRight .logs button{
+        margin: 1px 0 0 0;
+        padding: 0;
+        width: 100%;
+        height: 34px;
+        background: white;
+        border: none;
+    }
+    .contentRight .logs button.icon-calendar:hover{
+        background: #09c762;
+    }
+    .contentRight .done{
+        min-width: 35px;
+    }
+    .contentRight .done button{
+        margin: 1px 0 0 0;
+        padding: 0;
+        width: 100%;
+        height: 34px;
+        background: white;
+        border: none;
+    }
+    .contentRight .done button.icon-unlocked:hover{
+        background: #09c762;
+    }
+    .contentRight .done button.icon-lock:hover{
+        background: #09c762;
+    }
+    .contentRight .done button.icon-unlocked{
+        color: #cccccc;
+    }
+    .contentRight .affirmed{
+        min-width: 35px;
+    }
+    .contentRight .affirmed button{
+        margin:  1px 0 0 0;
+        padding: 0;
+        width: 100%;
+        height: 34px;
+        background: white;
+        border: none;
+    }
+    .contentRight td.logs{
+        position: relative;
+        overflow: visible;
+    }
+    .contentRight td.logs .logsWrapper{
+        position: absolute;
+        /* todo 因为外侧.insideWrapper使用了overflow: scroll; 横向的scroll使得无法溢出左table边界了*/
+        left: 0px;
+        top: 35px;
+        z-index: 20;
+        width: 650px;
+        height: 235px;
+        background: white;
+        border: 1px solid #666666;
+    }
+    .contentRight .logsWrapper button{
+        margin: 12px 0;
+        padding: 0;
+        width: 50px;
+        height: 25px;
+        line-height: 25px;
+        font-size: 12px;
+        font-weight: bold;
+        border: 1px solid black;
+    }
+    .contentRight .logsWrapper .logTableWraper{
+        height: 150px;
+        overflow-y: scroll;
+    }
+    .contentRight .logsWrapper .logTable{
+        border-collapse: collapse;
+        border: 1px solid #cccccc;
+        text-align: center;
+        color: black;
+        font-size: 12px;
+        font-weight: bold;
+        /*固定td宽度*/
+        table-layout:fixed;
+        /*这个用于强制换行*/
+        word-break: break-all;
+    }
+    .contentRight .logsWrapper .logTable th{
+        height: 32px;
+        border-left: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+        /*TODO 恢复外面大表的 white-space: nowrap */
+        white-space: normal;
+    }
+    .contentRight .logsWrapper .logTable td{
+        height: 30px;
+        border-left: 1px solid #cccccc;
+        border-bottom: 1px solid #cccccc;
+        white-space: normal;
+    }
+    .logTable .editTime{
+        width: 75px;
+    }
+    .logTable .editer{
+        width: 55px;
+    }
+    .logTable .done{
+        min-width: 40px!important;
+    }
+    .logTable .delete{
+        min-width: 40px!important;
+    }
+    .logTable .posStart{
+        min-width: 75px!important;
+    }
+    .logTable .posEnd{
+        min-width: 75px!important;
+    }
+    .logTable .ref{
+        min-width: 75px!important;
+    }
+    .logTable .alt{
+        min-width: 75px!important;
+    }
+    .logTable .reason_type{
+        width: 55px;
+    }
+    .logTable .submit_type{
+        width: 55px;
+    }
+    .contentRight .logsWrapper .bnWrapper{
+        width: 100%;
+        height: 50px;
+        border-top: 1px solid #cccccc;
+    }
+
+    .contentRight td.logs button.icon-info{
+        color: #cccccc;
+    }
+    .contentRight .affirmed button:hover{
+        background: #09c762;
+    }
+    .contentRight .affirmed button.icon-checkbox-unchecked{
+        color: #cccccc;
+    }
+    .contentRight td.affirmed{
+        position: relative;
+        overflow: visible;
+    }
+    .contentRight td.affirmed .reasonWrapper{
+        position: absolute;
+        left: 0;
+        top: 35px;
+        z-index: 10;
+        width: 300px;
+        height: 112px;
+        background: white;
+        border: 1px solid #666666;
+    }
+    .contentRight .reasonWrapper .selectWrapper{
+        margin: 0 auto;
+        width: 80%;
+        height: 30px;
+        line-height: 30px;
+        text-align: left;
+    }
+    .contentRight .reasonWrapper .selectWrapper select{
+        margin: 5px;
+        padding: 0;
+    }
+    .contentRight .reasonWrapper .textareaWrapper{
+        margin: 0 auto;
+        width: 80%;
+        height: 42px;
+        line-height: 40px;
+        text-align: left;
+    }
+    .contentRight .reasonWrapper .textareaWrapper textarea{
+        margin: 0;
+        padding: 0;
+        width: 170px;
+        height: 40px;
+        vertical-align: middle;
+    }
+    .contentRight .reasonWrapper .reasaonBnWrapper{
+        margin: auto;
+        width: 70%;
+        height: 40px;
+    }
+    .contentRight .reasonWrapper .reasaonBnWrapper button{
+        margin: 8px 15px;
+        width: 60px;
+        height: 24px;
+        border: 1px solid #cccccc;
+    }
+    .contentRight .recover{
+        min-width: 35px;
+    }
+    .contentRight .recover button{
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 34px;
+        background: white;
+        border: none;
+    }
+    .contentRight .recover button:hover{
+        background: #09c762;
+    }
+    .contentRight .recover .icon-undo2.equal{
+        color: #cccccc;
+    }
+    /*为已审核状态， icon-undo2无颜色*/
+    .contentRight tr.checked .icon-undo2{
+        color: #cccccc;
+    }
+    .contentRight tr.edited .icon-undo2{
+        color: #cccccc;
+    }
+    .contentRight tr.deleted .icon-undo2{
+        color: #cccccc;
+    }
+    .contentRight .delete{
+        min-width: 60px;
+    }
+    .contentRight tr.done .icon-cross{
+        color: #cccccc;
+    }
+    .contentRight .delete button{
+        margin:  1px 0 0 0;
+        padding: 0;
+        width: 35px;
+        height: 34px;
+        background: white;
+        border: none;
+        float: left;
+    }
+    .contentRight .delete button:hover{
+        background: #09c762;
+    }
+    .contentRight .undeleted.icon-cross{
+        color: #cccccc;
+    }
+    .contentRight tr.checked .icon-cross{
+        color: #cccccc;
+    }
+    .contentRight tr.edited .icon-cross{
+        color: #cccccc;
+    }
+
+    .contentRight .sampleSn{
+        position: relative;
+        min-width: 110px;
+    }
+    .contentRight .sampleSn .inside{
+        width: 109px;
+        overflow: hidden;
+    }
+
+    .contentRight .projectAbbreviation{
+        min-width: 35px;
+    }
+    .contentRight .projectAbbreviation .inside{
+        width: 34px;
+        overflow: hidden;
+    }
+    .contentRight .chr{
+        position: relative;
+        min-width: 92px;
+    }
+    .contentRight .chr .mutantInput{
+        float: left;
+        width: 62px;
+    }
+    .contentRight .chr .inside{
+        width: 91px;
+        overflow: hidden;
+    }
+    .contentRight .posStart{
+        position: relative;
+        min-width: 120px;
+    }
+    .contentRight .posStart .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .posStart .inside{
+        width: 119px;
+        overflow: hidden;
+    }
+    .contentRight .posEnd{
+        position: relative;
+        min-width: 120px;
+    }
+    .contentRight .posEnd .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .posEnd .inside{
+        width: 119px;
+        overflow: hidden;
+    }
+    .contentRight .ref{
+        min-width: 90px;
+    }
+    .contentRight .ref .mutantInput{
+        float: left;
+        width: 60px;
+    }
+    .contentRight .ref .inside{
+        width: 89px;
+        overflow: hidden;
+    }
+    .contentRight .alt{
+        min-width: 90px;
+    }
+    .contentRight .alt .mutantInput{
+        float: left;
+        width: 60px;
+    }
+    .contentRight .alt .inside{
+        width: 89px;
+        overflow: hidden;
+    }
+    .contentRight .freq{
+        min-width: 90px;
+    }
+    .contentRight .freq .mutantInput{
+        float: left;
+        width: 60px;
+    }
+    .contentRight .freq .inside{
+        width: 89px;
+        overflow: hidden;
+    }
+    .contentRight .exonicfuncRefgene{
+        min-width: 150px;
+    }
+    .contentRight .exonicfuncRefgene .inside{
+        padding: 0;
+        margin: 0;
+        width: 149px;
+        height: 100%;
+        border: none;
+    }
+
+    .contentRight .hgvs{
+        min-width: 150px;
+    }
+    .contentRight .hgvs .mutantInput{
+        float: left;
+        width: 120px;
+    }
+    .contentRight .hgvs .inside{
+        width: 149px;
+    }
+    .contentRight .geneVar{
+        min-width: 150px;
+    }
+    .contentRight .geneVar .mutantInput{
+        float: left;
+        width: 120px;
+    }
+    .contentRight .geneVar .inside{
+        width: 149px;
+    }
+    .contentRight .clinsig{
+        min-width: 150px;
+    }
+    .contentRight .clinsig .inside{
+        width: 149px;
+    }
+    .contentRight .intervarAutomated{
+        min-width: 150px;
+    }
+    .contentRight .intervarAutomated .inside{
+        width: 149px;
+    }
+    .contentRight .drugLevel{
+        min-width: 150px;
+    }
+    .contentRight .drugLevel .mutantInput{
+        float: left;
+        width: 120px;
+    }
+    .contentRight .drugLevel .inside{
+        width: 149px;
+    }
+    .contentRight .cancerType{
+        min-width: 150px;
+    }
+    .contentRight .cancerType .mutantInput{
+        float: left;
+        width: 120px;
+    }
+    .contentRight .cancerType .inside{
+        width: 149px;
+    }
+    .contentRight .drugs{
+        min-width: 150px;
+    }
+    .contentRight .drugs .mutantInput{
+        float: left;
+        width: 120px;
+    }
+    .contentRight .drugs .inside{
+        width: 149px;
+    }
+
+    .contentRight .NM_ID{
+        min-width: 120px;
+    }
+    .contentRight .NM_ID .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .NM_ID .inside{
+        width: 119px;
+    }
+    .contentRight .GeneName{
+        min-width: 120px;
+    }
+    .contentRight .GeneName .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .GeneName .inside{
+        width: 119px;
+    }
+    .contentRight .DNA_change{
+         min-width: 120px;
+     }
+    .contentRight .DNA_change .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .DNA_change .inside{
+        width: 119px;
+    }
+    .contentRight .AA_change{
+        min-width: 120px;
+    }
+    .contentRight .AA_change .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .AA_change .inside{
+        width: 119px;
+    }
+    .contentRight .wxz{
+        min-width: 90px;
+    }
+    .contentRight .wxz .mutantInput{
+        float: left;
+        width: 60px;
+    }
+    .contentRight .wxz .inside{
+        width: 89px;
+        overflow: hidden;
+    }
+    .contentRight .zlb{
+        min-width: 120px;
+    }
+    .contentRight .zlb .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .zlb .inside{
+        width: 119px;
+    }
+    .contentRight .hgsGb{
+        min-width: 120px;
+    }
+    .contentRight .hgsGb .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .hgsGb .inside{
+        width: 119px;
+    }
+    .contentRight .ajsGb{
+        min-width: 120px;
+    }
+    .contentRight .ajsGb .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .ajsGb .inside{
+        width: 119px;
+    }
+    .contentRight .alteration{
+        min-width: 120px;
+    }
+    .contentRight .alteration .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .alteration .inside{
+        width: 119px;
+    }
+    .contentRight ._geneName{
+        min-width: 120px;
+    }
+    .contentRight ._geneName .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight ._geneName .inside{
+        width: 119px;
+    }
+    .contentRight .geneType{
+        min-width: 120px;
+    }
+    .contentRight .geneType .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .geneType .inside{
+        width: 119px;
+    }
+    .contentRight .aachangeRefgene{
+        min-width: 200px;
+    }
+    .contentRight .aachangeRefgene .mutantInput{
+        float: left;
+        width: 170px;
+    }
+    .contentRight .aachangeRefgene .inside{
+        width: 199px;
+    }
+    .contentRight .level{
+        min-width: 120px;
+    }
+    .contentRight .level .mutantInput{
+        float: left;
+        width: 90px;
+    }
+    .contentRight .level .inside{
+        width: 119px;
+    }
+
+    .pagewrapper{
+        flex: 1;
+    }
+
+    /*.contentRight .igvWrapper{*/
+    /*    flex: 1;*/
+    /*}*/
+    /*.contentRight .igvBind{*/
+    /*    margin: 3px auto;*/
+    /*}*/
+</style>
