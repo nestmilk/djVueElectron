@@ -2,7 +2,7 @@
     <div class="footer">
         <div class="footerK">
 <!--            这个number必须加，不然就是各种传值跳跃错误！！！！ TODO-->
-            <select class="select" bind:value={pageSize} on:change="{()=>changePageSize()}">
+            <select class="select" bind:value={pageSize} on:change="{changePageSize}">
                 <option value="10">10/页</option>
                 <option value="15">15/页</option>
                 <option value="20">20/页</option>
@@ -36,11 +36,16 @@
     export let endShow = true
     export let page = -1
     export let totalPage = -1
+    export let currentPageSize
     // let pageList = []
     let setPage
     // todo 初始化设置这个没有用，还是显示第一位的值, 仍需要手工onMount设置
     let pageSize = 20
-
+    $: if(currentPageSize!==pageSize){
+        console.log('page3', currentPageSize, pageSize)
+        pageSize = currentPageSize
+        document.querySelector('.select').value = pageSize
+    }
 
     function nav (nav_page, nav_totalPage, nav_preText, nav_nextText, nav_endShow) {
         let pageList = []

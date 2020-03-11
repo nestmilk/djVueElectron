@@ -606,7 +606,7 @@
 
 
     // 其中sampleIds根据selected_sample_ids内容变动
-    let mutant_param_page = 1
+    let dmutant_param_page = 1
     let mutant_param_page_size = 20
 
 

@@ -101,8 +101,9 @@
                         </table><!--rightDataTable-->
                     </div><!--dataTableWrapper-->
                     <div class="dataPagerWrapper">
-                        <Page page={all_nowPageNum_totalPageNums_dict[params.type][dict.NOWPAGENUM]}
-                              totalPage={all_nowPageNum_totalPageNums_dict[params.type][dict.TOTALPAGENUMS]}
+                        <Page page={all_query_params_dict[params.type][dict.PAGE]}
+                              totalPage={total_page_nums}
+                              currentPageSize={all_query_params_dict[params.type][dict.PAGE_SIZE]}
                               on:changePageSize={handleChangePageSize}
                               on:changePage={handleChangePage}></Page>
                     </div><!--dataPagerWrapper-->
@@ -157,7 +158,7 @@
         ID: 'id', SAMPLESN: 'sampleSn', TITLE_LIST: 'title_list',
         PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
         TITLE: 'title', TRANSLATE: 'translate',
-        NOWPAGENUM: "nowPageNum", TOTALPAGENUMS: 'totalPageNums', TYPE: 'type',
+        TYPE: 'type',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll',
     }
     // 获取路径中的：值
@@ -193,11 +194,8 @@
         }
     }
     function __updateTotalPageNums(){
-        console.log("__updateTotalPageNums", data_num, all_query_params_dict[params.type][dict.PAGE_SIZE])
-        all_nowPageNum_totalPageNums_dict[params.type][dict.TOTALPAGENUMS] =
-                Math.ceil(data_num/all_query_params_dict[params.type][dict.PAGE_SIZE])
-
-        all_nowPageNum_totalPageNums_dict = all_nowPageNum_totalPageNums_dict
+        // console.log("__updateTotalPageNums", data_count, all_query_params_dict[params.type][dict.PAGE_SIZE])
+        total_page_nums = Math.ceil(data_count/all_query_params_dict[params.type][dict.PAGE_SIZE])
     }
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
     async function getPageData () {
@@ -218,7 +216,7 @@
             console.log("__getPageData now_page_data", now_page_data)
 
             // 更新当前页data_num
-            data_num = response.data.count
+            data_count = response.data.count
 
             success = true
 
@@ -285,33 +283,24 @@
     }, {})))
 
     // 当前页面数据的总条数 todo 需要手动更新
-    let data_num
-    // 整张panal的当前页和总页数
-    let all_nowPageNum_totalPageNums_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        result[item[dict.SHEET]] = {
-            nowPageNum: 1,
-            totalPageNums: null
-        }
-        return result
-    }, {})))
+    let data_count
+    // 当前总页数
+    let total_page_nums
+
     function handleChangePageSize(event){
         // console.log("handleChangePageSize", event.detail.pageSize)
         all_query_params_dict[params.type][dict.PAGE_SIZE] = event.detail.pageSize
-        all_query_params_dict = all_query_params_dict
 
         // 当前sheet的totalPageNums更新，data_num固定，但是当前页page_size生了变化！
         __updateTotalPageNums()
         // 当前sheet的nowPageNum设置为1，返回第一页
-        all_nowPageNum_totalPageNums_dict[params.type][dict.NOWPAGENUM] = 1
-        all_nowPageNum_totalPageNums_dict = all_nowPageNum_totalPageNums_dict
+        all_query_params_dict[params.type][dict.PAGE] = 1
         getPageData()
     }
     function handleChangePage(event){
         // console.log("handleChangePage", event.detail.page)
 
-        // 当前sheet的nowPageNum设置为1，返回第一页
-        all_nowPageNum_totalPageNums_dict[params.type][dict.NOWPAGENUM] = event.detail.page
-        all_nowPageNum_totalPageNums_dict = all_nowPageNum_totalPageNums_dict
+        all_query_params_dict[params.type][dict.PAGE] = event.detail.page
         getPageData()
     }
 
@@ -373,7 +362,6 @@
         // console.log(sample_id_list, sample_id_dict)
         // console.log(all_query_params_dict)
         // console.log(now_page_data)
-        console.log(all_nowPageNum_totalPageNums_dict)
     }
 </script>
 
@@ -698,15 +686,19 @@
     }
     .contentRight .rightDataTable .logs{
         min-width: 35px!important;
+        max-width: 35px;
     }
     .contentRight .rightDataTable .done{
         min-width: 35px!important;
+        max-width: 35px;
     }
     .contentRight .rightDataTable .affirmed{
         min-width: 35px!important;
+        max-width: 35px;
     }
     .contentRight .rightDataTable .delete{
         min-width: 60px!important;
+        max-width: 60px;
     }
     .contentRight .rightDataTable {
 
