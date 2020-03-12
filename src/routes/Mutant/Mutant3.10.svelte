@@ -1015,14 +1015,14 @@
         }
 
         await api.mutantList({
-            search: params.type,
             page: mutant_param_page,
             page_size: mutant_param_page_size,
-            done: mutant_param_done,
-            ordering: mutant_param_order,
             sampleIds: selected_sampleIds_list.join(','),
             panalId: params.panalId,
+            search: params.type,
+            done: mutant_param_done,
             logsEdit: mutant_param_logsEdit,
+            ordering: mutant_param_order,
             exonicfuncRefgene: mutant_param_exonicfuncRefgene
         }).then((response)=>{
             // console.log('getMutantsList', response.data)

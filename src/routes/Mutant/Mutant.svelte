@@ -34,21 +34,24 @@
                                 <th class="unsubmitedAndAffirmed">未提已审</th>
                                 <th class="unsubmitedAndUnaffirmed">未提未审</th>
                                 <th class="tick">
-
+                                    <button class="selectALL" on:click={handleToggleAllSample}>
+                                        {selected_sampleId_list.length === sample_list.length? '取消':'全选'}
+                                    </button>
                                 </th>
                             </tr>
                         </table>
                         <div class="tableContent">
                             <table class="sampleTable ">
                                 {#each sample_list as sample}
-                                    <tr >
+                                    <tr on:click={()=>handleSelectSample(sample[dict.ID])}>
                                         <td class="sampleSn">{sample.sampleSn}</td>
                                         <td class="total">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.ALLMUT]:''}</td>
                                         <td class="submitedAndAffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.S_AMUT]:''}</td>
                                         <td class="unsubmitedAndAffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.US_AMUT]:''}</td>
                                         <td class="unsubmitedAndUnaffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.US_UAMUT]:''}</td>
                                         <td class="tick">
-                                            <span ></span>
+                                            <button class="selectOne {selected_sampleId_list.indexOf(sample.id)>-1?'icon-checkbox-checked':
+                                                'icon-checkbox-unchecked'}"></button>
                                         </td>
                                     </tr>
                                 {/each}
@@ -316,6 +319,8 @@
     let sample_list = []
     // sampleSn对应sampleId
     let sampleSn_dict = {}
+    // 选中的样本id列表
+    let selected_sampleId_list = []
 
     let sheets_needSamplRecordDict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         if (!item.ifNotNeedSampleRecordDict) result.push(item[dict.SHEET])
@@ -337,6 +342,8 @@
             }
         })))
 
+        selected_sampleId_list = JSON.parse(JSON.stringify(sample_list.map(sample=>sample[dict.ID])))
+
         sampleSn_dict = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
             result[sampleInfoInPanal[dict.SAMPLE][dict.SAMPLESN]] = sampleInfoInPanal[dict.SAMPLE][dict.ID]
             return result
@@ -355,6 +362,56 @@
             }, {})))
         }
 
+    }
+
+    // 处理sample样品全选、取消全选的切换
+    async function handleToggleAllSample(){
+        loadingShow = true
+
+        if (selected_sampleId_list.length !== sample_list.length) {
+            selected_sampleId_list =  sample_list.map(item => item[dict.ID])
+
+            //更新当前sampleIds查询参数
+            all_query_params_dict[params.type][dict.SAMPLEIDS] = selected_sampleId_list.join(',')
+        }else{
+            selected_sampleId_list = []
+
+            //更新当前sampleIds查询参数, 如果不设置就是&sampleIds=&, 返回的还是全部数据
+            all_query_params_dict[params.type][dict.SAMPLEIDS] = 0
+        }
+
+        // 切换回第一页
+        all_query_params_dict[params.type][dict.PAGE] = 1
+
+        await getPageData()
+
+        loadingShow = false
+    }
+    // 处理sample样品单独选择
+    async function handleSelectSample(sample_id) {
+        // console.log('handleSelectSample ' + sample_id)
+        loadingShow = true
+
+        if (selected_sampleId_list.indexOf(sample_id)===-1) {
+            selected_sampleId_list.push(sample_id)
+            selected_sampleId_list = selected_sampleId_list.sort((a, b)=>{return(a-b)})
+        }else{
+            selected_sampleId_list = removeFromUniqueArray(selected_sampleId_list, sample_id)
+        }
+
+        //更新当前sampleIds查询参数
+        if (selected_sampleId_list.length === 0){
+            all_query_params_dict[params.type][dict.SAMPLEIDS] = 0
+        }else{
+            all_query_params_dict[params.type][dict.SAMPLEIDS] = selected_sampleId_list.join(',')
+        }
+
+        // 切换回第一页
+        all_query_params_dict[params.type][dict.PAGE] = 1
+
+        await getPageData()
+
+        loadingShow = false
     }
 
 
@@ -462,8 +519,11 @@
         font-size: 15px;
         color: white;
         text-align: center;
-        background: #5edbff;
-        border: 1px solid black;
+        background: #69ca60;
+        border-left: 1px solid #555555;
+        border-top: 1px solid #555555;
+        border-right: 3px solid black;
+        border-bottom: 3px solid black;
     }
     .subMenu button:hover{
         color: black;
@@ -525,28 +585,34 @@
     .navLeft .leftSampleTableWrapper .sampleTable th{
         width: 35px;
         height: 32px;
+        padding: 0;
+        margin: 0;
         border-left: 1px solid #cccccc;
         border-bottom: 3px solid #cccccc;
+        box-sizing: border-box;
     }
     .navLeft .leftSampleTableWrapper .sampleTable td{
         width: 35px;
         height: 30px;
+        padding: 0;
+        margin: 0;
+        border-left: 1px solid #cccccc;
         border-bottom: 1px solid #cccccc;
+        box-sizing: border-box;
     }
     .navLeft .leftSampleTableWrapper .sampleTable .sampleSn{
         width: 105px!important;
     }
-
-
-    .navLeft .leftSampleTableWrapper .sampleTable .selectALL{
+    .navLeft .leftSampleTableWrapper .sampleTable .selectALL, .navLeft .leftSampleTableWrapper .sampleTable .selectOne{
         margin: 0;
         padding: 0;
-        width: 35px;
-        height: 32px;
+        width: 34px;
+        height: 100%;
         line-height: 32px;
         border: none;
         background: white;
         font-weight: bold;
+        box-sizing: border-box;
     }
     .navLeft .leftSampleTableWrapper .sampleTable .selectALL:hover{
         background: #09c762;
@@ -554,14 +620,16 @@
     }
 
     .navLeft .leftSampleTableWrapper .tableContent{
+        width: 298px;
         height: 165px;
         overflow-y: scroll;
     }
-    .navLeft .leftSampleTableWrapper .tableContent .tick{
-        width: 38px;
-    }
     .navLeft .leftSampleTableWrapper .tableContent tr:hover{
         background: #09c762;
+    }
+    .navLeft .leftSampleTableWrapper .tableContent .tick .selectOne{
+        background: none!important;
+        font-weight: normal!important;
     }
 
     .navLeft .leftMessageWrapper{
