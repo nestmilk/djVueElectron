@@ -23,9 +23,9 @@
 
                     ></div>
                     <div class="leftMessage">
-
+                        提示：{errors}
                     </div>
-                    <div class="leftTopWrapper">
+                    <div class="leftSampleTableWrapper">
                         <table class="sampleTable">
                             <tr>
                                 <th class="sampleSn">样本名称</th>
@@ -39,10 +39,23 @@
                             </tr>
                         </table>
                         <div class="tableContent">
-
+                            <table class="sampleTable ">
+                                {#each sample_list as sample}
+                                    <tr >
+                                        <td class="sampleSn">{sample.sampleSn}</td>
+                                        <td class="total">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.ALLMUT]:''}</td>
+                                        <td class="submitedAndAffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.S_AMUT]:''}</td>
+                                        <td class="unsubmitedAndAffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.US_AMUT]:''}</td>
+                                        <td class="unsubmitedAndUnaffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.US_UAMUT]:''}</td>
+                                        <td class="tick">
+                                            <span ></span>
+                                        </td>
+                                    </tr>
+                                {/each}
+                            </table>
                         </div>
-                    </div>
-                    <div class="leftTopMidWrapper">
+                    </div><!--leftSampleTableWrapper-->
+                    <div class="leftMessageWrapper">
                         <div class="messageWrapper">
                             <div class="title">
                             </div>
@@ -52,7 +65,7 @@
 
                         </div>
                     </div>
-                    <div class="leftMidWrapper">
+                    <div class="leftSelectFileWrapper">
                         <div class="selectFile">
 
                         </div>
@@ -155,11 +168,12 @@
         SAMPLEINFOINPANAL: "sampleInfoInPanal",
         SHEET: 'sheet', SUBMENU_TRANSLATE: "submenu_translate", QUERY_PARAMS: "query_params",
         PARAM: 'param', SEARCH: 'search',
-        ID: 'id', SAMPLESN: 'sampleSn', TITLE_LIST: 'title_list',
-        PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
+        ID: 'id', SAMPLE: 'sample', SAMPLESN: 'sampleSn',  TITLE_LIST: 'title_list',
+        PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEID: 'sampleID', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
         TITLE: 'title', TRANSLATE: 'translate',
         TYPE: 'type',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll',
+        ALLMUT: 'allMut', S_AMUT: "subAndAffMut", US_AMUT: 'unsubAndAffMut', US_UAMUT: 'unsubAndUnaffMut',
     }
     // 获取路径中的：值
     export let params = {}
@@ -167,6 +181,8 @@
     // 控制loading页面的显示
     let loadingShow = false
 
+    // 提示错误信息
+    let errors = ''
 
     // 控制右侧的标题和下面mutant内容的联动
     let topScroll
@@ -251,14 +267,6 @@
     }
 
 
-    // 整张panal的所有表信息
-    let whole_panal_infoList_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        result[item[dict.SHEET]] = 'empty'
-        return result
-    }, {})))
-    let sample_id_list = []
-    let sample_id_dict = {}
-
     // 获取sheet页的页面参数字典
     let all_query_params_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         let params = item[dict.QUERY_PARAMS].reduce((result_2, item_2)=>{
@@ -304,6 +312,51 @@
         getPageData()
     }
 
+    // 整个表的sampleId的列表
+    let sample_list = []
+    // sampleSn对应sampleId
+    let sampleSn_dict = {}
+
+    let sheets_needSamplRecordDict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        if (!item.ifNotNeedSampleRecordDict) result.push(item[dict.SHEET])
+        return result
+    },[])))
+    // 统计每页sampleId为key，包含sampleSn，总数，未审核，未提交等的每个sample的总数
+    let all_sample_record_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        if (!item.ifNotNeedSampleRecordDict) {
+            result[item[dict.SHEET]] = {}
+        }
+        return result
+    }, {})))
+    function __setSampleIdList_and_AllSampleRecordDict(sampleInfoInPanals){
+
+        sample_list = JSON.parse(JSON.stringify(sampleInfoInPanals.map(sampleInfoInPanal=>{
+            return {
+                id: sampleInfoInPanal[dict.SAMPLE][dict.ID],
+                sampleSn: sampleInfoInPanal[dict.SAMPLE][dict.SAMPLESN]
+            }
+        })))
+
+        sampleSn_dict = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
+            result[sampleInfoInPanal[dict.SAMPLE][dict.SAMPLESN]] = sampleInfoInPanal[dict.SAMPLE][dict.ID]
+            return result
+        }, {})))
+
+
+        for (let sheet in all_sample_record_dict) {
+            all_sample_record_dict[sheet] = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
+                result[sampleInfoInPanal[dict.SAMPLE][dict.ID]] = {
+                    allMut: parseInt(sampleInfoInPanal[`${sheet}Count`]),
+                    subAndAffMut: parseInt(sampleInfoInPanal[`${sheet}SubmitCount`]),
+                    unsubAndAffMut: 0,
+                    unsubAndUnaffMut: parseInt(sampleInfoInPanal[`${sheet}Count`]) - parseInt(sampleInfoInPanal[`${sheet}SubmitCount`])
+                }
+                return result
+            }, {})))
+        }
+
+    }
+
 
     //标题相关参数
     let all_allFieldDisplayList_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
@@ -317,19 +370,17 @@
     }, {})))
 
 
+
+
     // 获取所有样本的id和sampleSn信息
     async function getSampleList(){
         loadingShow = true
 
         await api.retrievePanal(params.panalId).then(response=>{
             // console.log("getPanalSummary", response.data)
-            sample_id_list = response.data.samples.map(sample=> {
-                return {
-                    id: sample[dict.ID],
-                    sampleSn: sample[dict.SAMPLESN]
-                }
-            })
-            sample_id_dict = arrayToDict(sample_id_list, dict.ID)
+
+            // 初始化sampleId_list, 利用sampleInfoInPanals中样本信息，对手工表All_sample_record_dict初始化
+            __setSampleIdList_and_AllSampleRecordDict(response.data.sampleInfoInPanals)
         }).catch(error=>{
             console.log("getPanalSummary", error)
         })
@@ -341,7 +392,7 @@
     function updatePanalIdAndSampleIdsParams() {
         for (let sheet_name in all_query_params_dict ){
             all_query_params_dict[sheet_name][dict.PANALID] = parseInt(params[dict.PANALID])
-            all_query_params_dict[sheet_name][dict.SAMPLEIDS] = sample_id_list.map(item=>item[dict.ID]).join(',')
+            all_query_params_dict[sheet_name][dict.SAMPLEIDS] = sample_list.map(item=>item[dict.ID]).join(',')
         }
     }
 
@@ -359,9 +410,10 @@
     // 测试使用
     function test() {
         // console.log(whole_panal_infoList_dict)
-        // console.log(sample_id_list, sample_id_dict)
+        console.log(sample_list, sampleSn_dict)
         // console.log(all_query_params_dict)
         // console.log(now_page_data)
+        console.log(all_sample_record_dict)
     }
 </script>
 
@@ -410,7 +462,7 @@
         font-size: 15px;
         color: white;
         text-align: center;
-        background: orange;
+        background: #5edbff;
         border: 1px solid black;
     }
     .subMenu button:hover{
@@ -452,14 +504,14 @@
         color: orangered;
         border-bottom: 1px solid black;
     }
-    .navLeft .leftTopWrapper{
+    .navLeft .leftSampleTableWrapper{
         flex: 0 0 200px;
         width: 308px;
         padding: 3px;
         border-bottom: 1px solid black;
     }
 
-    .sampleTable{
+    .navLeft .leftSampleTableWrapper .sampleTable{
         border-collapse: collapse;
         border: 1px solid #cccccc;
         text-align: center;
@@ -470,29 +522,23 @@
         /*这个用于强制换行*/
         word-break: break-all;
     }
-    .sampleTable th{
+    .navLeft .leftSampleTableWrapper .sampleTable th{
+        width: 35px;
         height: 32px;
         border-left: 1px solid #cccccc;
         border-bottom: 3px solid #cccccc;
     }
-    .sampleTable td{
+    .navLeft .leftSampleTableWrapper .sampleTable td{
+        width: 35px;
         height: 30px;
         border-bottom: 1px solid #cccccc;
     }
-    .sampleTable .sampleSn{
-        width: 105px;
-    }
-    .sampleTable .total{
-        width: 35px;
-    }
-    .sampleTable .submitedAndAffirmed, .sampleTable .unsubmitedAndAffirmed, .sampleTable .unsubmitedAndUnaffirmed {
-        width: 35px;
-    }
-    .sampleTable .tick{
-        width: 35px;
+    .navLeft .leftSampleTableWrapper .sampleTable .sampleSn{
+        width: 105px!important;
     }
 
-    .sampleTable .selectALL{
+
+    .navLeft .leftSampleTableWrapper .sampleTable .selectALL{
         margin: 0;
         padding: 0;
         width: 35px;
@@ -502,53 +548,53 @@
         background: white;
         font-weight: bold;
     }
-    .sampleTable .selectALL:hover{
+    .navLeft .leftSampleTableWrapper .sampleTable .selectALL:hover{
         background: #09c762;
         color: white;
     }
 
-    .tableContent{
+    .navLeft .leftSampleTableWrapper .tableContent{
         height: 165px;
         overflow-y: scroll;
     }
-    .tableContent .tick{
+    .navLeft .leftSampleTableWrapper .tableContent .tick{
         width: 38px;
     }
-    .tableContent tr:hover{
+    .navLeft .leftSampleTableWrapper .tableContent tr:hover{
         background: #09c762;
     }
 
-    .leftTopMidWrapper{
+    .navLeft .leftMessageWrapper{
         flex: 0 0 228px;
         width: 308px;
         border-bottom: 1px solid black;
     }
-    .leftTopMidWrapper .messageWrapper{
+    .navLeft .leftMessageWrapper .messageWrapper{
         margin: 3px;
     }
-    .leftTopMidWrapper .messageWrapper .title{
+    .navLeft .leftMessageWrapper .messageWrapper .title{
         padding: 5px;
         height: 20px;
         line-height: 20px;
         font-size: 14px;
         border-bottom: 1px solid #cccccc;
     }
-    .leftTopMidWrapper .messageWrapper .uploadButtomWrapper{
+    .navLeft .leftMessageWrapper .messageWrapper .uploadButtomWrapper{
         height: 182px
     }
 
-    .leftTopMidWrapper .messageWrapper .uploadMessage{
+    .navLeft .leftMessageWrapper .messageWrapper .uploadMessage{
         height: 190px;
         width: 240px;
         font-size: 12px;
         overflow-y: scroll;
         float: left;
     }
-    .leftTopMidWrapper .messageWrapper .uploadBnWrapper{
+    .navLeft .leftMessageWrapper .messageWrapper .uploadBnWrapper{
         width: 62px;
         float: left;
     }
-    .leftTopMidWrapper .messageWrapper .uploadBnWrapper button{
+    .navLeft .leftMessageWrapper .messageWrapper .uploadBnWrapper button{
         margin: 3px 3px 0 3px;
         padding: 0px;
         height: 30px;
@@ -557,17 +603,17 @@
         font-size: 12px;
         font-weight: bold;
     }
-    .leftTopMidWrapper .messageWrapper .uploadBnWrapper button.disabled{
+    .navLeft .leftMessageWrapper .messageWrapper .uploadBnWrapper button.disabled{
         color: #cccccc;
         font-weight: normal;
     }
 
-    .leftMidWrapper{
+    .leftSelectFileWrapper{
         flex: 0 0 150px;
         width: 308px;
         border-bottom: 1px solid black;
     }
-    .leftMidWrapper .selectFile{
+    .leftSelectFileWrapper .selectFile{
         padding: 3px;
         height: 30px;
         width: 300px;
@@ -575,7 +621,7 @@
         font-size: 12px;
         border-bottom: 1px solid #cccccc;
     }
-    .leftMidWrapper input{
+    .leftSelectFileWrapper input{
         padding: 0;
         width: 72px;
         height: 30px;
@@ -583,7 +629,7 @@
         font-size: 14px;
         border: none;
     }
-    .leftMidWrapper .selectFile button{
+    .leftSelectFileWrapper .selectFile button{
           padding: 0;
           margin: 3px;
           width: 40px;
@@ -591,16 +637,16 @@
           line-height: 24px;
           float: right;
     }
-    .leftMidWrapper .selectFile button:hover{
+    .leftSelectFileWrapper .selectFile button:hover{
         background: #09c762;
     }
-    .leftMidWrapper .fileList{
+    .leftSelectFileWrapper .fileList{
         height: 107px;
         width: 308px;
         margin: 3px;
         overflow-y: scroll;
     }
-    .leftMidWrapper .fileList .sampleSn{
+    .leftSelectFileWrapper .fileList .sampleSn{
         margin: 3px 4px;
         width: 130px;
         height: 25px;

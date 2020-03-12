@@ -606,7 +606,7 @@
 
 
     // 其中sampleIds根据selected_sample_ids内容变动
-    let dmutant_param_page = 1
+    let mutant_param_page = 1
     let mutant_param_page_size = 20
 
 
@@ -2526,12 +2526,12 @@
         font-weight: normal;
     }
 
-    .leftMidWrapper{
+    .leftSelectFileWrapper{
         flex: 0 0 150px;
         width: 308px;
         border-bottom: 1px solid black;
     }
-    .leftMidWrapper .selectFile{
+    .leftSelectFileWrapper .selectFile{
         padding: 3px;
         height: 30px;
         width: 300px;
@@ -2539,7 +2539,7 @@
         font-size: 12px;
         border-bottom: 1px solid #cccccc;
     }
-    .leftMidWrapper input{
+    .leftSelectFileWrapper input{
         padding: 0;
         width: 72px;
         height: 30px;
@@ -2547,7 +2547,7 @@
         font-size: 14px;
         border: none;
     }
-    .leftMidWrapper .selectFile button{
+    .leftSelectFileWrapper .selectFile button{
           padding: 0;
           margin: 3px;
           width: 40px;
@@ -2555,16 +2555,16 @@
           line-height: 24px;
           float: right;
     }
-    .leftMidWrapper .selectFile button:hover{
+    .leftSelectFileWrapper .selectFile button:hover{
         background: #09c762;
     }
-    .leftMidWrapper .fileList{
+    .leftSelectFileWrapper .fileList{
         height: 107px;
         width: 308px;
         margin: 3px;
         overflow-y: scroll;
     }
-    .leftMidWrapper .fileList .sampleSn{
+    .leftSelectFileWrapper .fileList .sampleSn{
         margin: 3px 4px;
         width: 130px;
         height: 25px;

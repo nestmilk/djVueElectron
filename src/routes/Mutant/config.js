@@ -4,11 +4,12 @@
 // fixed固定显示的defaultDisplay true, selectDisplay false,
 // default默认显示的defaultDisplay true, selectDisplay true,
 // select选择显示的defaultDisplay false, selectDisplay true,
-// 不显示的defaultDisplay false, selectDisplay false,
+//  不显示的defaultDisplay false, selectDisplay false, 20.3.12 用不到了！
 
 export const sheetDisplayConfigList = [
     {
         sheet: "sampleInfoInPanal",
+        ifNotNeedSampleRecordDict: true,
         query_params: [
             {
                 param: "page",
@@ -31,25 +32,25 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "targetCount",
-                translate: "靶向总数",
+                translate: "靶向库存总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "targetSubmitCount",
-                translate: "提交总数",
+                translate: "靶向提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "hereditaryCount",
-                translate: "遗传总数",
+                translate: "遗传库存总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "hereditarySubmitCount",
-                translate: "提交总数",
+                translate: "提交库存总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -157,7 +158,7 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "clinicaltrialsSubmitCount",
-                translate: "提交总数",
+                translate: "clinicaltrials提交总数22222222",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -733,6 +734,48 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
+            }, {
+                title: "_geneName",
+                translate: "基因名称",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "clinicalGuide",
+                translate: "检测意义",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "testResult",
+                translate: "检测结果",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "effect",
+                translate: "疗效预测",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "dataInfo",
+                translate: "结果说明",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "projectAbbr",
+                translate: "项目简称",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
             },
         ],
     },
@@ -755,7 +798,77 @@ export const sheetDisplayConfigList = [
         title_list: [
             {
                 title: "sampleSn",
-                translate: "sampleSn",
+                translate: "样本编码*",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r2",
+                translate: "基因*",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "locusName",
+                translate: "突变肽段",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r3",
+                translate: "Neoantigen 打分",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r4",
+                translate: "野生型肽段",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r5",
+                translate: "HLA分型",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r6",
+                translate: "新表位打分",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r7",
+                translate: "野生型表位打分",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r8",
+                translate: "突变频率",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r9",
+                translate: "染色体编号",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r10",
+                translate: "突变位置",
                 type: "text",
                 modify: false,
                 defaultDisplay: true,
@@ -782,7 +895,119 @@ export const sheetDisplayConfigList = [
         title_list: [
             {
                 title: "sampleSn",
+                translate: "样本编码",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "chr1",
+                translate: "染色体1",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "posStart",
+                translate: "起始位置",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "chr2",
+                translate: "染色体2",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "posEnd",
+                translate: "终止位置",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "wxz",
+                translate: "外显子",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "fusions",
+                translate: "融合基因转录本",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "alteration",
+                translate: "基因变异",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "projectAbbreviation",
+                translate: "项目简称",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "VCF_Line",
+                translate: "vcfLine",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "sampleSn",
                 translate: "sampleSn",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "NM_ID",
+                translate: "转录本",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "GeneName",
+                translate: "基因名称",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "DNA_change",
+                translate: "碱基改变",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "AA_change",
+                translate: "氨基酸改变",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "drugLevel",
+                translate: "证据等级",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "cancerType",
+                translate: "癌症类型",
                 type: "text",
                 modify: false,
                 defaultDisplay: true,
@@ -809,7 +1034,84 @@ export const sheetDisplayConfigList = [
         title_list: [
             {
                 title: "sampleSn",
-                translate: "sampleSn",
+                translate: "样本编码",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "chr",
+                translate: "染色体",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "posStart",
+                translate: "起始位置",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "posEnd",
+                translate: "终止位置",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "cnaRatio",
+                translate: "变异倍数",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "projectAbbreviation",
+                translate: "项目简称",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "VCF_Line",
+                translate: "vcfLine",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "NM_ID",
+                translate: "转录本",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "_geneName",
+                translate: "基因名称",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "AA_change",
+                translate: "氨基酸改变",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "cancerType",
+                translate: "癌症类型",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "geneInfo",
+                translate: "基因描述",
                 type: "text",
                 modify: false,
                 defaultDisplay: true,

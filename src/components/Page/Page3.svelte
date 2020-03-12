@@ -117,7 +117,18 @@
             page: setPage
         })
     }
-    $: pageList = nav(page, totalPage, preText, nextText, endShow) //each无法resolve是个假象
+    // $: pageList = nav(page, totalPage, preText, nextText, endShow) //each无法resolve是个假象
+
+    let pageList
+    let pre_page, pre_totalPage, pre_preText, pre_nextText, pre_endShow
+    $: if(page!==pre_page || totalPage!==pre_totalPage || preText!==pre_preText || nextText!==pre_nextText || endShow !== pre_endShow) {
+        pageList = nav(page, totalPage, preText, nextText, endShow)
+        pre_page = page
+        pre_totalPage = totalPage
+        pre_preText = preText
+        pre_nextText = nextText
+        pre_endShow = pre_endShow
+    }
 
     onMount(()=>{
         document.querySelector('.select').value = pageSize
