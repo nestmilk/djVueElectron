@@ -159,6 +159,7 @@
     } from '../../utils/arrays'
     import {getTime, getParentNodeByParentClassName} from "../../utils/common";
     import {sheetDisplayConfigList, filterSelectionsConfig} from './config'
+    const sheetDisplayConfigDict = JSON.parse(JSON.stringify(arrayToDict(sheetDisplayConfigList, 'sheet')))
 
     // 引入electron相关包
     // const { ipcRenderer, remote } =window.require('electron')
@@ -177,8 +178,9 @@
         TYPE: 'type',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll',
         ALLMUT: 'allMut', S_AMUT: "subAndAffMut", US_AMUT: 'unsubAndAffMut', US_UAMUT: 'unsubAndUnaffMut',
-        DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering',
+        DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene',
         SAMPLEID2UNDERLINE: 'sample__id', DONE: 'done', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
+        TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB",
     }
     // 获取路径中的：值
     export let params = {}
@@ -271,6 +273,8 @@
         push(`/${type}/${params.panalId}`)
     }
 
+    // 每张表，除开通用的page，page_size, sampleIds，panalId, search，构建每个筛选的实例
+    let all_specific_filters = {}
 
     // 获取sheet页的页面参数字典
     let all_query_params_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
@@ -335,8 +339,10 @@
         }
         return result
     }, {})))
-    function __setSampleIdList_and_AllSampleRecordDict(sampleInfoInPanals){
-
+    // 加载初始化
+    function __setSampleIdList_and_AllSampleRecordDict__allSpecificFilters(data){
+        //1） 更新sample_list
+        let sampleInfoInPanals = data.sampleInfoInPanals
         sample_list = JSON.parse(JSON.stringify(sampleInfoInPanals.map(sampleInfoInPanal=>{
             return {
                 id: sampleInfoInPanal[dict.SAMPLE][dict.ID],
@@ -344,14 +350,16 @@
             }
         })))
 
+        // 顺便
         selected_sampleId_list = JSON.parse(JSON.stringify(sample_list.map(sample=>sample[dict.ID])))
 
+        // 顺便
         sampleSn_dict = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
             result[sampleInfoInPanal[dict.SAMPLE][dict.SAMPLESN]] = sampleInfoInPanal[dict.SAMPLE][dict.ID]
             return result
         }, {})))
 
-
+        // 更新all_sample_record_dict
         for (let sheet in all_sample_record_dict) {
             all_sample_record_dict[sheet] = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
                 result[sampleInfoInPanal[dict.SAMPLE][dict.ID]] = {
@@ -364,7 +372,60 @@
             }, {})))
         }
 
+        // 3) 更新all_specific_filters
+        // 先更新all_exonicfuncRefgenes中三张表
+        for (let type of [dict.TARGET, dict.HEREDITARY, dict.TMB]) {
+            let values = data[`${type.toLowerCase()}_exonicfuncRefgenes`]
+            // 如果没有，就不麻烦添加表了
+            if (values) {
+                let value_list = values.split(';')
+                let new_params = value_list.map(value=>({
+                    value: value,
+                    content: value
+                }))
+                all_exonicfuncRefgenes[type] = [all_exonicfuncRefgenes[type][0], ...new_params]
+            }
+        }
+
+        all_specific_filters = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result,item)=>{
+            let sheet = item[dict.SHEET]
+            let specific_found = false
+            let specific_params = []
+            for (let param of item[dict.QUERY_PARAMS]) {
+                if ([dict.PAGE, dict.PAGE_SIZE, dict.SAMPLEIDS, dict.PANALID, dict.SEARCH].indexOf(param)===-1) {
+                    specific_found = true
+                    specific_params.push(param)
+                }
+            }
+            if (specific_found) {
+                result[sheet] = {}
+                for (let param of specific_params) {
+                    switch (param) {
+                        case dict.DONE:
+                            result[sheet][param] = new DoneFilter()
+                            break
+                        case dict.LOGSEDIT:
+                            result[sheet][param] = new LogsEditFilter()
+                            break
+                        case dict.ORDERING:
+                            result[sheet][param] = new OrderingFilter()
+                            break
+                        case dict.EXONICFUNCREFGENE:
+                            result[sheet][param] = all_exonicfuncRefgenes[sheet]?
+                                    new ExonicfuncRefgeneFilter(all_exonicfuncRefgenes[sheet]) : null
+                            break
+                        default:
+                            break
+                    }
+                }
+            }
+            return result
+        }, {})))
+
+
+
     }
+
 
     // 处理sample样品全选、取消全选的切换
     async function handleToggleAllSample(){
@@ -416,6 +477,12 @@
         loadingShow = false
     }
 
+    // 三张表筛选用的selections
+    let all_exonicfuncRefgenes = {
+        target: [{value: null, content: "突变方式(全选)"}],
+        hereditary: [{value: null, content: "突变方式(全选)"}],
+        TMB: [{value: null, content: "突变方式(全选)"}]
+    }
     // 页面筛选相关done，logsEdit， ordering， exonicfuncRefGene的类函数
     // svelte不支持es7语法，貌似无static
     class DoneFilter {
@@ -471,8 +538,30 @@
         getContent (type) {
             return this.selections_dict[type][this.now_ids[type]].content
         }
+        getALLValues(){
+            let values = []
+            for (let key in this.selections_dict) {
+                values.push(this.selections_dict[key][this.now_ids[key]].value)
+            }
+            return values.join(',')
+        }
     }
-
+    class ExonicfuncRefgeneFilter {
+        constructor(selections) {
+            this.selections = selections
+            this.selections_len = selections.length
+            this.now_id = 0
+        }
+        toggleNowId (){
+            this.now_id = (this.now_id + 1)%this.selections_len
+        }
+        getValue () {
+            return this.selections[this.now_id].value
+        }
+        getContent () {
+            return this.selections[this.now_id].content
+        }
+    }
 
 
     //标题相关参数
@@ -497,7 +586,8 @@
             // console.log("getPanalSummary", response.data)
 
             // 初始化sampleId_list, 利用sampleInfoInPanals中样本信息，对手工表All_sample_record_dict初始化
-            __setSampleIdList_and_AllSampleRecordDict(response.data.sampleInfoInPanals)
+            __setSampleIdList_and_AllSampleRecordDict__allSpecificFilters(response.data)
+
         }).catch(error=>{
             console.log("getPanalSummary", error)
         })
@@ -531,10 +621,17 @@
         // console.log(all_query_params_dict)
         // console.log(now_page_data)
         // console.log(all_sample_record_dict)
-        let ordering =  new OrderingFilter()
-        console.log(ordering.getValue(dict.SAMPLEID2UNDERLINE), ordering.getContent(dict.SAMPLEID2UNDERLINE), ordering.getValue(dict.CHR))
-        ordering.toggleNowId(dict.SAMPLEID2UNDERLINE)
-        console.log(ordering.getValue(dict.SAMPLEID2UNDERLINE), ordering.getContent(dict.SAMPLEID2UNDERLINE), ordering.getValue(dict.CHR))
+
+        // let ordering =  new OrderingFilter()
+        // console.log(ordering.getValue(dict.SAMPLEID2UNDERLINE), ordering.getContent(dict.SAMPLEID2UNDERLINE), ordering.getALLValues())
+        // ordering.toggleNowId(dict.SAMPLEID2UNDERLINE)
+        // console.log(ordering.getValue(dict.SAMPLEID2UNDERLINE), ordering.getContent(dict.SAMPLEID2UNDERLINE), ordering.getALLValues())
+
+        // let exonic = new ExonicfuncRefgeneFilter(all_exonicfuncRefgenes.target)
+        // console.log(exonic.getValue())
+        // exonic.toggleNowId()
+        // console.log(exonic.getValue())
+        console.log(all_specific_filters)
     }
 </script>
 

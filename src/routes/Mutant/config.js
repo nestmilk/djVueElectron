@@ -413,7 +413,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "hereditary",
-        query_params: ["page","page_size","sampleIds","panalId","search"],
+        query_params: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", "ordering", "exonicfuncRefgene"],
         submenu_translate: '遗传',
         title_list: [
             {
@@ -568,7 +568,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "TMB",
-        query_params: ["page","page_size","sampleIds","panalId","search"],
+        query_params: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", "ordering", "exonicfuncRefgene"],
         submenu_translate: 'TMB',
         title_list: [
             {
@@ -664,7 +664,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "immune",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", "done"],
         submenu_translate: '免疫',
         title_list: [
             {
@@ -722,7 +722,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "TNB",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        query_params: ["page", "page_size", "sampleIds", "panalId",  "done"],
         submenu_translate: 'TNB',
         title_list: [
             {
@@ -808,7 +808,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "fusion",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        query_params: ["page", "page_size", "sampleIds", "panalId",  "done"],
         submenu_translate: '融合',
         title_list: [
             {
@@ -936,7 +936,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "CNA",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        query_params: ["page", "page_size", "sampleIds", "panalId",  "done"],
         submenu_translate: 'CNA',
         title_list: [
             {
