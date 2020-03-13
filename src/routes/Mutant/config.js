@@ -1729,44 +1729,53 @@ export const filterSelectionsConfig = {
             content: '修改记录'
         }
     ],
-    ordering: {
-        sample__id: [
-            {
-                value: "sample__id",
-                content: 'sampleId顺序'
-            }, {
-                value: null,
-                content: 'SampleId无序'
-            },
-        ],
-        chr: [
-            {
-                value: "chr",
-                content: 'chr顺序'
-            }, {
-                value: null,
-                content: 'chr无序'
-            },
-        ],
-        posStart: [
-            {
-                value: "posStart",
-                content: 'posStart顺序'
-            }, {
-                value: null,
-                content: 'posStart无序'
-            },
-        ],
-        posEnd: [
-            {
-                value: "posEnd",
-                content: 'posEnd顺序'
-            }, {
-                value: null,
-                content: 'posEnd无序'
-            },
-        ]
-    }
+    ordering: [
+        {
+            subFilter: "sample__id",
+            selections: [
+                {
+                    value: "sample__id",
+                    content: 'sampleId顺序'
+                }, {
+                    value: null,
+                    content: 'SampleId无序'
+                },
+            ],
+        }, {
+            subFilter: "chr",
+            selections: [
+                {
+                    value: "chr",
+                    content: 'chr顺序'
+                }, {
+                    value: null,
+                    content: 'chr无序'
+                },
+            ],
+        }, {
+            subFilter: "posStart",
+            selections: [
+                {
+                    value: "posStart",
+                    content: 'posStart顺序'
+                }, {
+                    value: null,
+                    content: 'posStart无序'
+                },
+            ],
+        }, {
+            subFilter: "posEnd",
+            selections: [
+                {
+                    value: "posEnd",
+                    content: 'posEnd顺序'
+                }, {
+                    value: null,
+                    content: 'posEnd无序'
+                },
+            ],
+        },
+    ]
 }
 
 

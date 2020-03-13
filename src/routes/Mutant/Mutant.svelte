@@ -9,7 +9,8 @@
             <div class="subMenuWrapper">
                 {#each submenu_list as submenu}
                     <button class="submenuBtn {params.type===submenu?'selectedSubMenu':''}"
-                            on:click={()=>handleSelectSubmenu(submenu)}>
+                            on:click={()=>handleSelectSubmenu(submenu)}
+                    >
                         {submenu_translate_dict[submenu]}
                     </button>
                 {/each}
@@ -87,11 +88,40 @@
                     <div class="titleTableWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)} >
                         <table class="rightDataTable">
                             <tr class="lineTitle">
-                                <th class="logs">全部日志</th>
-                                <th class="done">已经提交</th>
+                                <th class="logs" data-title="sampleSn"
+                                    on:click={()=>handleToggleFilter(dict.LOGSEDIT)}
+                                >
+                                    {all_specificFilter_indexes_dict[params.type]?filterSelectionsConfig[dict.LOGSEDIT][all_specificFilter_indexes_dict[params.type][dict.LOGSEDIT]].content:''}
+                                </th>
+                                <th class="done"
+                                    on:click={()=>handleToggleFilter(dict.DONE)}
+                                >
+                                    {all_specificFilter_indexes_dict[params.type]?filterSelectionsConfig[dict.DONE][all_specificFilter_indexes_dict[params.type][dict.DONE]].content:''}
+                                </th>
                                 <th class="affirmed">确认审核</th>
                                 <th class="delete">删除此行</th>
                                 {#each all_allFieldDisplayList_dict[params.type] as field}
+                                    {#if field[dict.TITLE]===dict.SAMPLESN &&
+                                        sheetDisplayConfigDict[params.type][dict.QUERY_PARAMS].indexOf(dict.ORDERING)
+                                    }
+
+                                    {:else if field[dict.TITLE]===dict.CHR &&
+                                        sheetDisplayConfigDict[params.type][dict.QUERY_PARAMS].indexOf(dict.ORDERING)
+                                    }
+
+                                    {:else if field[dict.TITLE]===dict.POSSTART &&
+                                        sheetDisplayConfigDict[params.type][dict.QUERY_PARAMS].indexOf(dict.ORDERING)
+                                    }
+
+                                    {:else if field[dict.TITLE]===dict.POSEND &&
+                                        sheetDisplayConfigDict[params.type][dict.QUERY_PARAMS].indexOf(dict.ORDERING)
+                                    }
+
+                                    {:else if field[dict.TITLE]===dict.EXONICFUNCREFGENE &&
+                                        sheetDisplayConfigDict[params.type][dict.QUERY_PARAMS].indexOf(dict.EXONICFUNCREFGENE)
+                                    }
+
+                                    {/if}
                                     <th class="{field[dict.TITLE]}">{field[dict.TRANSLATE]}</th>
                                 {/each}
                             </tr>
@@ -175,12 +205,13 @@
         ID: 'id', SAMPLE: 'sample', SAMPLESN: 'sampleSn',  TITLE_LIST: 'title_list',
         PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEID: 'sampleID', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
         TITLE: 'title', TRANSLATE: 'translate',
-        TYPE: 'type',
+        TYPE: 'type', CONTENT: 'content', VALUE: 'value',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll',
         ALLMUT: 'allMut', S_AMUT: "subAndAffMut", US_AMUT: 'unsubAndAffMut', US_UAMUT: 'unsubAndUnaffMut',
         DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene',
-        SAMPLEID2UNDERLINE: 'sample__id', DONE: 'done', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
+        SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
         TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB",
+
     }
     // 获取路径中的：值
     export let params = {}
@@ -274,7 +305,7 @@
     }
 
     // 每张表，除开通用的page，page_size, sampleIds，panalId, search，构建每个筛选的实例
-    let all_specific_filters = {}
+    let all_specificFilter_indexes_dict = {}
 
     // 获取sheet页的页面参数字典
     let all_query_params_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
@@ -383,11 +414,13 @@
                     value: value,
                     content: value
                 }))
-                all_exonicfuncRefgenes[type] = [all_exonicfuncRefgenes[type][0], ...new_params]
+                all_exonicfuncRefgenes_dict[type] = [all_exonicfuncRefgenes_dict[type][0], ...new_params]
+
+                all_exonicfuncRefgenes_lens_dict[type] = value_list.length
             }
         }
 
-        all_specific_filters = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result,item)=>{
+        all_specificFilter_indexes_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
             let sheet = item[dict.SHEET]
             let specific_found = false
             let specific_params = []
@@ -402,17 +435,16 @@
                 for (let param of specific_params) {
                     switch (param) {
                         case dict.DONE:
-                            result[sheet][param] = new DoneFilter()
+                            result[sheet][param] = 0
                             break
                         case dict.LOGSEDIT:
-                            result[sheet][param] = new LogsEditFilter()
+                            result[sheet][param] = 0
                             break
                         case dict.ORDERING:
-                            result[sheet][param] = new OrderingFilter()
+                            result[sheet][param] = Array(filterSelectionsConfig[dict.ORDERING].length).fill(0)
                             break
                         case dict.EXONICFUNCREFGENE:
-                            result[sheet][param] = all_exonicfuncRefgenes[sheet]?
-                                    new ExonicfuncRefgeneFilter(all_exonicfuncRefgenes[sheet]) : null
+                            result[sheet][param] = 0
                             break
                         default:
                             break
@@ -477,90 +509,62 @@
         loadingShow = false
     }
 
+
     // 三张表筛选用的selections
-    let all_exonicfuncRefgenes = {
+    let all_exonicfuncRefgenes_dict = {
         target: [{value: null, content: "突变方式(全选)"}],
         hereditary: [{value: null, content: "突变方式(全选)"}],
         TMB: [{value: null, content: "突变方式(全选)"}]
     }
+    let all_exonicfuncRefgenes_lens_dict = {}
     // 页面筛选相关done，logsEdit， ordering， exonicfuncRefGene的类函数
-    // svelte不支持es7语法，貌似无static
-    class DoneFilter {
-        constructor() {
-            this.selections = JSON.parse(JSON.stringify(filterSelectionsConfig[dict.DONE]))
-            this.selections_len = filterSelectionsConfig[dict.DONE].length
-            this.now_id = 0
+    // todo svelte不支持es7语法，貌似无static, svelte无法获取实例的方法，只有变量可以加载到
+    // todo svelte不支持，感觉框架结构就不应该再使用类管理了！！
+    // class LogsEditFilter {
+    //     constructor() {
+    //         this.selections = JSON.parse(JSON.stringify(filterSelectionsConfig[dict.LOGSEDIT]))
+    //         this.selections_len = filterSelectionsConfig[dict.LOGSEDIT].length
+    //         this.now_id = 0
+    //     }
+    //
+    //     toggleNowId () {
+    //         this.now_id = (this.now_id + 1)%this.selections_len
+    //     }
+    // }
+
+
+    // 几个过滤的长度
+    const done_selections_len = filterSelectionsConfig[dict.DONE].length
+    const logsEdit_selections_len = filterSelectionsConfig[dict.LOGSEDIT].length
+    const ordering_selections_lens = filterSelectionsConfig[dict.ORDERING].map(item=>{
+        return item.selections.length
+    })
+
+    // 切换filter的项
+    async function handleToggleFilter(type){
+        // console.log("handleToggleFilter", type)
+        loadingShow = true
+
+        switch (type) {
+            case dict.DONE:
+                let index_of_Done = all_specificFilter_indexes_dict[params.type][type]
+                let new_index_of_done = (index_of_Done+1)%done_selections_len
+                all_specificFilter_indexes_dict[params.type][type] = new_index_of_done
+                all_query_params_dict[params.type][type] = filterSelectionsConfig[type][new_index_of_done][dict.VALUE]
+                break
+            case dict.LOGSEDIT:
+                let index_of_logsEdit = all_specificFilter_indexes_dict[params.type][type]
+                let new_index_of_logsEdit = (index_of_logsEdit+1)%logsEdit_selections_len
+                all_specificFilter_indexes_dict[params.type][type] = new_index_of_logsEdit
+                all_query_params_dict[params.type][type] = filterSelectionsConfig[type][new_index_of_logsEdit][dict.VALUE]
+                break
+            default:
+                break
         }
-        toggleNowId (){
-            this.now_id = (this.now_id + 1)%this.selections_len
-        }
-        getValue () {
-            return this.selections[this.now_id].value
-        }
-        getContent () {
-            return this.selections[this.now_id].content
-        }
-    }
-    class LogsEditFilter {
-        constructor() {
-            this.selections = JSON.parse(JSON.stringify(filterSelectionsConfig[dict.LOGSEDIT]))
-            this.selections_len = filterSelectionsConfig[dict.LOGSEDIT].length
-            this.now_id = 0
-        }
-        toggleNowId (){
-            this.now_id = (this.now_id + 1)%this.selections_len
-        }
-        getValue () {
-            return this.selections[this.now_id].value
-        }
-        getContent () {
-            return this.selections[this.now_id].content
-        }
-    }
-    class OrderingFilter {
-        constructor() {
-            this.selections_dict = JSON.parse(JSON.stringify(filterSelectionsConfig[dict.ORDERING]))
-            this.selections_lens = Object.keys(filterSelectionsConfig[dict.ORDERING]).reduce((result, key)=>{
-                result[key] = filterSelectionsConfig[dict.ORDERING][key].length
-                return result
-            }, {})
-            this.now_ids = Object.keys(filterSelectionsConfig[dict.ORDERING]).reduce((result, key)=>{
-                result[key] = 0
-                return result
-            }, {})
-        }
-        toggleNowId (type) {
-            this.now_ids[type] = (this.now_ids[type] + 1)%this.selections_lens[type]
-        }
-        getValue (type) {
-            return this.selections_dict[type][this.now_ids[type]].value
-        }
-        getContent (type) {
-            return this.selections_dict[type][this.now_ids[type]].content
-        }
-        getALLValues(){
-            let values = []
-            for (let key in this.selections_dict) {
-                values.push(this.selections_dict[key][this.now_ids[key]].value)
-            }
-            return values.join(',')
-        }
-    }
-    class ExonicfuncRefgeneFilter {
-        constructor(selections) {
-            this.selections = selections
-            this.selections_len = selections.length
-            this.now_id = 0
-        }
-        toggleNowId (){
-            this.now_id = (this.now_id + 1)%this.selections_len
-        }
-        getValue () {
-            return this.selections[this.now_id].value
-        }
-        getContent () {
-            return this.selections[this.now_id].content
-        }
+
+        await getPageData()
+
+        loadingShow = false
     }
 
 
@@ -631,7 +635,8 @@
         // console.log(exonic.getValue())
         // exonic.toggleNowId()
         // console.log(exonic.getValue())
-        console.log(all_specific_filters)
+        // console.log(all_specificFilter_indexes_dict)
+        console.log(all_exonicfuncRefgenes_lens_dict)
     }
 </script>
 
