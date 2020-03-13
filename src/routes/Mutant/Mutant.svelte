@@ -87,7 +87,7 @@
                     <div class="titleTableWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)} >
                         <table class="rightDataTable">
                             <tr class="lineTitle">
-                                <th class="logs">全部记录</th>
+                                <th class="logs">全部日志</th>
                                 <th class="done">已经提交</th>
                                 <th class="affirmed">确认审核</th>
                                 <th class="delete">删除此行</th>
@@ -158,7 +158,7 @@
         arrayToDict
     } from '../../utils/arrays'
     import {getTime, getParentNodeByParentClassName} from "../../utils/common";
-    import {sheetDisplayConfigList} from './config'
+    import {sheetDisplayConfigList, filterSelectionsConfig} from './config'
 
     // 引入electron相关包
     // const { ipcRenderer, remote } =window.require('electron')
@@ -177,6 +177,8 @@
         TYPE: 'type',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll',
         ALLMUT: 'allMut', S_AMUT: "subAndAffMut", US_AMUT: 'unsubAndAffMut', US_UAMUT: 'unsubAndUnaffMut',
+        DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering',
+        SAMPLEID2UNDERLINE: 'sample__id', DONE: 'done', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
     }
     // 获取路径中的：值
     export let params = {}
@@ -220,7 +222,7 @@
     async function getPageData () {
         loadingShow = true
 
-        // 第一次加载，还没有更新获得panalId和sampleIds参数
+        // 第一次切换到mutant上加载，还没有更新获得panalId和sampleIds参数
         __addPanalIDIfFirstLoad()
 
         let success = false
@@ -232,7 +234,7 @@
         await api[`list${name}`](all_query_params_dict[params.type]).then(response=>{
             // console.log("__getPageData", response.data)
             now_page_data = response.data.results
-            console.log("__getPageData now_page_data", now_page_data)
+            // console.log("__getPageData now_page_data", now_page_data)
 
             // 更新当前页data_num
             data_count = response.data.count
@@ -251,7 +253,7 @@
     }
     // 动态更新当前页面信息
     $: if (pre_params_type !== params.type) {
-        console.log('listem params.type 先前params.type 现在params.tpe', pre_params_type, params.type)
+        // console.log('listem params.type 先前params.type 现在params.tpe', pre_params_type, params.type)
         getPageData()
     }
 
@@ -272,22 +274,22 @@
 
     // 获取sheet页的页面参数字典
     let all_query_params_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        let params = item[dict.QUERY_PARAMS].reduce((result_2, item_2)=>{
-            switch (item_2[dict.PARAM]) {
+        let params = item[dict.QUERY_PARAMS].reduce((param_dict, param)=>{
+            switch (param) {
                 case dict.PAGE:
-                    result_2[item_2[dict.PARAM]] = 1
+                    param_dict[param] = 1
                     break
                 case dict.PAGE_SIZE:
-                    result_2[item_2[dict.PARAM]] = 20
+                    param_dict[param] = 20
                     break
                 case dict.SEARCH:
-                    result_2[item_2[dict.PARAM]] = item[dict.SHEET]
+                    param_dict[param] = item[dict.SHEET]
                     break
                 default:
-                    result_2[item_2[dict.PARAM]] = null
+                    param_dict[param] = null
             }
 
-            return result_2
+            return param_dict
         }, {})
         result[item[dict.SHEET]] = params
         return result
@@ -414,6 +416,64 @@
         loadingShow = false
     }
 
+    // 页面筛选相关done，logsEdit， ordering， exonicfuncRefGene的类函数
+    // svelte不支持es7语法，貌似无static
+    class DoneFilter {
+        constructor() {
+            this.selections = JSON.parse(JSON.stringify(filterSelectionsConfig[dict.DONE]))
+            this.selections_len = filterSelectionsConfig[dict.DONE].length
+            this.now_id = 0
+        }
+        toggleNowId (){
+            this.now_id = (this.now_id + 1)%this.selections_len
+        }
+        getValue () {
+            return this.selections[this.now_id].value
+        }
+        getContent () {
+            return this.selections[this.now_id].content
+        }
+    }
+    class LogsEditFilter {
+        constructor() {
+            this.selections = JSON.parse(JSON.stringify(filterSelectionsConfig[dict.LOGSEDIT]))
+            this.selections_len = filterSelectionsConfig[dict.LOGSEDIT].length
+            this.now_id = 0
+        }
+        toggleNowId (){
+            this.now_id = (this.now_id + 1)%this.selections_len
+        }
+        getValue () {
+            return this.selections[this.now_id].value
+        }
+        getContent () {
+            return this.selections[this.now_id].content
+        }
+    }
+    class OrderingFilter {
+        constructor() {
+            this.selections_dict = JSON.parse(JSON.stringify(filterSelectionsConfig[dict.ORDERING]))
+            this.selections_lens = Object.keys(filterSelectionsConfig[dict.ORDERING]).reduce((result, key)=>{
+                result[key] = filterSelectionsConfig[dict.ORDERING][key].length
+                return result
+            }, {})
+            this.now_ids = Object.keys(filterSelectionsConfig[dict.ORDERING]).reduce((result, key)=>{
+                result[key] = 0
+                return result
+            }, {})
+        }
+        toggleNowId (type) {
+            this.now_ids[type] = (this.now_ids[type] + 1)%this.selections_lens[type]
+        }
+        getValue (type) {
+            return this.selections_dict[type][this.now_ids[type]].value
+        }
+        getContent (type) {
+            return this.selections_dict[type][this.now_ids[type]].content
+        }
+    }
+
+
 
     //标题相关参数
     let all_allFieldDisplayList_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
@@ -467,10 +527,14 @@
     // 测试使用
     function test() {
         // console.log(whole_panal_infoList_dict)
-        console.log(sample_list, sampleSn_dict)
+        // console.log(sample_list, sampleSn_dict)
         // console.log(all_query_params_dict)
         // console.log(now_page_data)
-        console.log(all_sample_record_dict)
+        // console.log(all_sample_record_dict)
+        let ordering =  new OrderingFilter()
+        console.log(ordering.getValue(dict.SAMPLEID2UNDERLINE), ordering.getContent(dict.SAMPLEID2UNDERLINE), ordering.getValue(dict.CHR))
+        ordering.toggleNowId(dict.SAMPLEID2UNDERLINE)
+        console.log(ordering.getValue(dict.SAMPLEID2UNDERLINE), ordering.getContent(dict.SAMPLEID2UNDERLINE), ordering.getValue(dict.CHR))
     }
 </script>
 

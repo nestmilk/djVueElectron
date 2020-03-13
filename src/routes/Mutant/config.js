@@ -10,18 +10,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "sampleInfoInPanal",
         ifNotNeedSampleRecordDict: true,
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: '总览',
         title_list: [
             {
@@ -32,25 +21,25 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "targetCount",
-                translate: "靶向库存总数",
+                translate: "target总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "targetSubmitCount",
-                translate: "靶向提交总数",
+                translate: "target提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "hereditaryCount",
-                translate: "遗传库存总数",
+                translate: "hereditary总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "hereditarySubmitCount",
-                translate: "提交库存总数",
+                translate: "hereditary提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -62,19 +51,19 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "TMBSubmitCount",
-                translate: "提交总数",
+                translate: "TMB提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "immuneCount",
-                translate: "免疫总数",
+                translate: "immune总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "immuneSubmitCount",
-                translate: "提交总数",
+                translate: "immune提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -86,19 +75,19 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "TNBSubmitCount",
-                translate: "提交总数",
+                translate: "TNB提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "fusionCount",
-                translate: "融合总数",
+                translate: "fusion总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "fusionSubmitCount",
-                translate: "提交总数",
+                translate: "fusion提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -110,19 +99,19 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "CNASubmitCount",
-                translate: "提交总数",
+                translate: "CNA提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "chemicalCount",
-                translate: "化疗总数",
+                translate: "chemical总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "chemicalSubmitCount",
-                translate: "提交总数",
+                translate: "chemical提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -134,7 +123,7 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "MSISubmitCount",
-                translate: "提交总数",
+                translate: "MSI提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -146,7 +135,7 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "HRRSubmitCount",
-                translate: "提交总数",
+                translate: "HRR提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -158,7 +147,7 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "clinicaltrialsSubmitCount",
-                translate: "clinicaltrials提交总数22222222",
+                translate: "clinicaltrials提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -170,7 +159,7 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "HLASubmitCount",
-                translate: "提交总数",
+                translate: "HLA提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -182,19 +171,19 @@ export const sheetDisplayConfigList = [
                 selectDisplay: false
             }, {
                 title: "QCSubmitCount",
-                translate: "提交总数",
+                translate: "QC提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "sampleInfoCount",
-                translate: "样本信息总数",
+                translate: "sampleInfo总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "sampleInfoSubmitCount",
-                translate: "提交总数",
+                translate: "sampleInfo提交总数",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -204,20 +193,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "target",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }, {
-                param: "search"
-            }
-
-        ],
+        query_params: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", "ordering", "exonicfuncRefgene"],
         submenu_translate: '靶向',
         title_list: [
             {
@@ -437,20 +413,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "hereditary",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }, {
-                param: "search"
-            }
-
-        ],
+        query_params: ["page","page_size","sampleIds","panalId","search"],
         submenu_translate: '遗传',
         title_list: [
             {
@@ -605,19 +568,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "TMB",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }, {
-                param: "search"
-            }
-        ],
+        query_params: ["page","page_size","sampleIds","panalId","search"],
         submenu_translate: 'TMB',
         title_list: [
             {
@@ -713,18 +664,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "immune",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: '免疫',
         title_list: [
             {
@@ -782,18 +722,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "TNB",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: 'TNB',
         title_list: [
             {
@@ -879,18 +808,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "fusion",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: '融合',
         title_list: [
             {
@@ -1018,18 +936,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "CNA",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: 'CNA',
         title_list: [
             {
@@ -1122,18 +1029,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "chemical",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: '化疗',
         title_list: [
             {
@@ -1219,18 +1115,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "MSI",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: 'MSI',
         title_list: [
             {
@@ -1288,18 +1173,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "HRR",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: 'HRR',
         title_list: [
             {
@@ -1371,18 +1245,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "clinicaltrials",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: 'clinicaltrials',
         title_list: [
             {
@@ -1475,18 +1338,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "HLA",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: 'HLA',
         title_list: [
             {
@@ -1537,18 +1389,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "QC",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: 'QC',
         title_list: [
             {
@@ -1697,18 +1538,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "sampleInfo",
-        query_params: [
-            {
-                param: "page",
-            }, {
-                param: "page_size",
-            }, {
-                param: "sampleIds",
-            }, {
-                param: "panalId",
-            }
-
-        ],
+        query_params: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: '样本信息',
         title_list: [
             {
@@ -1877,7 +1707,67 @@ export const sheetDisplayConfigList = [
     },
 ]
 
-
+export const filterSelectionsConfig = {
+    done: [
+        {
+            value: null,
+            content: '全部'
+        }, {
+            value: false,
+            content: '尚未提交'
+        }, {
+            value: true,
+            content: '已经提交'
+        },
+    ],
+    logsEdit: [
+        {
+            value: null,
+            content: '全部记录'
+        }, {
+            value: 'True',
+            content: '修改记录'
+        }
+    ],
+    ordering: {
+        sample__id: [
+            {
+                value: "sample__id",
+                content: 'sampleId顺序'
+            }, {
+                value: null,
+                content: 'SampleId无序'
+            },
+        ],
+        chr: [
+            {
+                value: "chr",
+                content: 'chr顺序'
+            }, {
+                value: null,
+                content: 'chr无序'
+            },
+        ],
+        posStart: [
+            {
+                value: "posStart",
+                content: 'posStart顺序'
+            }, {
+                value: null,
+                content: 'posStart无序'
+            },
+        ],
+        posEnd: [
+            {
+                value: "posEnd",
+                content: 'posEnd顺序'
+            }, {
+                value: null,
+                content: 'posEnd无序'
+            },
+        ]
+    }
+}
 
 
 
