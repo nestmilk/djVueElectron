@@ -38,7 +38,7 @@ axios.interceptors.response.use(
         //         break
         //     // alert('服务器错误');
         //     default:
-        console.error('axios拦截已打开, 包装为error.response或error.message', res)
+        console.error('axios拦截已打开, 包装为error.response或error.message', error, res)
 
         // res = error.response 包装过了，和正确时候可以同样处理了！
         return Promise.reject(res)   // 返回接口返回的错误信息

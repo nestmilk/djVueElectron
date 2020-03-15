@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         remote.dialog.showOpenDialog({
             title: 'igv路径',
             properties: ['openFile'],
-            filters: [{name: 'bat', extensions: ['bat']}],
+            FILTERS: [{name: 'bat', extensions: ['bat']}],
             message: '选择igv.bat文件路径'
         }).then(result=>{
             if(result.filePaths.length > 0){

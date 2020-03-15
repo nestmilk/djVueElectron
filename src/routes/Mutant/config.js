@@ -6,11 +6,12 @@
 // select选择显示的defaultDisplay false, selectDisplay true,
 //  不显示的defaultDisplay false, selectDisplay false, 20.3.12 用不到了！
 
+// query_params作用，1，标题栏利用此处关联，
+
 export const sheetDisplayConfigList = [
     {
         sheet: "sampleInfoInPanal",
-        ifNotNeedSampleRecordDict: true,
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        filters: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: '总览',
         title_list: [
             {
@@ -193,7 +194,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "target",
-        query_params: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", "ordering", "exonicfuncRefgene"],
+        filters: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", 'ordering', "exonicfuncRefgene"],
         submenu_translate: '靶向',
         title_list: [
             {
@@ -413,7 +414,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "hereditary",
-        query_params: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", "ordering", "exonicfuncRefgene"],
+        filters: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", 'ordering', "exonicfuncRefgene"],
         submenu_translate: '遗传',
         title_list: [
             {
@@ -568,7 +569,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "TMB",
-        query_params: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", "ordering", "exonicfuncRefgene"],
+        filters: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", 'ordering', "exonicfuncRefgene"],
         submenu_translate: 'TMB',
         title_list: [
             {
@@ -664,7 +665,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "immune",
-        query_params: ["page", "page_size", "sampleIds", "panalId", "done"],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
         submenu_translate: '免疫',
         title_list: [
             {
@@ -722,7 +724,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "TNB",
-        query_params: ["page", "page_size", "sampleIds", "panalId",  "done"],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
         submenu_translate: 'TNB',
         title_list: [
             {
@@ -808,7 +811,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "fusion",
-        query_params: ["page", "page_size", "sampleIds", "panalId",  "done"],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
         submenu_translate: '融合',
         title_list: [
             {
@@ -936,7 +940,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "CNA",
-        query_params: ["page", "page_size", "sampleIds", "panalId",  "done"],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
         submenu_translate: 'CNA',
         title_list: [
             {
@@ -1029,7 +1034,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "chemical",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "ordering"],
         submenu_translate: '化疗',
         title_list: [
             {
@@ -1115,7 +1121,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "MSI",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "ordering"],
         submenu_translate: 'MSI',
         title_list: [
             {
@@ -1173,7 +1180,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "HRR",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "ordering"],
         submenu_translate: 'HRR',
         title_list: [
             {
@@ -1245,7 +1253,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "clinicaltrials",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "ordering" ],
         submenu_translate: 'clinicaltrials',
         title_list: [
             {
@@ -1338,7 +1347,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "HLA",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "ordering"],
         submenu_translate: 'HLA',
         title_list: [
             {
@@ -1389,7 +1399,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "QC",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "ordering"],
         submenu_translate: 'QC',
         title_list: [
             {
@@ -1538,7 +1549,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "sampleInfo",
-        query_params: ["page", "page_size", "sampleIds", "panalId", ],
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "ordering"],
         submenu_translate: '样本信息',
         title_list: [
             {
@@ -1707,8 +1719,18 @@ export const sheetDisplayConfigList = [
     },
 ]
 
-export const filterSelectionsConfig = {
-    done: [
+// 记录内容和亚筛选项的顺序，"exonicfuncRefgene"是三张表都不一样的，先使用初始化的筛选项'initial_exonicfuncRefgene'，需要加载后替换
+export const common_filter_subFilters_dict = {
+    done: ['done',],
+    logsEdit:['logsEdit',],
+    ordering: ['sample__id', 'chr', 'posStart', 'posEnd'],
+    exonicfuncRefgene: ['initial_exonicfuncRefgene'],
+}
+
+
+// 每个亚筛选项的 选择内容的列表，"exonicfuncRefgene"是3张mutant表都不一样的，需要加载获得
+export const common_subFilter_selections_dict = {
+    'done': [
         {
             value: null,
             content: '全部'
@@ -1720,7 +1742,7 @@ export const filterSelectionsConfig = {
             content: '已经提交'
         },
     ],
-    logsEdit: [
+    'logsEdit': [
         {
             value: null,
             content: '全部记录'
@@ -1729,53 +1751,48 @@ export const filterSelectionsConfig = {
             content: '修改记录'
         }
     ],
-    ordering: [
+    'sample__id': [
         {
-            subFilter: "sample__id",
-            selections: [
-                {
-                    value: "sample__id",
-                    content: 'sampleId顺序'
-                }, {
-                    value: null,
-                    content: 'SampleId无序'
-                },
-            ],
+            value: "sample__id",
+            content: '样本编号 <span class="icon-sort-amount-asc" style="font-size: 16px"></span>'
         }, {
-            subFilter: "chr",
-            selections: [
-                {
-                    value: "chr",
-                    content: 'chr顺序'
-                }, {
-                    value: null,
-                    content: 'chr无序'
-                },
-            ],
-        }, {
-            subFilter: "posStart",
-            selections: [
-                {
-                    value: "posStart",
-                    content: 'posStart顺序'
-                }, {
-                    value: null,
-                    content: 'posStart无序'
-                },
-            ],
-        }, {
-            subFilter: "posEnd",
-            selections: [
-                {
-                    value: "posEnd",
-                    content: 'posEnd顺序'
-                }, {
-                    value: null,
-                    content: 'posEnd无序'
-                },
-            ],
+            value: null,
+            content: '样本编号'
         },
-    ]
+    ],
+    'chr': [
+        {
+            value: "chr",
+            content: '染色体 <span class="icon-sort-amount-asc" style="font-size: 16px"></span>'
+        }, {
+            value: null,
+            content: '染色体'
+        },
+    ],
+    'posStart': [
+        {
+            value: "posStart",
+            content: '起始位置 <span class="icon-sort-amount-asc" style="font-size: 16px"></span>'
+        }, {
+            value: null,
+            content: '起始位置'
+        },
+    ],
+    'posEnd': [
+        {
+            value: "posEnd",
+            content: '终止位置 <span class="icon-sort-amount-asc" style="font-size: 16px"></span>'
+        }, {
+            value: null,
+            content: '终止位置'
+        },
+    ],
+    'initial_exonicfuncRefgene': [
+        {
+            value: null,
+            content: "突变方式(全选)"
+        },
+    ],
 }
 
 
