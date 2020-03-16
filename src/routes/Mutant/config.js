@@ -1551,7 +1551,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "sampleInfo",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "ordering"],
+        filters: ["page", "page_size", "sampleIds", "panalId"],
         submenu_translate: '样本信息',
         title_list: [
             {

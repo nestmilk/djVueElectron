@@ -46,10 +46,10 @@
                                 {#each sample_list as sample}
                                     <tr on:click={()=>handleSelectSample(sample[dict.ID])}>
                                         <td class="sampleSn">{sample.sampleSn}</td>
-                                        <td class="total">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.ALLMUT]:''}</td>
-                                        <td class="submitedAndAffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.S_AMUT]:''}</td>
-                                        <td class="unsubmitedAndAffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.US_AMUT]:''}</td>
-                                        <td class="unsubmitedAndUnaffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.US_UAMUT]:''}</td>
+                                        <td class="total">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.ALLDATA]:''}</td>
+                                        <td class="submitedAndAffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.S_ADATA]:''}</td>
+                                        <td class="unsubmitedAndAffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.US_ADATA]:''}</td>
+                                        <td class="unsubmitedAndUnaffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.US_UADATA]:''}</td>
                                         <td class="tick">
                                             <button class="selectOne {selected_sampleId_list.indexOf(sample.id)>-1?'icon-checkbox-checked':
                                                 'icon-checkbox-unchecked'}"></button>
@@ -62,6 +62,7 @@
                     <div class="leftMessageWrapper">
                         <div class="messageWrapper">
                             <div class="title">
+                                {all_sheet_record_dict[params.type].totalSubmitAndAffirmed}条已提交，{all_sheet_record_dict[params.type].totalUnsubmitAndAffirmed}条待提交，{all_sheet_record_dict[params.type].totalUnsubmitAndUnaffirmed}条待审核
                             </div>
                             <div class="uploadButtomWrapper">
 
@@ -176,20 +177,41 @@
                     <div class="dataTableWrapper" bind:this={bottomScroll} on:scroll={()=>handleScroll(dict.BOTTOMSCROLL)} >
                         <table class="rightDataTable">
                             {#each now_page_data as line_data, index}
-                                <tr class="lineData">
-                                    {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.DONE) !== -1}
+                                <tr class="lineData
+                                    {all_now_data_id[params.type]===line_data.id?'current':''}
+                                    "
+                                    on:click|stopPropagation={(e)=>handleChangeNowDataIdandNowSampleId(line_data.id, line_data.sampleId, e)}
+                                >
+                                    {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
                                         <td class="logs">全部记录</td>
-                                        <td class="done">已经提交</td>
+                                        <td class="done">
+                                            <button class="{line_data[dict.DONE]?'icon-lock':'icon-unlocked'}"
+
+                                                    disabled="{panal_unable_handle?'disabled':''}">
+                                            </button>
+                                        </td>
                                         <td class="affirmed">确认审核</td>
                                         <td class="delete">删除此行</td>
                                     {/if}
 
                                     {#each all_allFieldDisplayList_dict[params.type] as field}
-                                        <td class="{field[dict.TITLE]}"
-                                            title="实时数据：{line_data[field[dict.TITLE]]}{field[dict.TITLE]==='sampleSn'?' '+line_data[dict.ID]:''}"
-                                        >
-                                            <div class="inside">{line_data[field[dict.TITLE]]}</div>
-                                        </td>
+                                        {#if all_titleConfigList_dict[params.type][field[dict.TITLE]][dict.MODIFY]}
+                                            <td class="{field[dict.TITLE]}"
+                                                title="实时数据：{line_data[field[dict.TITLE]]}{field[dict.TITLE]==='sampleSn'?' '+line_data[dict.ID]:''}"
+                                            >
+                                                <div class="inside">{line_data[field[dict.TITLE]]}</div>
+                                            </td>
+<!--                                            <input class="dataInput" type={sheetDisplayConfigDict[params.type][field][dict.TYPE]}-->
+<!--                                                   value="{all_editedData_dict[params.type]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"-->
+<!--                                                   on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}-->
+<!--                                            >-->
+                                        {:else}
+                                            <td class="{field[dict.TITLE]}"
+                                                title="实时数据：{line_data[field[dict.TITLE]]}{field[dict.TITLE]==='sampleSn'?' '+line_data[dict.ID]:''}"
+                                            >
+                                                <div class="inside">{line_data[field[dict.TITLE]]}</div>
+                                            </td>
+                                        {/if}
                                     {/each}
                                 </tr>
                             {/each}
@@ -212,6 +234,9 @@
 {#if loadingShow}
     <Loading></Loading>
 {/if}
+{#if sureShow}
+    <Sure ></Sure>
+{/if}
 
 <script>
     //引入svelte相关包
@@ -226,6 +251,7 @@
     import LeftMenus from '../../components/LeftMenus/LeftMenus.svelte'
     import Loading from '../../components/Loading/Loading.svelte'
     import Page from '../../components/Page/Page3.svelte'
+    import Sure from '../../components/Sure/Sure.svelte'
 
 
     // 引入本地脚本
@@ -252,14 +278,15 @@
         SHEET: 'sheet', SUBMENU_TRANSLATE: "submenu_translate", FILTERS: "filters",
         PARAM: 'param', SEARCH: 'search',
         ID: 'id', SAMPLE: 'sample', SAMPLESN: 'sampleSn',  TITLE_LIST: 'title_list',
-        PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEID: 'sampleID', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
+        PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEID: 'sampleId', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
         TITLE: 'title', TRANSLATE: 'translate',
         TYPE: 'type', CONTENT: 'content', VALUE: 'value',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll',
-        ALLMUT: 'allMut', S_AMUT: "subAndAffMut", US_AMUT: 'unsubAndAffMut', US_UAMUT: 'unsubAndUnaffMut',
+        ALLDATA: 'allData', S_ADATA: "subAndAffData", US_ADATA: 'unsubAndAffData', US_UADATA: 'unsubAndUnaffData',
         DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene',
         SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
         TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB",
+        MODIFY: 'modify',
 
     }
     // 获取路径中的：值
@@ -267,6 +294,8 @@
 
     // 控制loading页面的显示
     let loadingShow = false
+    // 控制确定页面的显示
+    let sureShow = false
 
     // 提示错误信息
     let errors = ''
@@ -527,6 +556,8 @@
     let sampleSn_dict = {}
     // 选中的样本id列表
     let selected_sampleId_list = []
+    // panal能否被操作的状态
+    let panal_unable_handle = false
 
     let sheets_needSamplRecordDict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         // 筛选当中有 ‘logsEdit=’的需要，才说明有编辑的可能性
@@ -535,9 +566,48 @@
     },[])))
     // 统计每页sampleId为key，包含sampleSn，总数，未审核，未提交等的每个sample的总数
     let all_sample_record_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        result[item[dict.SHEET]] = {}
+        let sheet = item[dict.SHEET]
+        // // 仅构建有编辑记录的页面的，样本信息记录表, 这样其它页面的样本表无法正常显示
+        // if (sheetDisplayConfigDict[sheet][dict.FILTERS].indexOf(dict.LOGSEDIT)>-1){}
+        result[sheet] = {}
         return result
     }, {})))
+    // 整页的已提交，未提交，未审核等总数的记录
+    let all_sheet_record_dict =  JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        result[item[dict.SHEET]] = {
+            totalSubmitAndAffirmed: 0,
+            totalUnsubmitAndAffirmed: 0,
+            totalUnsubmitAndUnaffirmed: 0,
+        }
+        return result
+    }, {})))
+
+    // 每页修改提交的数据汇总
+    let all_editedData_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        let sheet = item[dict.SHEET]
+        if (item[dict.FILTERS].indexOf(dict.LOGSEDIT)> -1){
+            result[sheet] = {}
+        }
+        return result
+    }, {})))
+    // 目前data的id，sample的id
+    let all_now_data_id = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        result[item[dict.SHEET]] = -1
+        return result
+    }, {})))
+    let all_now_sample_id = JSON.parse(JSON.stringify(all_now_data_id))
+    let all_pre_data_id = JSON.parse(JSON.stringify(all_now_data_id))
+    let all_pre_sample_id =JSON.parse(JSON.stringify(all_now_data_id))
+
+    function handleChangeNowDataIdandNowSampleId(data_id, sample_id, event=null){
+        all_pre_data_id[params.type] = all_now_data_id[params.type]
+        all_pre_sample_id[params.type] = all_now_sample_id[params.type]
+        all_now_data_id[params.type] = data_id
+        all_now_sample_id[params.type] = sample_id
+    }
+
+
+
     // 加载初始化
     function __setSampleIdList_and_AllSampleRecordDict__allSpecificFilters(data){
         //1） 更新sample_list
@@ -548,8 +618,9 @@
                 sampleSn: sampleInfoInPanal[dict.SAMPLE][dict.SAMPLESN]
             }
         })))
+        // console.log("__setSampleIdList_and_AllSampleRecordDict__allSpecificFilters", sampleInfoInPanals, sample_list)
 
-        // 顺便
+        // 顺便初始化已选择的样本id列表，即selected_sampleId_list
         selected_sampleId_list = JSON.parse(JSON.stringify(sample_list.map(sample=>sample[dict.ID])))
 
         // 顺便
@@ -561,11 +632,15 @@
         // 更新all_sample_record_dict
         for (let sheet in all_sample_record_dict) {
             all_sample_record_dict[sheet] = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
+                // 顺便统计更新all_sheet_record_dict, 每页总数详细
+                all_sheet_record_dict[sheet].totalSubmitAndAffirmed = all_sheet_record_dict[sheet].totalSubmitAndAffirmed + parseInt(sampleInfoInPanal[`${sheet}SubmitCount`])
+                all_sheet_record_dict[sheet].totalUnsubmitAndUnaffirmed = all_sheet_record_dict[sheet].totalUnsubmitAndUnaffirmed + parseInt(sampleInfoInPanal[`${sheet}Count`]) - parseInt(sampleInfoInPanal[`${sheet}SubmitCount`])
+
                 result[sampleInfoInPanal[dict.SAMPLE][dict.ID]] = {
-                    allMut: parseInt(sampleInfoInPanal[`${sheet}Count`]),
-                    subAndAffMut: parseInt(sampleInfoInPanal[`${sheet}SubmitCount`]),
-                    unsubAndAffMut: 0,
-                    unsubAndUnaffMut: parseInt(sampleInfoInPanal[`${sheet}Count`]) - parseInt(sampleInfoInPanal[`${sheet}SubmitCount`])
+                    allData: parseInt(sampleInfoInPanal[`${sheet}Count`]),
+                    subAndAffData: parseInt(sampleInfoInPanal[`${sheet}SubmitCount`]),
+                    unsubAndAffData: 0,
+                    unsubAndUnaffData: parseInt(sampleInfoInPanal[`${sheet}Count`]) - parseInt(sampleInfoInPanal[`${sheet}SubmitCount`])
                 }
                 return result
             }, {})))
@@ -644,8 +719,6 @@
     }
 
 
-
-
     //标题相关参数
     let all_allFieldDisplayList_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         result[item[dict.SHEET]] = item[dict.TITLE_LIST].map(title_list_item=>(
@@ -656,7 +729,11 @@
         ))
         return result
     }, {})))
-
+    // 每页的title_list,转化为字典
+    let all_titleConfigList_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        result[item[dict.SHEET]] = arrayToDict(item.title_list, 'title')
+        return result
+    }, {})))
 
 
 
@@ -666,6 +743,8 @@
 
         await api.retrievePanal(params.panalId).then(response=>{
             // console.log("getPanalSummary", response.data)
+
+            panal_unable_handle = response.data.done || response.data.delete ? true:false
 
             // 初始化sampleId_list, 利用sampleInfoInPanals中样本信息，对手工表All_sample_record_dict初始化
             __setSampleIdList_and_AllSampleRecordDict__allSpecificFilters(response.data)
@@ -719,7 +798,9 @@
         // console.log(whole_panal_infoList_dict)
         // console.log(sample_list, sampleSn_dict)
         // console.log(now_page_data)
-        // console.log(all_sample_record_dict)
+        // console.log(all_titleConfigList_dict)
+        console.log(all_sample_record_dict)
+        console.log(all_sheet_record_dict)
 
         // let ordering =  new OrderingFilter()
         // ordering.toggleNowId(dict.SAMPLEID2UNDERLINE)
@@ -728,7 +809,9 @@
         // exonic.toggleNowId()
         // console.log(exonic.getValue())
         // console.log(all_searchParams_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict, all_sample_record_dict)
-        console.log(exonicfuncRefgeneSelection)
+        // console.log(exonicfuncRefgeneSelection)
+        // console.log(all_editedData_dict)
+        // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
     }
 </script>
 
@@ -1036,6 +1119,9 @@
         /*固定td宽度*/
         table-layout: fixed;
         /*word-break: break-all;*/
+    }
+    .contentRight .rightDataTable .lineData.current{
+        border: 2px solid black;
     }
     .contentRight .rightDataTable>tr>th, .contentRight .rightDataTable>tr>td{
         height: 36px;
