@@ -297,14 +297,13 @@
         }
     }
     function __updateTotalPageNums(){
-        console.log("__updateTotalPageNums", data_count)
+        // console.log("__updateTotalPageNums", data_count)
         total_page_nums = Math.ceil(data_count/all_searchParams_dict[params.type][dict.PAGE_SIZE])
-        console.log("__updateTotalPageNums", total_page_nums)
-
+        // console.log("__updateTotalPageNums", total_page_nums)
     }
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
     async function __getPageData () {
-        console.log('__getPageData begin')
+        // console.log('__getPageData begin')
         loadingShow = true
 
         // 第一次切换到mutant上加载，还没有更新获得panalId和sampleIds参数
@@ -314,13 +313,12 @@
 
         let name = params.type
         name = name.slice(0, 1).toUpperCase() + name.slice(1)
-        console.log("__getPageData upperQueryName params", name)
+        // console.log("__getPageData upperQueryName params", name)
 
         await api[`list${name}`](all_searchParams_dict[params.type]).then(response=>{
-            console.log("__getPageData", response.data)
             now_page_data = response.data.results
-            console.log("__getPageData now_page_data", now_page_data)
 
+            // console.log("__getPageData now_page_data", now_page_data)
             // 更新当前页data_num
             data_count = response.data.count
 
@@ -351,45 +349,49 @@
         push(`/${type}/${params.panalId}`)
     }
     // 1) 每页的filter的定制版subFilters的名字列表，因为三张mutant表的exonicfuncRefGene
+    // 若果是表是ifSimpleOrdering，需要将ordering的内容更正为['sample__id']
+    //  然后每张表，除开通用的page，page_size, sampleIds，panalId, search筛选项
+    //  根据common_filter_subFilters_dict中，特殊筛选大项，构建每个亚级筛选项的所选项目的index
     let all_subFilter_names_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         let sheet = item[dict.SHEET]
-        // result[sheet] = JSON.parse(JSON.stringify(sheetDisplayConfigDict[params.type][dict.FILTERS].reduce((filters_result, filter_name)=>{
-        //     filters_result[filter_name] = common_filter_subFilters_dict[filter_name]
-        //     return filters_result
-        // }, {})))
-        result[sheet] = JSON.parse(JSON.stringify(common_filter_subFilters_dict))
-        // 若果此表是简化版本的ordering，就重置此表ordering
-        if (item.ifSimpleOrdering) {
-            result[sheet][dict.ORDERING] = [dict.SAMPLEID2UNDERLINE]
-        }
-
-        // console.log("all_subFilter_names_dict", result)
-        // 此时target_exonicfuncRefgene的subFilter_selections还没有获得，不要在此处先创造了！
-        return result
-    }, {})))
-    // 2) todo 必须先重置all_subFilters_dict, 因为ordering有些是简化的，只含sample__id
-    //  然后每张表，除开通用的page，page_size, sampleIds，panalId, search，构建每个亚级筛选项的所选项目的index
-    let all_subFilter_indexes_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        let sheet = item[dict.SHEET]
+        let uncommon_filters = Object.keys(common_filter_subFilters_dict)
         let specific_found = false
         let specific_filters = []
         for (let filter of item[dict.FILTERS]) {
-            if (common_filters.indexOf(filter)===-1) {
+            if(uncommon_filters.indexOf(filter) > -1){
                 specific_found = true
                 specific_filters.push(filter)
             }
         }
+
         if (specific_found) {
             result[sheet] = {}
-            console.log('all_subFilter_indexes_dict', sheet, specific_filters, all_subFilter_names_dict[sheet])
+            // console.log('all_subFilter_indexes_dict', sheet, specific_filters, all_subFilter_names_dict[sheet])
             for (let filter of specific_filters) {
-                console.log('all_subFilter_indexes_dict', filter)
-                console.log('all_subFilter_indexes_dict', all_subFilter_names_dict[sheet][filter].length)
-                result[sheet][filter] = Array(all_subFilter_names_dict[sheet][filter].length).fill(0)
+                result[sheet][filter] = common_filter_subFilters_dict[filter]
             }
+        }
+
+        // 若果是表是ifSimpleOrdering，需要将ordering的内容更正为['sample__id']
+        if (specific_found && result[sheet].hasOwnProperty(dict.ORDERING) &&
+                sheetDisplayConfigDict[sheet].ifSimpleOrdering) {
+            result[sheet][dict.ORDERING] = [dict.SAMPLEID2UNDERLINE]
+        }
+
+        return result
+    }, {})))
+    // 2) todo 必须先重置all_subFilters_dict, 因为ordering有些是简化的，只含sample__id
+    let all_subFilter_indexes_dict = JSON.parse(JSON.stringify(Object.keys(all_subFilter_names_dict).reduce((result, sheet_name)=>{
+        let subFilter_names = all_subFilter_names_dict[sheet_name]
+        result[sheet_name] = {}
+        for (let filter_name in subFilter_names) {
+            result[sheet_name][filter_name] = Array(subFilter_names[filter_name].length).fill(0)
         }
         return result
     }, {})))
+    // 3) 每页的subFilters的定制版选项列表，再追加三张mutant的exonicfuncRefGene项目列表
+    let subFilter_selections_dict = JSON.parse(JSON.stringify(common_subFilter_selections_dict))
+
     // 获取sheet页的页面筛选参数字典，获取当前页内容时直接调取即可！！
     let all_searchParams_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         let params = item[dict.FILTERS].reduce((param_dict, param)=>{
@@ -413,8 +415,7 @@
         return result
     }, {})))
 
-    // 每页的subFilters的定制版选项列表，再追加三张mutant的exonicfuncRefGene项目列表
-    let subFilter_selections_dict = JSON.parse(JSON.stringify(common_subFilter_selections_dict))
+
     // 页面筛选相关done，logsEdit， ordering， exonicfuncRefGene的类函数
     // todo svelte不支持es7语法，貌似无static, svelte无法获取实例的方法，只有变量可以加载到
     // todo svelte不支持，感觉框架结构就不应该再使用类管理了！！
@@ -486,7 +487,7 @@
 
         loadingShow = false
     }
-    // 用于绑定exonicfuncRefgene标题筛选框
+    // 用于绑定exonicfuncRefgene标题筛选框, 一个页面只能绑定一次
     let exonicfuncRefgeneSelection
     function change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(index){
         console.log("change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict", index)
@@ -684,17 +685,22 @@
         }
     }
 
+    function __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex(){
+        if (exonicfuncRefgeneSelection){
+            // 筛选框重置
+            exonicfuncRefgeneSelection.value = 0
+
+            // 筛选坐标重置
+            all_subFilter_indexes_dict[pre_params_type][dict.EXONICFUNCREFGENE][0] = 0
+            __set_specfic_Params_in_AllSearchParamsDict()
+        }
+    }
     // 动态更新当前页面信息
     $: if (pre_params_type !== params.type) {
         // console.log('listem params.type 先前params.type 现在params.tpe', pre_params_type, params.type)
-        // console.log(all_subFilter_names_dict.hasOwnProperty(params.type), all_subFilter_names_dict[params.type])
 
         //todo 筛选框值修改，不会触发onChange事件, 返回人工修改
-        // if (all_subFilter_names_dict.hasOwnProperty(params.type) &&
-        //         all_subFilter_names_dict[params.type].hasOwnProperty(dict.EXONICFUNCREFGENE)) {
-        //     exonicfuncRefgeneSelection.value = all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0]
-        // }
-
+        __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex()
         __getPageData()
     }
 
@@ -721,8 +727,8 @@
         // console.log(exonic.getValue())
         // exonic.toggleNowId()
         // console.log(exonic.getValue())
-        console.log(all_searchParams_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict, all_sample_record_dict)
-
+        // console.log(all_searchParams_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict, all_sample_record_dict)
+        console.log(exonicfuncRefgeneSelection)
     }
 </script>
 
