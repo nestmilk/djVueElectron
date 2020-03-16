@@ -154,7 +154,18 @@
                                     {:else if field[dict.TITLE]===dict.EXONICFUNCREFGENE &&
                                         sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.EXONICFUNCREFGENE) > -1
                                     }
-                                        <th class="{field[dict.TITLE]}">{field[dict.TRANSLATE]}</th>
+                                        <th class="exonicfuncRefgene" >
+                                            <select bind:this={exonicfuncRefgeneSelection}
+                                                    on:change="{(e) => change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(e.target.value)}"
+                                                    class="inside"
+                                            >
+                                                {#each subFilter_selections_dict[`${params.type.toLowerCase()}_exonicfuncRefgene`] as selection, index}
+                                                    <option value={index}>
+                                                        {selection[dict.CONTENT]}
+                                                    </option>
+                                                {/each}
+                                            </select>
+                                        </th>
                                     {:else}
                                         <th class="{field[dict.TITLE]}">{field[dict.TRANSLATE]}</th>
                                     {/if}
@@ -226,7 +237,7 @@
         arrayToDict
     } from '../../utils/arrays'
     import {getTime, getParentNodeByParentClassName} from "../../utils/common";
-    import {sheetDisplayConfigList, common_filter_subFilters_dict, common_subFilter_selections_dict} from './config'
+    import {common_filters, sheetDisplayConfigList, common_filter_subFilters_dict, common_subFilter_selections_dict} from './config'
     const sheetDisplayConfigDict = JSON.parse(JSON.stringify(arrayToDict(sheetDisplayConfigList, 'sheet')))
 
     // 引入electron相关包
@@ -292,7 +303,8 @@
 
     }
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
-    async function getPageData () {
+    async function __getPageData () {
+        console.log('__getPageData begin')
         loadingShow = true
 
         // 第一次切换到mutant上加载，还没有更新获得panalId和sampleIds参数
@@ -324,11 +336,6 @@
         }
         loadingShow = false
     }
-    // 动态更新当前页面信息
-    $: if (pre_params_type !== params.type) {
-        console.log('listem params.type 先前params.type 现在params.tpe', pre_params_type, params.type)
-        getPageData()
-    }
 
     // submenu列表(即sheet页，含附加的汇总表）
     let submenu_list = JSON.parse(JSON.stringify(sheetDisplayConfigList.map(item=>item.sheet)))
@@ -344,13 +351,19 @@
         push(`/${type}/${params.panalId}`)
     }
     // 1) 每页的filter的定制版subFilters的名字列表，因为三张mutant表的exonicfuncRefGene
-    let all_subFilters_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+    let all_subFilter_names_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         let sheet = item[dict.SHEET]
+        // result[sheet] = JSON.parse(JSON.stringify(sheetDisplayConfigDict[params.type][dict.FILTERS].reduce((filters_result, filter_name)=>{
+        //     filters_result[filter_name] = common_filter_subFilters_dict[filter_name]
+        //     return filters_result
+        // }, {})))
         result[sheet] = JSON.parse(JSON.stringify(common_filter_subFilters_dict))
         // 若果此表是简化版本的ordering，就重置此表ordering
         if (item.ifSimpleOrdering) {
             result[sheet][dict.ORDERING] = [dict.SAMPLEID2UNDERLINE]
         }
+
+        // console.log("all_subFilter_names_dict", result)
         // 此时target_exonicfuncRefgene的subFilter_selections还没有获得，不要在此处先创造了！
         return result
     }, {})))
@@ -361,15 +374,18 @@
         let specific_found = false
         let specific_filters = []
         for (let filter of item[dict.FILTERS]) {
-            if ([dict.PAGE, dict.PAGE_SIZE, dict.SAMPLEIDS, dict.PANALID, dict.SEARCH].indexOf(filter)===-1) {
+            if (common_filters.indexOf(filter)===-1) {
                 specific_found = true
                 specific_filters.push(filter)
             }
         }
         if (specific_found) {
             result[sheet] = {}
+            console.log('all_subFilter_indexes_dict', sheet, specific_filters, all_subFilter_names_dict[sheet])
             for (let filter of specific_filters) {
-                result[sheet][filter] = Array(all_subFilters_dict[sheet][filter].length).fill(0)
+                console.log('all_subFilter_indexes_dict', filter)
+                console.log('all_subFilter_indexes_dict', all_subFilter_names_dict[sheet][filter].length)
+                result[sheet][filter] = Array(all_subFilter_names_dict[sheet][filter].length).fill(0)
             }
         }
         return result
@@ -428,7 +444,7 @@
                 for (let index of indexes) {
                     // all_subFilters_dict , 页下面，是ordering：['sample__id', 'chr', 'posStart', 'posEnd'],
                     // 通过位置i信息，获取此位置subFilter的名称
-                    let subFilter_name = all_subFilters_dict[sheet][filter][i]
+                    let subFilter_name = all_subFilter_names_dict[sheet][filter][i]
                     let value = subFilter_selections_dict[subFilter_name][index][dict.VALUE]
                     value_list.push(value)
 
@@ -450,8 +466,8 @@
         loadingShow = true
         let found_filter_name
         let found_subFilter_index
-        for (let filter_name in all_subFilters_dict[params.type]){
-            let subFilter_name_list = all_subFilters_dict[params.type][filter_name]
+        for (let filter_name in all_subFilter_names_dict[params.type]){
+            let subFilter_name_list = all_subFilter_names_dict[params.type][filter_name]
             if (subFilter_name_list.indexOf(subFilter) > -1) {
                 found_filter_name = filter_name
                 found_subFilter_index = subFilter_name_list.indexOf(subFilter)
@@ -466,9 +482,19 @@
 
         // 其中包含，页面切换回第一页
         __set_specfic_Params_in_AllSearchParamsDict()
-        await getPageData()
+        await __getPageData()
 
         loadingShow = false
+    }
+    // 用于绑定exonicfuncRefgene标题筛选框
+    let exonicfuncRefgeneSelection
+    function change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(index){
+        console.log("change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict", index)
+        all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0] = index
+
+        // 其中包含，页面切换回第一页
+        __set_specfic_Params_in_AllSearchParamsDict()
+        __getPageData()
     }
 
 
@@ -485,13 +511,13 @@
         __updateTotalPageNums()
         // 当前sheet的nowPageNum设置为1，返回第一页
         all_searchParams_dict[params.type][dict.PAGE] = 1
-        getPageData()
+        __getPageData()
     }
     function handleChangePage(event){
         // console.log("handleChangePage", event.detail.page)
 
         all_searchParams_dict[params.type][dict.PAGE] = event.detail.page
-        getPageData()
+        __getPageData()
     }
 
     // 整个表的sampleId的列表
@@ -548,7 +574,7 @@
         // 先更新all_subFilters_dict中的三张表名, 再再all_exonicfuncRefgenes中添加这三张表
         for (let sheet of [dict.TARGET, dict.HEREDITARY, dict.TMB]) {
             //先更新all_subFilters_dict中的表名
-            all_subFilters_dict[sheet][dict.EXONICFUNCREFGENE] = [`${sheet.toLowerCase()}_exonicfuncRefgene`]
+            all_subFilter_names_dict[sheet][dict.EXONICFUNCREFGENE] = [`${sheet.toLowerCase()}_exonicfuncRefgene`]
 
             let values = data[`${sheet.toLowerCase()}_exonicfuncRefgenes`]
             // 如果没有，就不麻烦添加表了
@@ -585,7 +611,7 @@
         // 切换回第一页
         all_searchParams_dict[params.type][dict.PAGE] = 1
 
-        await getPageData()
+        await __getPageData()
 
         loadingShow = false
     }
@@ -611,7 +637,7 @@
         // 切换回第一页
         all_searchParams_dict[params.type][dict.PAGE] = 1
 
-        await getPageData()
+        await __getPageData()
 
         loadingShow = false
     }
@@ -658,6 +684,19 @@
         }
     }
 
+    // 动态更新当前页面信息
+    $: if (pre_params_type !== params.type) {
+        // console.log('listem params.type 先前params.type 现在params.tpe', pre_params_type, params.type)
+        // console.log(all_subFilter_names_dict.hasOwnProperty(params.type), all_subFilter_names_dict[params.type])
+
+        //todo 筛选框值修改，不会触发onChange事件, 返回人工修改
+        // if (all_subFilter_names_dict.hasOwnProperty(params.type) &&
+        //         all_subFilter_names_dict[params.type].hasOwnProperty(dict.EXONICFUNCREFGENE)) {
+        //     exonicfuncRefgeneSelection.value = all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0]
+        // }
+
+        __getPageData()
+    }
 
     onMount(async () => {
         pre_params_type = params.type
@@ -682,7 +721,7 @@
         // console.log(exonic.getValue())
         // exonic.toggleNowId()
         // console.log(exonic.getValue())
-        console.log(all_searchParams_dict, all_subFilter_indexes_dict, all_subFilters_dict, subFilter_selections_dict, all_sample_record_dict)
+        console.log(all_searchParams_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict, all_sample_record_dict)
 
     }
 </script>
@@ -974,7 +1013,7 @@
 
     .contentRight .titleTableWrapper{
         overflow: scroll;
-        flex: 0 0 51px;
+        flex: 0 0 54px;
     }
 
     .contentRight .dataTableWrapper{
@@ -1004,6 +1043,13 @@
     .contentRight .rightDataTable .lineTitle .hoverGreen:hover{
         background: #09c762;
         color: white;
+    }
+    .contentRight .rightDataTable .lineTitle .exonicfuncRefgene .inside{
+        padding: 0;
+        margin: 0;
+        width: 119px;
+        height: 100%;
+        border: none;
     }
     .contentRight .rightDataTable .lineData td .inside{
         width: 119px;

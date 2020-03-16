@@ -7,6 +7,7 @@
 //  不显示的defaultDisplay false, selectDisplay false, 20.3.12 用不到了！
 
 // query_params作用，1，标题栏利用此处关联，
+export const common_filters = ["page","page_size","sampleIds","panalId","search",]
 
 export const sheetDisplayConfigList = [
     {
