@@ -62,7 +62,7 @@
                     <div class="leftMessageWrapper">
                         <div class="messageWrapper">
                             <div class="title">
-                                {all_sheet_record_dict[params.type].totalSubmitAndAffirmed}条已提交，{all_sheet_record_dict[params.type].totalUnsubmitAndAffirmed}条待提交，{all_sheet_record_dict[params.type].totalUnsubmitAndUnaffirmed}条待审核
+                                {all_sheet_record_dict[params.type][dict.TOTAL_SUBANDAFF]}条已提交，{all_sheet_record_dict[params.type][dict.TOTAL_UNSANDAFF]}条待提交，{all_sheet_record_dict[params.type][dict.TOTAL_UNSANDUNA]}条待审核
                             </div>
                             <div class="uploadButtomWrapper">
 
@@ -90,36 +90,36 @@
                         <table class="rightDataTable">
                             <tr class="lineTitle">
                                 {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
-                                    <th class="logs hoverGreen"
+                                    <th class="logs short hoverGreen"
                                         on:click={()=>handleToggleFilter(dict.LOGSEDIT)}
                                     >
                                         {subFilter_selections_dict[dict.LOGSEDIT][all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]][dict.CONTENT]}
                                     </th>
                                 {/if}
                                 {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.DONE) !== -1}
-                                    <th class="done hoverGreen"
+                                    <th class="done short hoverGreen"
                                         on:click={()=>handleToggleFilter(dict.DONE)}
                                     >
                                         {subFilter_selections_dict[dict.DONE][all_subFilter_indexes_dict[params.type][dict.DONE][0]][dict.CONTENT]}
                                     </th>
                                 {/if}
                                 {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.DONE) !== -1}
-                                    <th class="affirmed">确认审核</th>
+                                    <th class="affirmed short">确认审核</th>
                                 {/if}
                                 {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
-                                    <th class="delete">删除此行</th>
+                                    <th class="delete short">删除此行</th>
                                 {/if}
 
-                                {#each all_allFieldDisplayList_dict[params.type] as field}
-                                    {#if field[dict.TITLE]===dict.SAMPLESN}
+                                {#each all_wholeTitle_list[params.type] as field}
+                                    {#if field===dict.SAMPLESN}
                                         {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) > -1}
                                             <th class="sampleSn hoverGreen" on:click={()=>handleToggleFilter(dict.SAMPLEID2UNDERLINE)}>
                                                 {@html subFilter_selections_dict[dict.SAMPLEID2UNDERLINE][all_subFilter_indexes_dict[params.type][dict.ORDERING][0]][dict.CONTENT]}
                                             </th>
                                         {:else}
-                                            <th class="{field[dict.TITLE]}">{field[dict.TRANSLATE]}</th>
+                                            <th class="{field}">{all_titleList_dict[params.type][field][dict.TRANSLATE]}</th>
                                         {/if}
-                                    {:else if field[dict.TITLE]===dict.CHR &&
+                                    {:else if field===dict.CHR &&
                                         sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) &&
                                         !sheetDisplayConfigDict[params.type].ifSimpleOrdering
                                     }
@@ -128,9 +128,9 @@
                                                 {@html subFilter_selections_dict[dict.CHR][all_subFilter_indexes_dict[params.type][dict.ORDERING][1]][dict.CONTENT]}
                                             </th>
                                         {:else}
-                                            <th class="{field[dict.TITLE]}">{field[dict.TRANSLATE]}</th>
+                                            <th class="{field}">{all_titleList_dict[params.type][field][dict.TRANSLATE]}</th>
                                         {/if}
-                                    {:else if field[dict.TITLE]===dict.POSSTART &&
+                                    {:else if field===dict.POSSTART &&
                                         sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) &&
                                         !sheetDisplayConfigDict[params.type].ifSimpleOrdering
                                     }
@@ -139,9 +139,9 @@
                                                 {@html subFilter_selections_dict[dict.POSSTART][all_subFilter_indexes_dict[params.type][dict.ORDERING][2]][dict.CONTENT]}
                                             </th>
                                         {:else}
-                                            <th class="{field[dict.TITLE]}">{field[dict.TRANSLATE]}</th>
+                                            <th class="{field}">{all_titleList_dict[params.type][field][dict.TRANSLATE]}</th>
                                         {/if}
-                                    {:else if field[dict.TITLE]===dict.POSEND &&
+                                    {:else if field===dict.POSEND &&
                                         sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) &&
                                         !sheetDisplayConfigDict[params.type].ifSimpleOrdering
                                     }
@@ -150,9 +150,9 @@
                                                 {@html subFilter_selections_dict[dict.POSEND][all_subFilter_indexes_dict[params.type][dict.ORDERING][3]][dict.CONTENT]}
                                             </th>
                                         {:else}
-                                            <th class="{field[dict.TITLE]}">{field[dict.TRANSLATE]}</th>
+                                            <th class="{field}">{all_titleList_dict[params.type][field][dict.TRANSLATE]}</th>
                                         {/if}
-                                    {:else if field[dict.TITLE]===dict.EXONICFUNCREFGENE &&
+                                    {:else if field===dict.EXONICFUNCREFGENE &&
                                         sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.EXONICFUNCREFGENE) > -1
                                     }
                                         <th class="exonicfuncRefgene" >
@@ -168,7 +168,7 @@
                                             </select>
                                         </th>
                                     {:else}
-                                        <th class="{field[dict.TITLE]}">{field[dict.TRANSLATE]}</th>
+                                        <th class="{field}">{all_titleList_dict[params.type][field][dict.TRANSLATE]}</th>
                                     {/if}
                                 {/each}
                             </tr>
@@ -176,40 +176,65 @@
                     </div><!--titleTableWrapper-->
                     <div class="dataTableWrapper" bind:this={bottomScroll} on:scroll={()=>handleScroll(dict.BOTTOMSCROLL)} >
                         <table class="rightDataTable">
-                            {#each now_page_data as line_data, index}
+                            {#each page_data as line_data, index}
                                 <tr class="lineData
                                     {all_now_data_id[params.type]===line_data.id?'current':''}
                                     "
                                     on:click|stopPropagation={(e)=>handleChangeNowDataIdandNowSampleId(line_data.id, line_data.sampleId, e)}
                                 >
                                     {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
-                                        <td class="logs">全部记录</td>
-                                        <td class="done">
+                                        <td class="logs short">
+                                            <button class="{true?'icon-copy':(line_data.logs.length!==0?'icon-calendar':'icon-info')}"
+                                                    disabled=""
+
+                                            ></button>
+                                        </td>
+                                        <td class="done short">
                                             <button class="{line_data[dict.DONE]?'icon-lock':'icon-unlocked'}"
 
                                                     disabled="{panal_unable_handle?'disabled':''}">
                                             </button>
                                         </td>
-                                        <td class="affirmed">确认审核</td>
-                                        <td class="delete">删除此行</td>
+                                        <td class="affirmed short">
+                                            <button class="{true?
+                                                            'icon-checkbox-checked':'icon-checkbox-unchecked'}"
+                                                    on:click={()=>handleAffirmForData(line_data.id, line_data.sampleId)}
+                                                    disabled="">
+                                            </button>
+                                        </td>
+                                        <td class="delete short" title="实时数据：{line_data[dict.DELETE]?'删除':'保留'}">
+                                            <button class="{pageData_dict[line_data.id][dict.DELETE]?'':'undeleted'} icon-cross"
+                                                    on:click={(e)=>changeValueInNowPageDataDict(e, line_data.id, dict.DELETE)}
+                                                    disabled="">
+                                            </button>
+                                            <div class="{pageData_dict[line_data.id][dict.DELETE]?'icon-warning':''}"></div>
+                                        </td>
                                     {/if}
 
-                                    {#each all_allFieldDisplayList_dict[params.type] as field}
-                                        {#if all_titleConfigList_dict[params.type][field[dict.TITLE]][dict.MODIFY]}
-                                            <td class="{field[dict.TITLE]}"
-                                                title="实时数据：{line_data[field[dict.TITLE]]}{field[dict.TITLE]==='sampleSn'?' '+line_data[dict.ID]:''}"
+                                    {#each all_wholeTitle_list[params.type] as field}
+                                        {#if all_titleList_dict[params.type][field][dict.MODIFY]}
+                                            <td class="{field}"
+                                                title="实时数据：{line_data[field]}{field==='sampleSn'?' '+line_data[dict.ID]:''}"
+                                                on:mouseenter={()=>handleMutantTDMouseenter(field, line_data.id)}
+                                                on:mouseleave={()=>handleMutantTDMouseleave(field, line_data.id)}
                                             >
-                                                <div class="inside">{line_data[field[dict.TITLE]]}</div>
+                                                <input class="dataInput" type={all_titleList_dict[params.type][field][dict.TYPE]}
+                                                       value="{pageData_dict[line_data.id][field]}"
+                                                        on:change={(e)=>changeValueInNowPageDataDict(e, line_data.id, field)}
+                                                >
+                                                <div class="besideInput {pageData_dict[line_data.id][field]!==line_data[field]?'icon-warning':''}"></div>
+                                                <div class="besideInput down icon-undo2
+                                                            {pageData_dict[line_data.id][field]!==line_data[field] &&
+                                                                pageModifyField_mouseEnter_dict[line_data.id][field]?'show':''}
+                                                            "
+                                                     on:click={()=>recoverValuesInNowPageDataDict([line_data.id],[field])}
+                                                ></div>
                                             </td>
-<!--                                            <input class="dataInput" type={sheetDisplayConfigDict[params.type][field][dict.TYPE]}-->
-<!--                                                   value="{all_editedData_dict[params.type]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"-->
-<!--                                                   on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}-->
-<!--                                            >-->
                                         {:else}
-                                            <td class="{field[dict.TITLE]}"
-                                                title="实时数据：{line_data[field[dict.TITLE]]}{field[dict.TITLE]==='sampleSn'?' '+line_data[dict.ID]:''}"
+                                            <td class="{field}"
+                                                title="实时数据：{line_data[field]}{field==='sampleSn'?' '+line_data[dict.ID]:''}"
                                             >
-                                                <div class="inside">{line_data[field[dict.TITLE]]}</div>
+                                                <div class="inside">{line_data[field]}</div>
                                             </td>
                                         {/if}
                                     {/each}
@@ -267,7 +292,7 @@
     const sheetDisplayConfigDict = JSON.parse(JSON.stringify(arrayToDict(sheetDisplayConfigList, 'sheet')))
 
     // 引入electron相关包
-    // const { ipcRenderer, remote } =window.require('electron')
+    const { ipcRenderer, remote } =window.require('electron')
     // const {exec, execSync} = window.require('child_process')
     // const iconv = window.require('iconv-lite');
     // const Store = window.require('electron-store')
@@ -287,7 +312,10 @@
         SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
         TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB",
         MODIFY: 'modify',
-
+        TOTAL_SUBANDAFF: "totalSubmitAndAffirmed", TOTAL_UNSANDAFF: "totalUnsubmitAndAffirmed", TOTAL_UNSANDUNA: "totalUnsubmitAndUnaffirmed",
+        DELETE: "delete", FREQ: 'freq',
+        NOWDISPLAY: 'nowDisplay', DEFAULTDISPLAY: 'defaultDisplay', SELECTDISPLAY: 'selectDisplay',
+        FIELD_MOUSE_ENTER: 'field_mouse_enter',
     }
     // 获取路径中的：值
     export let params = {}
@@ -312,9 +340,62 @@
         }
     }
 
-    // 当前页面信息
-    let now_page_data = []
+    // 当前页面信息列表，用于循环展示
+    let page_data = []
+    // 用作差异校验, 以id为key，value为所有field的字典
+    let pageData_dict_original = {}
+    // 用于当前修改记录
+    let pageData_dict = {}
+    let pageModifyField_mouseEnter_dict = {}
+    // 修改now_pageData_dict中的值
+    function recoverValuesInNowPageDataDict(id_list, field_list=[]){
+        let recover_field_list = all_modifyTitle_list[params.type]
+        if (field_list.length > 0) {
+            recover_field_list = field_list
+        }
+        id_list.forEach(id=>{
+            recover_field_list.forEach(field=>{
+                pageData_dict[id][field] = pageData_dict_original[id][field]
+            })
+        })
 
+    }
+    function changeValueInNowPageDataDict(e, data_id, field){
+        if(field===dict.DELETE){
+            pageData_dict[data_id][dict.DELETE] = !pageData_dict[data_id][dict.DELETE]
+            // 同时需要将其余已修改的项恢复
+            recoverValuesInNowPageDataDict([data_id])
+        }else{
+            // 操作前先将delete置换为false
+            pageData_dict[data_id][dict.DELETE] = false
+            //// 接着修改title的值
+            if ([dict.POSSTART, dict.POSEND].indexOf(field) > -1){
+                pageData_dict[data_id][field] = parseInt(e.target.value)
+            }else if (field === dict.FREQ){
+                let eValue = e.target.value
+
+                // console.log(eValue, isNaN(eValue), parseFloat(eValue)>=0, parseFloat(eValue)<=1)
+                if(!isNaN(eValue) && parseFloat(eValue)>=0 && parseFloat(eValue)<=1){
+                    pageData_dict[data_id][field] = eValue
+                }else{
+                    remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
+                }
+            }else{
+                pageData_dict[data_id][field] = e.target.value
+            }
+        }
+    }
+    // 处理鼠标划入突变的td的状态, 为了触发单元格 恢复按钮
+    function handleMutantTDMouseenter (field, id){
+        pageModifyField_mouseEnter_dict[id][field] = true
+    }
+    function handleMutantTDMouseleave (field, id){
+        pageModifyField_mouseEnter_dict[id][field] = false
+    }
+
+    function handleAffirmForData(id, sampleId){
+        console.log(id, sampleId)
+    }
 
     // 先前的页面type
     let pre_params_type
@@ -330,6 +411,7 @@
         total_page_nums = Math.ceil(data_count/all_searchParams_dict[params.type][dict.PAGE_SIZE])
         // console.log("__updateTotalPageNums", total_page_nums)
     }
+
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
     async function __getPageData () {
         // console.log('__getPageData begin')
@@ -345,7 +427,17 @@
         // console.log("__getPageData upperQueryName params", name)
 
         await api[`list${name}`](all_searchParams_dict[params.type]).then(response=>{
-            now_page_data = response.data.results
+            page_data = response.data.results
+            pageData_dict = JSON.parse(JSON.stringify(arrayToDict(page_data, dict.ID)))
+            pageData_dict_original = JSON.parse(JSON.stringify(arrayToDict(page_data, dict.ID)))
+            pageModifyField_mouseEnter_dict = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
+                let status_dict = {}
+                for (let field in item){
+                    status_dict[field] = false
+                }
+                result[item[dict.ID]] = status_dict
+                return result
+            }, {})))
 
             // console.log("__getPageData now_page_data", now_page_data)
             // 更新当前页data_num
@@ -583,7 +675,7 @@
     }, {})))
 
     // 每页修改提交的数据汇总
-    let all_editedData_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+    let all_data_submit_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         let sheet = item[dict.SHEET]
         if (item[dict.FILTERS].indexOf(dict.LOGSEDIT)> -1){
             result[sheet] = {}
@@ -633,8 +725,8 @@
         for (let sheet in all_sample_record_dict) {
             all_sample_record_dict[sheet] = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
                 // 顺便统计更新all_sheet_record_dict, 每页总数详细
-                all_sheet_record_dict[sheet].totalSubmitAndAffirmed = all_sheet_record_dict[sheet].totalSubmitAndAffirmed + parseInt(sampleInfoInPanal[`${sheet}SubmitCount`])
-                all_sheet_record_dict[sheet].totalUnsubmitAndUnaffirmed = all_sheet_record_dict[sheet].totalUnsubmitAndUnaffirmed + parseInt(sampleInfoInPanal[`${sheet}Count`]) - parseInt(sampleInfoInPanal[`${sheet}SubmitCount`])
+                all_sheet_record_dict[sheet][dict.TOTAL_SUBANDAFF] = all_sheet_record_dict[sheet][dict.TOTAL_SUBANDAFF] + parseInt(sampleInfoInPanal[`${sheet}SubmitCount`])
+                all_sheet_record_dict[sheet][dict.TOTAL_UNSANDUNA] = all_sheet_record_dict[sheet][dict.TOTAL_UNSANDUNA] + parseInt(sampleInfoInPanal[`${sheet}Count`]) - parseInt(sampleInfoInPanal[`${sheet}SubmitCount`])
 
                 result[sampleInfoInPanal[dict.SAMPLE][dict.ID]] = {
                     allData: parseInt(sampleInfoInPanal[`${sheet}Count`]),
@@ -719,21 +811,31 @@
     }
 
 
-    //标题相关参数
-    let all_allFieldDisplayList_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        result[item[dict.SHEET]] = item[dict.TITLE_LIST].map(title_list_item=>(
-                {
-                    title: title_list_item[dict.TITLE],
-                    translate: title_list_item[dict.TRANSLATE]
-                }
-        ))
+    //标题相关参数 每页title_list的列表，
+    let all_wholeTitle_list = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        result[item[dict.SHEET]] = item[dict.TITLE_LIST].map(title_list_item=>title_list_item[dict.TITLE])
         return result
     }, {})))
-    // 每页的title_list,转化为字典
-    let all_titleConfigList_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        result[item[dict.SHEET]] = arrayToDict(item.title_list, 'title')
+    // 每页的title_list,转化为字典， 其中nowDisplay用于控制是否此标题栏显示
+    let all_titleList_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        let title_list = item[dict.TITLE_LIST].map(title=>{
+            title[dict.NOWDISPLAY]= title[dict.DEFAULTDISPLAY]?true:false
+            return title
+        })
+        result[item[dict.SHEET]] = arrayToDict(title_list, dict.TITLE)
         return result
     }, {})))
+    // 每页需要修改的title列表
+    let all_modifyTitle_list = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        result[item[dict.SHEET]] = item[dict.TITLE_LIST].reduce((title_result, title)=>{
+            if (title[dict.MODIFY]){
+                title_result.push(title[dict.TITLE])
+            }
+            return title_result
+        }, [])
+        return result
+    }, {})))
+
 
 
 
@@ -799,8 +901,8 @@
         // console.log(sample_list, sampleSn_dict)
         // console.log(now_page_data)
         // console.log(all_titleConfigList_dict)
-        console.log(all_sample_record_dict)
-        console.log(all_sheet_record_dict)
+        // console.log(all_sample_record_dict)
+        // console.log(all_sheet_record_dict)
 
         // let ordering =  new OrderingFilter()
         // ordering.toggleNowId(dict.SAMPLEID2UNDERLINE)
@@ -812,6 +914,10 @@
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
+        // console.log(now_pageData_dict)
+        // console.log(all_modifyTitle_list)
+        // console.log(all_titleList_dict)
+        console.log(pageModifyField_mouseEnter_dict)
     }
 </script>
 
@@ -1126,11 +1232,64 @@
     .contentRight .rightDataTable>tr>th, .contentRight .rightDataTable>tr>td{
         height: 36px;
         box-sizing: border-box;
-        padding-top: 0;
-        padding-bottom: 0;
+        margin: 0;
+        padding: 0;
+        /*padding-top: 0;*/
+        /*padding-bottom: 0;*/
         border-right: 1px solid #cccccc;
         border-bottom: 1px solid #cccccc;
         min-width: 120px;
+    }
+    .contentRight .rightDataTable .lineData .dataInput{
+        float: left;
+        width: 90px;
+        margin: 1px 0 0 3px;
+        border: none;
+        font-weight: bold;
+        background: #eaffad;
+    }
+    .contentRight .rightDataTable .lineData .icon-cross.undeleted{
+        color: #cccccc;
+    }
+    /*每行按钮鼠标*/
+    .contentRight .rightDataTable .lineData td>button{
+        box-sizing: border-box;
+        padding: 0;
+        margin: 0;
+        width: 33px;
+        height: 33px;
+        border: none;
+        background: none;
+        border-radius: 0;
+    }
+    .contentRight .rightDataTable .lineData td.short:hover{
+        background: #09c762;
+    }
+    .contentRight .rightDataTable .lineData .icon-warning{
+         font-size: 14px;
+         color: indianred;
+     }
+    /*和每行删除单元格相关*/
+    .contentRight .rightDataTable .lineData .delete{
+        position: relative;
+    }
+    .contentRight .rightDataTable .lineData .delete .icon-warning{
+        position: absolute;
+        top: -1px;
+        right: -1px;
+    }
+
+
+    /*和单元格恢复相关*/
+    .contentRight .rightDataTable .lineData .besideInput{
+        margin-top: 1px;
+        font-size: 14px;
+    }
+    .contentRight .rightDataTable .lineData .besideInput.down{
+        display: none;
+    }
+    .contentRight .rightDataTable .lineData .besideInput.down.show{
+        display: block!important;
     }
     .contentRight .rightDataTable .lineTitle .hoverGreen:hover{
         background: #09c762;
@@ -1153,26 +1312,11 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .contentRight .rightDataTable .logs{
+    /*控制短的单元格的长度*/
+    .contentRight .rightDataTable .short{
         min-width: 35px!important;
         max-width: 35px;
     }
-    .contentRight .rightDataTable .done{
-        min-width: 35px!important;
-        max-width: 35px;
-    }
-    .contentRight .rightDataTable .affirmed{
-        min-width: 35px!important;
-        max-width: 35px;
-    }
-    .contentRight .rightDataTable .delete{
-        min-width: 60px!important;
-        max-width: 60px;
-    }
-    /*.contentRight .rightDataTable .hoverGreen:hover{*/
-    /*    background: #09c762;*/
-    /*    color: white;*/
-    /*}*/
 
     .contentRight .dataPagerWrapper{
         flex: 1;

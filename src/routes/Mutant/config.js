@@ -19,60 +19,70 @@ export const sheetDisplayConfigList = [
                 title: "sampleSn",
                 translate: "sampleSn",
                 modify: false,
+                type: "text",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "targetCount",
                 translate: "target总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "targetSubmitCount",
                 translate: "target提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "hereditaryCount",
                 translate: "hereditary总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "hereditarySubmitCount",
                 translate: "hereditary提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "TMBCount",
                 translate: "TMB总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "TMBSubmitCount",
                 translate: "TMB提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "immuneCount",
                 translate: "immune总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "immuneSubmitCount",
                 translate: "immune提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "TNBCount",
                 translate: "TNB总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
@@ -85,18 +95,21 @@ export const sheetDisplayConfigList = [
                 title: "fusionCount",
                 translate: "fusion总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "fusionSubmitCount",
                 translate: "fusion提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "CNACount",
                 translate: "CNA总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
@@ -109,84 +122,98 @@ export const sheetDisplayConfigList = [
                 title: "chemicalCount",
                 translate: "chemical总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "chemicalSubmitCount",
                 translate: "chemical提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "MSICount",
                 translate: "MSI总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "MSISubmitCount",
                 translate: "MSI提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "HRRCount",
                 translate: "HRR总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "HRRSubmitCount",
                 translate: "HRR提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "clinicaltrialsCount",
                 translate: "clinicaltrials总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "clinicaltrialsSubmitCount",
                 translate: "clinicaltrials提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "HLACount",
                 translate: "HLA总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "HLASubmitCount",
                 translate: "HLA提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "QCCount",
                 translate: "QC总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "QCSubmitCount",
                 translate: "QC提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "sampleInfoCount",
                 translate: "sampleInfo总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "sampleInfoSubmitCount",
                 translate: "sampleInfo提交总数",
                 modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             },
@@ -695,21 +722,21 @@ export const sheetDisplayConfigList = [
                 title: "testResult",
                 translate: "检测结果",
                 type: "text",
-                modify: false,
+                modify: true,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "effect",
                 translate: "疗效预测",
                 type: "text",
-                modify: false,
+                modify: true,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
                 title: "dataInfo",
                 translate: "结果说明",
                 type: "text",
-                modify: false,
+                modify: true,
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
@@ -717,8 +744,8 @@ export const sheetDisplayConfigList = [
                 translate: "项目简称",
                 type: "text",
                 modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             },
         ],
     },
@@ -748,43 +775,43 @@ export const sheetDisplayConfigList = [
                 translate: "突变肽段",
                 type: "text",
                 modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "r3",
                 translate: "Neoantigen 打分",
                 type: "text",
                 modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "r4",
                 translate: "野生型肽段",
                 type: "text",
                 modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "r5",
                 translate: "HLA分型",
                 type: "text",
                 modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "r6",
                 translate: "新表位打分",
                 type: "text",
                 modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "r7",
                 translate: "野生型表位打分",
                 type: "text",
                 modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "r8",
                 translate: "突变频率",
@@ -851,44 +878,9 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
-            }, {
-                title: "wxz",
-                translate: "外显子",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "fusions",
-                translate: "融合基因转录本",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "alteration",
-                translate: "基因变异",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "projectAbbreviation",
-                translate: "项目简称",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "VCF_Line",
-                translate: "vcfLine",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "sampleSn",
-                translate: "sampleSn",
+            },  {
+                title: "freq",
+                translate: "频率",
                 type: "text",
                 modify: false,
                 defaultDisplay: true,
@@ -935,6 +927,97 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
+            }, {
+                title: "drugs",
+                translate: "靶向药",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "hgvs",
+                translate: "hgvs命名",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            },  {
+                title: "geneVar",
+                translate: "位点解析",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "wxz",
+                translate: "外显子",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "fusions",
+                translate: "融合基因转录本",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "hgsGb",
+                translate: "碱基改变",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "ajsGb",
+                translate: "氨基酸改变",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "alteration",
+                translate: "基因变异",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "_geneName",
+                translate: "基因名称",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "exonicfuncRefgene",
+                translate: "突变方式",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "aachangeRefgene",
+                translate: "突变描述",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "fusionNum",
+                translate: "融合reads数",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "researchStatus",
+                translate: "研究状态",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
             },
         ],
     },
@@ -953,55 +1036,6 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
-                title: "chr",
-                translate: "染色体",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "posStart",
-                translate: "起始位置",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "posEnd",
-                translate: "终止位置",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "cnaRatio",
-                translate: "变异倍数",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "projectAbbreviation",
-                translate: "项目简称",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "VCF_Line",
-                translate: "vcfLine",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "NM_ID",
-                translate: "转录本",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
                 title: "_geneName",
                 translate: "基因名称",
                 type: "text",
@@ -1009,8 +1043,8 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
-                title: "AA_change",
-                translate: "氨基酸改变",
+                title: "drugLevel",
+                translate: "证据等级",
                 type: "text",
                 modify: false,
                 defaultDisplay: true,
@@ -1023,12 +1057,54 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
-                title: "geneInfo",
-                translate: "基因描述",
+                title: "drugs",
+                translate: "靶向药",
                 type: "text",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
+            },  {
+                title: "immune",
+                translate: "靶向药",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "drugs",
+                translate: "免疫相关",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "cnaRatio",
+                translate: "变异倍数",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            },{
+                title: "chr",
+                translate: "染色体",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "posStart",
+                translate: "起始位置",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "posEnd",
+                translate: "终止位置",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
             },
         ],
     },

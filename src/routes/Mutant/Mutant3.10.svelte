@@ -1055,7 +1055,7 @@
         filedListExceptSampleSn.splice(sampleSn_index, 1)
         // console.log('__setMutantInMutantSubmitDict', allFieldDisplayList, filedListExceptSampleSn)
 
-        // 其中reasonType和reasonDesc是nudefined
+        // 其中reasonType和reasonDesc是undefined
         for (let field of [...filedListExceptSampleSn, dict.DELETE, dict.REASONTYPE, dict.REASONDESC]) {
             mutant_submit_dict[mutant.id][field] = {
                 nowValue: mutant[field]!==undefined?mutant[field]:'',
@@ -2202,7 +2202,7 @@
     }
 
 
-    // 处理鼠标划入突变的td的状态
+    // 处理鼠标划入突变的td的状态, 为了触发单元格 恢复按钮
     function handleMutantTDMouseenter (field, mutant_id){
         // console.log(mutant_id)
         mutant_submit_dict[mutant_id][field][dict.FIELD_MOUSE_ENTER] = true
