@@ -28,6 +28,9 @@
     import {push} from 'svelte-spa-router'
     import {userInfo, previousUrl} from '../../store/store'
 
+    const Store = window.require('electron-store')
+    const settingsStore = new Store({name: 'Settings'})
+
     import Loading from '../../components/Loading/Loading.svelte'
 
     import cookie from '../../utils/cookie'
@@ -35,8 +38,8 @@
     import {setUserInfoInStoreByToken} from "../../utils/common";
 
 
-    let username = ''
-    let password = ''
+    let username = settingsStore.get('username')
+    let password = settingsStore.get('password')
     let error=''
     let loadingShow = false
     let keep = false

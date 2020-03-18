@@ -177,7 +177,7 @@ if (process.platform === 'darwin') {
                 }, {
                     type: 'separator'
                 }, {
-                    label: '设置',
+                    label: '参数设置',
                     accelerator: 'Ctrl+S',
                     click: () => {
                         // todo 同一主进程内，发送消息出去
