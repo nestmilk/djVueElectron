@@ -340,6 +340,7 @@
                                                 </div>
                                                 <div class="textareaWrapper">
                                                     原因描述：
+                                                    <!-- todo <textarea></textarea>中间不能有空格啊  -->
                                                     <textarea value="{mutant_submit_dict[mutant.id]?
                                                                     mutant_submit_dict[mutant.id][dict.REASONDESC][dict.NOWVALUE]:''}"
                                                               on:input={(e)=>handleAddReason(e, mutant.id, dict.REASONDESC)}></textarea>

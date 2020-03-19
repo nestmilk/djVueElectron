@@ -224,6 +224,21 @@ export const sheetDisplayConfigList = [
         sheet: "target",
         filters: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", 'ordering', "exonicfuncRefgene"],
         submenu_translate: '靶向',
+        reason_type: [
+            {
+                value: 'nothing',
+                content: '请选择'
+            }, {
+                value: 'false_positive',
+                content: '假阳性'
+            }, {
+                value: 'merge_complex_loci',
+                content: '复杂位点合并'
+            }, {
+                value: 'other',
+                content: '其它'
+            }
+        ],
         title_list: [
             {
                 title: "sampleSn",
@@ -444,6 +459,21 @@ export const sheetDisplayConfigList = [
         sheet: "hereditary",
         filters: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", 'ordering', "exonicfuncRefgene"],
         submenu_translate: '遗传',
+        reason_type: [
+            {
+                value: 'nothing',
+                content: '请选择'
+            }, {
+                value: 'false_positive',
+                content: '假阳性'
+            }, {
+                value: 'merge_complex_loci',
+                content: '复杂位点合并'
+            }, {
+                value: 'other',
+                content: '其它'
+            }
+        ],
         title_list: [
             {
                 title: "sampleSn",
@@ -599,6 +629,21 @@ export const sheetDisplayConfigList = [
         sheet: "TMB",
         filters: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", 'ordering', "exonicfuncRefgene"],
         submenu_translate: 'TMB',
+        reason_type: [
+            {
+                value: 'nothing',
+                content: '请选择'
+            }, {
+                value: 'false_positive',
+                content: '假阳性'
+            }, {
+                value: 'merge_complex_loci',
+                content: '复杂位点合并'
+            }, {
+                value: 'other',
+                content: '其它'
+            }
+        ],
         title_list: [
             {
                 title: "sampleSn",
@@ -696,6 +741,21 @@ export const sheetDisplayConfigList = [
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
         submenu_translate: '免疫',
+        reason_type: [
+            {
+                value: 'nothing',
+                content: '请选择'
+            }, {
+                value: 'TMB_related_modify',
+                content: 'TMB相关修改'
+            }, {
+                value: 'target_related_modify',
+                content: '靶向相关修改'
+            }, {
+                value: 'other',
+                content: '其它'
+            }
+        ],
         title_list: [
             {
                 title: "sampleSn",
@@ -755,6 +815,18 @@ export const sheetDisplayConfigList = [
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
         submenu_translate: 'TNB',
+        reason_type: [
+            {
+                value: 'nothing',
+                content: '请选择'
+            }, {
+                value: 'TMB_related_modify',
+                content: 'TMB相关修改'
+            }, {
+                value: 'other',
+                content: '其它'
+            }
+        ],
         title_list: [
             {
                 title: "sampleSn",
@@ -842,6 +914,18 @@ export const sheetDisplayConfigList = [
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
         submenu_translate: '融合',
+        reason_type: [
+            {
+                value: 'nothing',
+                content: '请选择'
+            }, {
+                value: 'false_positive',
+                content: '假阳性'
+            }, {
+                value: 'other',
+                content: '其它'
+            }
+        ],
         title_list: [
             {
                 title: "sampleSn",
@@ -1027,6 +1111,18 @@ export const sheetDisplayConfigList = [
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
         submenu_translate: 'CNA',
+        reason_type: [
+            {
+                value: 'nothing',
+                content: '请选择'
+            }, {
+                value: 'false_positive',
+                content: '假阳性'
+            }, {
+                value: 'other',
+                content: '其它'
+            }
+        ],
         title_list: [
             {
                 title: "sampleSn",

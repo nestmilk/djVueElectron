@@ -191,7 +191,7 @@
                                     {all_status_of_data_dict[params.type][line_data.id]}
 
                                     "
-                                    on:mousedown|stopPropagation={(e)=>handle_lineDataTR_mousedown(line_data.id, line_data.sampleId, e)}
+                                    on:click|stopPropagation={(e)=>handle_lineDataTR_click(line_data.id, line_data.sampleId, e)}
 
                                     data-id="{line_data.id}"
                                     data-sampleid="{line_data[dict.SAMPLEID]}"
@@ -226,7 +226,8 @@
                                             <button class="{all_nowValue_of_data_dict[params.type][line_data.id]?
                                                 (all_nowValue_of_data_dict[params.type][line_data.id][dict.DELETE]?'':'undeleted'):''} icon-cross"
                                                     on:click={(e)=>changeValueInNowPageDataDict(e, line_data.id, dict.DELETE)}
-                                                    disabled="">
+                                                    disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE?"":'disabled'}"
+                                            >
                                             </button>
                                             <div class="{all_nowValue_of_data_dict[params.type][line_data.id]?
                                                 (all_nowValue_of_data_dict[params.type][line_data.id][dict.DELETE]!==
@@ -236,7 +237,10 @@
 
                                     {#each all_wholeTitle_list[params.type] as field}
                                         {#if all_titleItemList_dict[params.type][field][dict.MODIFY]}
-                                            <td class="{field}"
+                                            <td class="{field} containInput
+                                                        {all_nowValue_of_data_dict[params.type][line_data.id]?
+                                                            (all_nowValue_of_data_dict[params.type][line_data.id][field]!==line_data[field]?'unequal':''):''}
+                                                      "
                                                 title="实时数据：{line_data[field]}{field==='sampleSn'?' '+line_data[dict.ID]:''}"
                                                 on:mouseenter={()=>handleMutantTDMouseenter(field, line_data.id)}
                                                 on:mouseleave={()=>handleMutantTDMouseleave(field, line_data.id)}
@@ -245,12 +249,9 @@
                                                        value="{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}"
                                                         on:change={(e)=>changeValueInNowPageDataDict(e, line_data.id, field)}
                                                 >
-                                                <div class="besideInput {all_nowValue_of_data_dict[params.type][line_data.id]?
-                                                    (all_nowValue_of_data_dict[params.type][line_data.id][field]!==line_data[field]?'icon-warning':''):''}"></div>
-                                                <div class="besideInput down icon-undo2
-                                                            {all_nowValue_of_data_dict[params.type][line_data.id]?
-                                                                (all_nowValue_of_data_dict[params.type][line_data.id][field]!==line_data[field] &&
-                                                                    page_ModifyField_mouseEnter_dict[line_data.id][field]?'show':''):''}
+                                                <div class="upBesideInput icon-warning"></div>
+                                                <div class="downBesideInput icon-undo2
+                                                            {page_ModifyField_mouseEnter_dict[line_data.id][field]?'show':''}
                                                             "
                                                      on:click={()=>recoverValuesInNowPageDataDict([line_data.id],[field])}
                                                 ></div>
@@ -287,6 +288,13 @@
 {#if sureShow}
     <Sure ></Sure>
 {/if}
+{#if reasonShow}
+    <Reason
+        reasonType_list="{all_reasonType_list_dict[params.type]?all_reasonType_list_dict[params.type]:[{value: null, context: '请选择'}]}"
+        on:cancel={handleAddReasonCancel}
+        on:sure={handleAddReasonSure}
+    ></Reason>
+{/if}
 
 <script>
     import uuidv4 from 'uuid/v4'
@@ -304,6 +312,7 @@
     import Loading from '../../components/Loading/Loading.svelte'
     import Page from '../../components/Page/Page3.svelte'
     import Sure from '../../components/Sure/Sure.svelte'
+    import Reason from '../../components/Reason/Reason.svelte'
 
 
     // 引入本地脚本
@@ -343,7 +352,8 @@
         NOWDISPLAY: 'nowDisplay', DEFAULTDISPLAY: 'defaultDisplay', SELECTDISPLAY: 'selectDisplay',
         FIELD_MOUSE_ENTER: 'field_mouse_enter',
         FREE: 'free', CHECKED: 'checked', DELETED: 'deleted', EDITED: 'edited',
-        AVAILABLE_EDIT: 'availableEdit',
+        AVAILABLE_EDIT: 'availableEdit', REASON_TYPE: 'reason_type',
+        DEFAULT: 'default', IDS: 'ids', NOTHING: 'nothing',
     }
     // 获取路径中的：值
     export let params = {}
@@ -352,6 +362,8 @@
     let loadingShow = false
     // 控制确定页面的显示
     let sureShow = false
+    // 控制修改原因页面的显示
+    let reasonShow = false
 
     // 提示错误信息
     let errors = ''
@@ -405,6 +417,8 @@
     }, {})))
     // 用于当前修改记录, 每页以id为key，value为所有field的字典
     let all_nowValue_of_data_dict = JSON.parse(JSON.stringify(all_preValue_of_data_dict))
+
+
 
 
     // 每页多选列是否显示的状态
@@ -476,11 +490,62 @@
         page_ModifyField_mouseEnter_dict[id][field] = false
     }
 
-    function __changeDataStatus(id, status){
+    function __change_status_params_logs(id, status, reason=null, unequal_values=null){
         all_status_of_data_dict[params.type][id] = status
+
+        switch (status) {
+            case dict.CHECKED:
+                // 添加此id的提交params
+                all_submit_params_dict[params.type][id] = {
+                    done: true
+                }
+                // 日志选择为默认类型
+                all_submit_logs_dict[params.type][id] = null
+                return
+            case dict.EDITED:
+                all_submit_params_dict[params.type][id] = {
+                    done: true,
+                    ...unequal_values
+                }
+                let log_edited_id = uuidv4()
+                all_submit_logs_dict[params.type][id] = log_edited_id
+                all_logs_dict[log_edited_id] = {
+                    ids: [id],
+                    ...reason
+                }
+                return
+            case dict.DELETED:
+                all_submit_params_dict[params.type][id] = {
+                    done: true,
+                    delete: true
+                }
+                // 创建新log的id
+                let log_deleted_id = uuidv4()
+                all_submit_logs_dict[params.type][id] = log_deleted_id
+                all_logs_dict[log_deleted_id] = {
+                    ids: [id],
+                    ...reason
+                }
+                return
+            case dict.FREE:
+                // todo 判断此日志如果不是null，目前无论是不是批次还是单次的原因一律删除
+                if (all_submit_logs_dict[params.type][id]){
+                    // todo 最好提醒一下，是批次的是否确定要删除
+                    delete all_logs_dict[all_submit_logs_dict[params.type][id]]
+                }
+                // 删除此data的id的日志名称
+                delete all_submit_logs_dict[params.type][id]
+                // 删除此id的提交params
+                delete all_submit_params_dict[params.type][id]
+                return
+            default:
+                return
+        }
     }
+
     // 将sample_record_dict和sheet_record_dict中相关总数进行增减
     function __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, from, to){
+        // console.log("__moveCountFromToInAllSampleRecordandAllSheetRecord", sample_id, all_sample_record_dict, all_sheet_record_dict, from, to)
         all_sample_record_dict[params.type][sample_id][from]--
         all_sample_record_dict[params.type][sample_id][to]++
 
@@ -489,11 +554,20 @@
     }
     // 查看此条数据，所有modifyTitle列表对应的值是否有过修改
     function __checkModifyFieldEqual(id, modify_list=[]){
-        let default_field_list = all_modifyTitle_list[params.type]
+        let default_field_list = [...all_modifyTitle_list[params.type], dict.DELETE]
         if (modify_list.length > 0) {
             default_field_list = modify_list
         }
-        return default_field_list.every(field=>all_nowValue_of_data_dict[params.type][id][field]===all_preValue_of_data_dict[params.type][id][field])
+        let unequal_fieldValue_dict = default_field_list.reduce((result, field)=>{
+            let nowValue = all_nowValue_of_data_dict[params.type][id][field]
+            let preValue = all_preValue_of_data_dict[params.type][id][field]
+            if (nowValue!==preValue){
+                result[field] = nowValue
+            }
+            return result
+        }, {})
+        // console.log("__checkModifyFieldEqual")
+        return unequal_fieldValue_dict
     }
     function handleSingleAffirm(id, sample_id){
         // console.log(id, sampleId)
@@ -507,31 +581,48 @@
         // 如果处于3个已审阅状态，则撤回到未审核
         if ([dict.CHECKED, dict.DELETED, dict.EDITED].indexOf(status) !== -1) {
             // 修改状态为free
-            __changeDataStatus(id, dict.FREE)
+            __change_status_params_logs(id, dict.FREE)
             // 此时必然是 未提交已审核 状态，则未提交已审核-1, 未提交未审核+1
             __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA)
-
             return
         }
 
         // 此时必然是 未提交未审核 状态
         // 查看是否有修改，如果有修改，弹出修改原因
-        if (__checkModifyFieldEqual(id, [...all_modifyTitle_list[params.type], dict.DELETE])) {
+        let unequal_values = __checkModifyFieldEqual(id)
+        console.log("handleSingleAffirm", unequal_values)
+        if (Object.keys(unequal_values).length === 0) {
             //此时必然是 未提交未审核 状态
             // 将状态从free设置为checked
-            __changeDataStatus(id, dict.CHECKED)
+            __change_status_params_logs(id, dict.CHECKED)
             __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
-            // 另外将reason_type, reason_desc恢复
-            // todo
             return
         }else{
-            // todo 显示修改原因填写页面
+            // 显示修改原因填写页面, 逻辑跳转handleAddReasonSure处理
+            reasonShow = true
         }
 
     }
     // 处理多选时候的审核
-    function handleMultipleAffirm(id, sample_id){
+    function handleMultipleAffirm(){
+        // 只有此页有选中id才进行处理
+        if(all_selected_dataIds_dict[params.type].length > 0){
+            // 获取selected_dataIds的sampleId的字典
+            let sampleIds_of_selectedDataIds = all_selected_dataIds_dict[params.type].reduce((result, id)=>{
+                let sample_id = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
+                result[id]=sample_id
+                return result
+            },{})
+            // console.log("handleMultipleAffirm", sampleIds_of_selectedDataIds)
 
+            if(all_selected_dataIds_dict[params.type].length===1){
+                for (let id in sampleIds_of_selectedDataIds){
+                    handleSingleAffirm(id, sampleIds_of_selectedDataIds[id])
+                }
+            }else{
+                // 先判断其中
+            }
+        }
     }
 
     // 先前的页面type
@@ -847,17 +938,67 @@
         }
         return result
     }, {})))
-    // 同上，每条数据提交的使用的log的id号
+    // 同上，每页中key为数据dataId号，value为log的logId号
     let all_submit_logs_dict = JSON.parse(JSON.stringify(all_submit_params_dict))
-    // log的字典，不用分页
-    let logs_dict = {default: null}
+    // log的实际内容, 不分页key使用的logId, ids为所在dataId列表
+    let all_logs_dict = {}
 
+    // 有编辑记录筛选项的每页，提交原因类型的列表的字典
+    let all_reasonType_list_dict =  JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        let sheet = item[dict.SHEET]
+        if (item[dict.FILTERS].indexOf(dict.LOGSEDIT)> -1){
+            result[sheet] = item[dict.REASON_TYPE]
+        }
+        return result
+    }, {})))
+    // 有编辑记录筛选项的每页，提交原因类型的字典的字典
+    let all_reasonType_dicts =  JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        let sheet = item[dict.SHEET]
+        if (item[dict.FILTERS].indexOf(dict.LOGSEDIT)> -1){
+            result[sheet] = item[dict.REASON_TYPE].reduce((reasonDict_result, reason)=>{
+                reasonDict_result[reason[dict.VALUE]] = reason[dict.CONTENT]
+                return reasonDict_result
+            }, {})
+        }
+        return result
+    }, {})))
 
+    function handleAddReasonCancel(){
+        reasonShow = false
+    }
+    function handleAddReasonSure(e){
+        reasonShow = false
+        // console.log(e.detail.value, e.detail.desc)
+        let reason = {
+            value: e.detail.value,
+            desc: e.detail.desc
+        }
+        // todo此处应该判断是不是多选后处理
+        if(all_selectShow_dict[params.type]){
+
+        }else{
+            let id = all_now_data_id[params.type]
+            let sample_id = all_now_sample_id[params.type]
+
+            __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
+
+            // 先获取不等项的值
+            let unequal_values = __checkModifyFieldEqual(id)
+            console.log("handleAddReasonSure",unequal_values)
+            // 判断不等项中有没有delete，如果有需要时true
+            // 否则可能是删除提交后撤销，然后撤销删除或并加修改后提交状态
+            if(unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]){
+                __change_status_params_logs(id, dict.DELETED, reason)
+            }else{
+                __change_status_params_logs(id, dict.EDITED, reason, unequal_values)
+            }
+        }
+    }
 
 
     // 目前data的id，sample的id
     let all_now_data_id = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        result[item[dict.SHEET]] = -1
+        result[item[dict.SHEET]] = null
         return result
     }, {})))
     let all_now_sample_id = JSON.parse(JSON.stringify(all_now_data_id))
@@ -870,24 +1011,29 @@
         all_now_sample_id[params.type] = sample_id
     }
 
-    function handle_lineDataTR_mousedown(id, sample_id, e=null){
-        console.log("handleChangeNowDataIdandNowSampleIde", e)
-        // 页面多选列未打开，左键，右键都是选择dataId，sampleId
-        // 页面多选列打开，仅左键是多选、选择dataId，sampleId
+    function handle_lineDataTR_click(id, sample_id, e=null){
+        // console.log("handleChangeNowDataIdandNowSampleIde", e)
+        // click只能是左键产生，哈哈哈
+
         if(all_selectShow_dict[params.type]){
-            if(e.button === 0) {
-                let preExisted = all_selected_dataIds_dict[params.type].indexOf(id) !== -1
-                handleMultipleSelect(id)
-                let nowExisted = all_selected_dataIds_dict[params.type].indexOf(id) !== -1
-                // 如果移出多选项，设为-1
-                if(preExisted && !nowExisted){
-                    __change_dataIds_and_sampleIds(-1, -1)
-                }else{
-                    __change_dataIds_and_sampleIds(id, sample_id)
-                }
+            // 多选的状态下
+            let preExisted = all_selected_dataIds_dict[params.type].indexOf(id) !== -1
+            handleMultipleSelect(id)
+            let nowExisted = all_selected_dataIds_dict[params.type].indexOf(id) !== -1
+            // 如果移出多选项，设为初始null
+            if(preExisted && !nowExisted){
+                __change_dataIds_and_sampleIds(null, null)
+            }else{
+                __change_dataIds_and_sampleIds(id, sample_id)
             }
         }else{
+            // 非多选的状态下
             __change_dataIds_and_sampleIds(id, sample_id)
+            // 如果带alt的点击, 就是审核
+            if(e.altKey){
+                handleSingleAffirm(id, sample_id)
+            }
+
         }
     }
 
@@ -1054,9 +1200,12 @@
     function __handleContextMenu(e){
         if (document.querySelector('.downTable').contains(e.target)){
             let lineData_element = getParentNodeByParentClassName(e.target, 'lineData')
-            // 切换当前data的id和sample的id
-            let id = parseInt(lineData_element.dataset.id)
-            let sampleId = parseInt(lineData_element.dataset.sampleid)
+            // 使用右键获取当前data的id和sample的id，20.3.19弃用
+            let right_id = parseInt(lineData_element.dataset.id)
+            // let sampleId = parseInt(lineData_element.dataset.sampleid)
+            let id = all_now_data_id[params.type]
+            let sample_id = all_now_sample_id[params.type]
+
             // 多选和非多选状态，生成的右键菜单应该不同
             let menu = new remote.Menu
 
@@ -1064,10 +1213,18 @@
             let selectMenuItem = new remote.MenuItem({
                 label: all_selectShow_dict[params.type]?'隐藏选择':'显示选择',
                 click: ()=>{
-                    // 如果当前为显示选择，且已经有选择项，点击后清空此页选项id
-                    if(all_selectShow_dict[params.type] &&
-                            all_selected_dataIds_dict[params.type].length > 0){
-                        handleUnselectedAllDataIds()
+                    // 如果当前为已经打开选择列
+                    if(all_selectShow_dict[params.type]){
+                        // 且已经有选择项，点击后清空此页选项id
+                        if (all_selected_dataIds_dict[params.type].length > 0) {
+                            handleUnselectedAllDataIds()
+                        }
+                    }else{
+                        // 当前未打开选择列, 将当前选项作为多选项第一个内容加入
+                        // todo 有待处理，如果id在某个批量提交中的情况
+                        if(id){
+                            handleMultipleSelect(id)
+                        }
                     }
 
                     all_selectShow_dict[params.type] = !all_selectShow_dict[params.type]
@@ -1075,21 +1232,28 @@
             })
             menu.append(selectMenuItem)
 
-
-            let affirmMenuItem = new remote.MenuItem({
-                label: all_selectShow_dict[params.type]?'批量审核':'审核',
-                click: ()=>{
-                    if(all_selectShow_dict[params.type]){
-                        handleMultipleAffirm()
-                    }else{
-                        handleSingleAffirm(id, sampleId)
+            // 多选状态显示，非多选状态需要右键点击的id和now_data_id一致，才显示此按钮
+            if(all_selectShow_dict[params.type] || (!all_selectShow_dict[params.type] && id===right_id)){
+                let affirmMenuItem = new remote.MenuItem({
+                    label: all_submit_logs_dict[params.type]?
+                             (''):
+                             (''),
+                    enabled: all_selectShow_dict[params.type]?
+                                (all_selected_dataIds_dict[params.type].length>0?true:false):
+                                (all_now_data_id[params.type]?true:false),
+                    click: ()=>{
+                        if(all_selectShow_dict[params.type]){
+                            handleMultipleAffirm()
+                        }else{
+                            handleSingleAffirm(id, sample_id)
+                        }
                     }
-                }
-            })
-            menu.append(affirmMenuItem)
+                })
+                menu.append(affirmMenuItem)
+            }
 
             // 仅需要编辑的页面才会有审核按钮
-            if(sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf([dict.LOGSEDIT]) > -1){
+            if(sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) > -1){
                 menu.popup({window: remote.getCurrentWindow()})
             }
 
@@ -1140,7 +1304,10 @@
         // console.log(all_data_status_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
-        console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
+        // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
+        // console.log(all_preValue_of_data_dict)
+        console.log(all_submit_params_dict, all_submit_logs_dict, all_logs_dict)
+        // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type], all_now_data_id[params.type])
     }
 </script>
 
@@ -1481,14 +1648,7 @@
         border-bottom: 1px solid #cccccc;
         min-width: 120px;
     }
-    .contentRight .rightDataTable .lineData .dataInput{
-        float: left;
-        width: 90px;
-        margin: 1px 0 0 3px;
-        border: none;
-        font-weight: bold;
-        background: #eaffad;
-    }
+
     .contentRight .rightDataTable .lineData .icon-cross.undeleted{
         color: #cccccc;
     }
@@ -1525,16 +1685,34 @@
 
 
     /*和单元格恢复相关*/
-    .contentRight .rightDataTable .lineData .besideInput{
-        margin-top: 1px;
+    .contentRight .rightDataTable .lineData .containInput{
+        position: relative;
+    }
+    .contentRight .rightDataTable .lineData .containInput .dataInput{
+        position: absolute;
+        left: 2px;
+        top: 5px;
+        width: 115px;
+        border: none;
+        font-weight: bold;
+        background: #eaffad;
+    }
+    .contentRight .rightDataTable .lineData .containInput.unequal .dataInput{
+        width: 98px;
+    }
+    .contentRight .rightDataTable .lineData .containInput.unequal .upBesideInput{
+        position: absolute;
+        top: 2px;
+        right: 2px;
         font-size: 14px;
     }
-    .contentRight .rightDataTable .lineData .besideInput.down{
-        display: none;
+    .contentRight .rightDataTable .lineData .containInput.unequal .downBesideInput.show{
+        position: absolute;
+        right: 2px;
+        bottom: 2px;
+        font-size: 14px;
     }
-    .contentRight .rightDataTable .lineData .besideInput.down.show{
-        display: block!important;
-    }
+
     .contentRight .rightDataTable .lineTitle .hoverGreen:hover{
         background: #09c762;
         color: white;
