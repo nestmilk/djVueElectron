@@ -45,7 +45,11 @@ DoneFilter.prototype.toggleNowId = function () {
     this.content = this.selections[this.now_id].content
 }
 
-let done = new DoneFilter()
-console.log(done.value, done.content)
-done.toggleNowId()
-console.log(done.value, done.content)
+// let done = new DoneFilter()
+// console.log(done.value, done.content)
+// done.toggleNowId()
+// console.log(done.value, done.content)
+function show(a, b=null, c=null){
+    console.log(a,b,c)
+}
+show(a=1,c=3)

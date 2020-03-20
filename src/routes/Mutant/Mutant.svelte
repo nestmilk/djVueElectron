@@ -342,7 +342,7 @@
                                         {#if all_titleItemList_dict[params.type][field][dict.MODIFY]}
                                             <td class="{field} containInput
                                                         {all_nowValue_of_data_dict[params.type][line_data.id]?
-                                                            (all_nowValue_of_data_dict[params.type][line_data.id][field]!==line_data[field]?'unequal':''):''}
+                                                            (all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]?'unequal':''):''}
                                                       "
                                                 title="实时数据：{line_data[field]}{field==='sampleSn'?' '+line_data[dict.ID]:''}"
                                                 on:mouseenter={()=>handleMutantTDMouseenter(field, line_data.id)}
@@ -524,25 +524,26 @@
             case dict.SIN_AFFIRM:
                 // 只要状态是free就显示
                 let status_sin_affirm = all_status_of_data_dict[params.type][id]
-                return status_sin_affirm===dict.FREE?true:false
+                return status_sin_affirm===dict.FREE
             case dict.CANCEL_SINAFF:
                 // 先判断是不是在批量组内
                 let ifInsideMultiple_cancelSinAff = __checkIfInsideMultipleAffirm(id)
                 let status_cancel_sinaff = all_status_of_data_dict[params.type][id]
                 // 首先不在批量组内，且目前状态是已审核中的一种
                 return !ifInsideMultiple_cancelSinAff &&
-                    [dict.EDITED, dict.CHECKED, dict.DELETED].indexOf(status_cancel_sinaff)!==-1? true:false
+                    [dict.EDITED, dict.CHECKED, dict.DELETED].indexOf(status_cancel_sinaff)!==-1
             case dict.EDIT_SINAFF_REASON:
                 // 先判断是不是在批量组内
                 let ifInsideMultiple_editSinAffReason = __checkIfInsideMultipleAffirm(id)
                 // 首先不在批量组内，且有all_submit_logs_dict中存在此id，并且其log_id不为null, 则显示
                 return !ifInsideMultiple_editSinAffReason &&
                     all_submit_logs_dict[params.type].hasOwnProperty(id) &&
-                    all_submit_logs_dict[params.type][id]? true:false
+                    all_submit_logs_dict[params.type][id]
             case dict.MUL_AFFIRM:
-                // 只要状态是free就显示
                 let status_mul_affirm = all_status_of_data_dict[params.type][id]
-                return status_mul_affirm===dict.FREE?true:false
+                // 必须是有真修改的（delete false， 删除撤销的不算）才能算 todo 理论上应该要查修改记录的历史值
+                let unequal_values = __checkModifyFieldEqual(id, [...all_modifyTitle_list[params.type]])
+                return status_mul_affirm===dict.FREE && Object.keys(unequal_values).length>0
             default:
                 return false
         }
@@ -557,7 +558,7 @@
             case dict.EDIT_SINAFF_REASON:
                 return false
             case dict.MUL_AFFIRM:
-                return done?false:true
+                return false
             default:
                 return false
         }
@@ -637,8 +638,6 @@
     }, {})))
     // 用于当前修改记录, 每页以id为key，value为所有field的字典
     let all_nowValue_of_data_dict = JSON.parse(JSON.stringify(all_preValue_of_data_dict))
-
-
 
 
     // 每页多选列是否显示的状态
@@ -868,14 +867,15 @@
         all_sheet_record_dict[params.type][to]++
     }
     // 查看此条数据，所有modifyTitle列表对应的值是否有过修改
-    function __checkModifyFieldEqual(id, modify_list=[]){
+    function __checkModifyFieldEqual(id, modify_list=[], sub_nowData=null, sub_preData=null){
         let default_field_list = [...all_modifyTitle_list[params.type], dict.DELETE]
         if (modify_list.length > 0) {
             default_field_list = modify_list
         }
         let unequal_fieldValue_dict = default_field_list.reduce((result, field)=>{
-            let nowValue = all_nowValue_of_data_dict[params.type][id][field]
-            let preValue = all_preValue_of_data_dict[params.type][id][field]
+
+            let nowValue = sub_nowData?sub_nowData[field]:all_nowValue_of_data_dict[params.type][id][field]
+            let preValue = sub_preData?sub_preData[field]:all_preValue_of_data_dict[params.type][id][field]
             if (nowValue!==preValue){
                 result[field] = nowValue
             }
@@ -938,7 +938,7 @@
             let sampleIds_dict = __getSampleIdsDict_by_dataIdsList(all_selected_dataIds_dict[params.type])
 
             // 先判断id表中，所有项目是否都有修改
-            let all_equal = all_selected_dataIds_dict[params.type].every(id=>__checkModifyFieldEqual(id))
+            let all_equal = all_selected_dataIds_dict[params.type].every(id=>Object.keys(__checkModifyFieldEqual(id)).length===0)
             if(all_equal){
                 // 如果都没有修改过，每个当做 "单独审核" 处理
                 all_selected_dataIds_dict[params.type].forEach(id=>
@@ -976,17 +976,33 @@
 
         for (let data of page_data) {
             let id = data[dict.ID]
-            // 插入新数据的状态大表
-            if (!all_status_of_data_dict[params.type].hasOwnProperty(id)) {
-                all_status_of_data_dict[params.type][id] = data[dict.DONE]?dict.DONE:dict.FREE
-            }
-            // 插入新数据的nowValue
-            if (!all_nowValue_of_data_dict[params.type].hasOwnProperty(id)){
+
+            //先本地是否有此条记录
+            if (all_status_of_data_dict[params.type].hasOwnProperty(id)) {
+                // 如果有记录，再判断数据是否外部可能会被人修改了，
+                // 最常见为测试，其次为多人操作
+                // 整个title表都查一遍，反正查了
+                let unequal_values = __checkModifyFieldEqual(id,
+                        [...all_wholeTitle_list[params.type], dict.DELETE, dict.DONE], data)
+                if(Object.keys(unequal_values).length>0) {
+                    remote.dialog.showMessageBox({
+                        type: 'info',
+                        title: `数据库被人修改(未处理)，数据ID为${id}`,
+                        message: '最新数据：'+JSON.stringify(unequal_values)+
+                                '，目前数据：'+ JSON.stringify(Object.keys(unequal_values).reduce((result, field)=>{
+                                    result[field] = all_preValue_of_data_dict[params.type][id][field]
+                                    return result
+                                }, {}))
+                    })
+                }
+                // todo 后期要根据done状态修改
+            }else{
+                // 插入新数据的nowValue
                 all_nowValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
-            }
-            // 插入新数据的preValue
-            if (!all_preValue_of_data_dict[params.type].hasOwnProperty(id)){
+                // 插入新数据的preValue
                 all_preValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
+                // 插入新数据的状态大表
+                all_status_of_data_dict[params.type][id] = data[dict.DONE]?dict.DONE:dict.FREE
             }
         }
 
@@ -1570,6 +1586,11 @@
         __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex()
         __getPageData()
     }
+    // 只要出现修改，就执行一次
+    $: if(Object.keys(all_nowValue_of_data_dict[params.type]).length>0 &&
+            Object.keys(all_nowValue_of_data_dict[params.type]).any(id=>Object.keys(__checkModifyFieldEqual(id)).length>0)){
+        console.log('页面内存在差异')
+    }
 
 
     function __handleContextMenu(e){
@@ -1666,10 +1687,8 @@
         // console.log(all_titleConfigList_dict)
         // console.log(all_sample_record_dict)
         // console.log(all_sheet_record_dict)
-
         // let ordering =  new OrderingFilter()
         // ordering.toggleNowId(dict.SAMPLEID2UNDERLINE)
-
         // console.log(exonic.getValue())
         // exonic.toggleNowId()
         // console.log(exonic.getValue())
@@ -1681,16 +1700,15 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(uuidv4())
-        // console.log(all_data_status_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_preValue_of_data_dict)
-        console.log(all_submit_params_dict, all_submit_logs_dict, all_logs_dict)
-        // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type], all_now_data_id[params.type])
+        // console.log(all_submit_params_dict, all_submit_logs_dict, all_logs_dict)
         // console.log(all_affirm_status_dict)
         // console.log(page_availableSelect_dict)
         // console.log(all_selected_dataIds_dict)
+        console.log(all_status_of_data_dict)
     }
 
 </script>
