@@ -23,6 +23,64 @@
                     <div class="divider"
 
                     ></div>
+                    <div class="leftAffirmSelectWrapper">
+                        <button class="commonButton
+                                   {singleAffirmSelectionValues.indexOf(all_affirm_status_dict[params.type]) !== -1?'select':''}"
+                            on:mouseenter={()=>openAffirmSelectionShow(dict.SINGLE)}
+                        >单项审核</button>
+                        {#if singleAffirmSelectionShow}
+                            <div class="AffrimeWrapper singleAffirmWrapper"
+                                 on:mouseleave={closeAffirmSelectionShow}
+                            >
+                                <table>
+                                    {#each singleAffirmSelectionConfig as item}
+                                        <tr class="selectItemTR"
+                                            on:click={()=>changeAffirmStatus(item[dict.VALUE])}
+                                        >
+                                            <td class="content">
+                                                <div class="selectContentDiv">{item[dict.CONTENT]}</div>
+                                            </td>
+                                            <td class="tick">
+                                                <button class="selectItemButton
+                                                    {all_affirm_status_dict[params.type]===item[dict.VALUE]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
+                                                >
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </table>
+                            </div>
+                        {/if}
+
+                        <button class="commonButton
+                                   {multipleAffirmSelectionValues.indexOf(all_affirm_status_dict[params.type]) !== -1?'select':''}"
+                                on:mouseenter={()=>openAffirmSelectionShow(dict.MULTIPLE)}
+                        >
+                            同批审核</button>
+                        {#if multipleAffirmSelectionShow}
+                            <div class="AffrimeWrapper multipleAffirmWrapper"
+                                 on:mouseleave={closeAffirmSelectionShow}
+                            >
+                                <table>
+                                    {#each multipleAffirmSelectionConfig as item}
+                                        <tr class="selectItemTR"
+                                            on:click={()=>changeAffirmStatus(item[dict.VALUE])}
+                                        >
+                                            <td class="content">
+                                                <div class="selectContentDiv">{item[dict.CONTENT]}</div>
+                                            </td>
+                                            <td class="tick">
+                                                <button class="selectItemButton
+                                                        {all_affirm_status_dict[params.type]===item[dict.VALUE]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
+                                                ></button>
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </table>
+                            </div>
+                        {/if}
+
+                    </div>
                     <div class="leftMessage">
                         提示：{errors}
                     </div>
@@ -324,7 +382,8 @@
         arrayToDict
     } from '../../utils/arrays'
     import {getTime, getParentNodeByParentClassName} from "../../utils/common";
-    import {common_filters, sheetDisplayConfigList, common_filter_subFilters_dict, common_subFilter_selections_dict} from './config'
+    import {sheetDisplayConfigList, common_filter_subFilters_dict, common_subFilter_selections_dict,
+    singleAffirmSelectionConfig, multipleAffirmSelectionConfig} from './config'
     const sheetDisplayConfigDict = JSON.parse(JSON.stringify(arrayToDict(sheetDisplayConfigList, 'sheet')))
 
     // 引入electron相关包
@@ -354,6 +413,10 @@
         FREE: 'free', CHECKED: 'checked', DELETED: 'deleted', EDITED: 'edited',
         AVAILABLE_EDIT: 'availableEdit', REASON_TYPE: 'reason_type',
         DEFAULT: 'default', IDS: 'ids', NOTHING: 'nothing',
+        SINGLE: 'single', MULTIPLE: 'multiple',
+        SIN_AFFIRM: 'single_affirm', CANCEL_SINAFF: 'cancel_single_affirm', EDIT_SINAFF_REASON: "edit_single_affirm_reason",
+        MUL_AFFIRM: "multiple_affirm", CANCEL_MULAFF: 'cancel_multiple_affirm', EDIT_MULAFF_REASON: "edit_multiple_affirm_reason",
+        ADJUST_MULAFF_ITEMS: "adjust_multiple_affirm_items",
     }
     // 获取路径中的：值
     export let params = {}
@@ -364,6 +427,39 @@
     let sureShow = false
     // 控制修改原因页面的显示
     let reasonShow = false
+    // 控制singleAffirm显示
+    let singleAffirmSelectionShow = false
+    // 控制multipleAffirm显示
+    let multipleAffirmSelectionShow = false
+    let singleAffirmSelectionValues = JSON.parse(JSON.stringify(singleAffirmSelectionConfig.map(item=>item[dict.VALUE])))
+    let multipleAffirmSelectionValues = JSON.parse(JSON.stringify(multipleAffirmSelectionConfig.map(item=>item[dict.VALUE])))
+    function openAffirmSelectionShow(type){
+        switch (type) {
+            case dict.SINGLE:
+                singleAffirmSelectionShow = true
+                multipleAffirmSelectionShow = false
+                return
+            case dict.MULTIPLE:
+                multipleAffirmSelectionShow = true
+                singleAffirmSelectionShow = false
+                return
+            default:
+                return;
+        }
+    }
+    function closeAffirmSelectionShow(type){
+        singleAffirmSelectionShow = false
+        multipleAffirmSelectionShow = false
+    }
+    let all_affirm_status_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        result[item[dict.SHEET]] = dict.SIN_AFFIRM
+        return result
+    },{})))
+
+    function changeAffirmStatus(type){
+        // console.log('changeAffirmStatus', type)
+        all_affirm_status_dict[params.type] = type
+    }
 
     // 提示错误信息
     let errors = ''
@@ -569,7 +665,8 @@
         // console.log("__checkModifyFieldEqual")
         return unequal_fieldValue_dict
     }
-    function handleSingleAffirm(id, sample_id){
+    // 处理数据的审核
+    function handleDataAffirm(id, sample_id){
         // console.log(id, sampleId)
         // todo //先置于不可编辑状态
         // page_data.find(data=>data.id===id)[dict.AVAILABLE_EDIT] = false
@@ -590,7 +687,7 @@
         // 此时必然是 未提交未审核 状态
         // 查看是否有修改，如果有修改，弹出修改原因
         let unequal_values = __checkModifyFieldEqual(id)
-        console.log("handleSingleAffirm", unequal_values)
+        // console.log("handleSingleAffirm", unequal_values)
         if (Object.keys(unequal_values).length === 0) {
             //此时必然是 未提交未审核 状态
             // 将状态从free设置为checked
@@ -603,7 +700,11 @@
         }
 
     }
-    // 处理多选时候的审核
+    // 选择列不显示时，处理单个data的审核
+    function handleSingleAffirm(id, sample_id){
+        handleDataAffirm(id, sample_id)
+    }
+    // 选择列显示时，处理多选时候的审核
     function handleMultipleAffirm(){
         // 只有此页有选中id才进行处理
         if(all_selected_dataIds_dict[params.type].length > 0){
@@ -617,7 +718,7 @@
 
             if(all_selected_dataIds_dict[params.type].length===1){
                 for (let id in sampleIds_of_selectedDataIds){
-                    handleSingleAffirm(id, sampleIds_of_selectedDataIds[id])
+                    handleDataAffirm(id, sampleIds_of_selectedDataIds[id])
                 }
             }else{
                 // 先判断其中
@@ -1031,7 +1132,7 @@
             __change_dataIds_and_sampleIds(id, sample_id)
             // 如果带alt的点击, 就是审核
             if(e.altKey){
-                handleSingleAffirm(id, sample_id)
+                handleDataAffirm(id, sample_id)
             }
 
         }
@@ -1235,9 +1336,21 @@
             // 多选状态显示，非多选状态需要右键点击的id和now_data_id一致，才显示此按钮
             if(all_selectShow_dict[params.type] || (!all_selectShow_dict[params.type] && id===right_id)){
                 let affirmMenuItem = new remote.MenuItem({
-                    label: all_submit_logs_dict[params.type]?
-                             (''):
-                             (''),
+                    label: all_selectShow_dict[params.type]?
+                               (all_selected_dataIds_dict[params.type].some(id=>all_submit_logs_dict[params.type].hasOwnProperty(id))?
+                                     '取消涉及此组的所有审核':
+                                     '批量审核'
+                               ):
+                               (all_submit_logs_dict[params.type].hasOwnProperty(id)?
+                                     (all_submit_logs_dict[params.type][id]?
+                                             (all_logs_dict[all_submit_logs_dict[params.type][id]][dict.IDS].length > 1?
+                                                '取消本条审核(同批保留)':
+                                                '取消本条审核'
+                                             ):
+                                             '取消本条审核'
+                                     ):
+                                     ('审核本条')
+                               ),
                     enabled: all_selectShow_dict[params.type]?
                                 (all_selected_dataIds_dict[params.type].length>0?true:false):
                                 (all_now_data_id[params.type]?true:false),
@@ -1245,6 +1358,7 @@
                         if(all_selectShow_dict[params.type]){
                             handleMultipleAffirm()
                         }else{
+                            //todo 如果本条已经在一组批量审核中，操作因为 '取消本条审核(同批保留)'
                             handleSingleAffirm(id, sample_id)
                         }
                     }
@@ -1306,8 +1420,9 @@
         // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_preValue_of_data_dict)
-        console.log(all_submit_params_dict, all_submit_logs_dict, all_logs_dict)
+        // console.log(all_submit_params_dict, all_submit_logs_dict, all_logs_dict)
         // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type], all_now_data_id[params.type])
+        console.log(all_affirm_status_dict)
     }
 </script>
 
@@ -1393,10 +1508,74 @@
         height: 100%;
         background: #cccccc;
     }
+    .navLeft .leftAffirmSelectWrapper{
+        position: relative;
+        flex: 0 0 32px;
+        width: 302px;
+        border-bottom: 1px solid black;
+    }
+    .navLeft .leftAffirmSelectWrapper .commonButton{
+        float: left;
+        width: 149px;
+        height: 30px;
+        line-height: 30px;
+        margin: 1px;
+        padding: 0;
+        font-size: 16px;
+        font-width: bold;
+        background: white;
+    }
+    .navLeft .leftAffirmSelectWrapper .commonButton.select{
+        background: mediumorchid;
+        color: white;
+    }
+    .navLeft .leftAffirmSelectWrapper .AffrimeWrapper {
+        position: absolute;
+        width: 149px;
+        min-height: 50px;
+        box-sizing: border-box;
+        font-size: 16px;
+        border: 1px solid #939393;
+        background: white;
+    }
+    .navLeft .leftAffirmSelectWrapper .AffrimeWrapper .selectItemTR{
+        border-bottom: 1px solid #cccccc;
+    }
+    .navLeft .leftAffirmSelectWrapper .singleAffirmWrapper{
+        top: 32px;
+        left: 1px;
+    }
+    .navLeft .leftAffirmSelectWrapper .multipleAffirmWrapper{
+        top: 32px;
+        right: 1px;
+    }
+    .navLeft .leftAffirmSelectWrapper .content{
+        width: 130px;
+        text-align: left;
+    }
+    .navLeft .leftAffirmSelectWrapper .content .selectContentDiv{
+        box-sizing: border-box;
+        width: 130px;
+        height: 100%;
+        padding: 0 3px;
+    }
+    .navLeft .leftAffirmSelectWrapper .tick{
+        width: 20px;
+    }
+    .navLeft .leftAffirmSelectWrapper .tick .selectItemButton{
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: white;
+    }
     .navLeft .leftMessage{
-        flex: 0 0 20px;
+        flex: 0 0 30px;
         width: 308px;
         line-height: 20px;
+        box-sizing: border-box;
         padding: 5px;
         text-align: left;
         font-size: 12px;
