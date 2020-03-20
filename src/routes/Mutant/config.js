@@ -1985,7 +1985,7 @@ export const singleAffirmSelectionConfig = [
 export const multipleAffirmSelectionConfig = [
     {
         value: "multiple_affirm",
-        content: '确认审核(>1条)'
+        content: '确认审核'
     }, {
         value: "cancel_multiple_affirm",
         content: '取消审核(同批)'

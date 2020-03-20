@@ -253,7 +253,9 @@
                             {#each page_data as line_data, index}
                                 <tr class="lineData
                                     {all_now_data_id[params.type]===line_data.id?'current':''}
-                                    {all_selected_dataIds_dict[params.type].indexOf(line_data.id)>-1?'selected':''}
+                                    {all_affirm_status_dict[params.type]===dict.MUL_AFFIRM &&
+                                        all_selected_dataIds_dict[params.type].indexOf(line_data.id)!==-1?'selected':''
+                                    }
                                     {all_status_of_data_dict[params.type][line_data.id]}
 
                                     "
@@ -569,6 +571,17 @@
         for (let id in page_availableSelect_dict) {
             page_availableSelect_dict[id] = __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id, type)
         }
+
+        // 特例 单项确认 切换到 确认多选项目，已经审核确认的单项 需要从"多选列表"中剔除
+        switch (type) {
+            case dict.MUL_AFFIRM:
+                all_selected_dataIds_dict[params.type] = all_selected_dataIds_dict[params.type].filter(id=>__check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id))
+                // 如果当前data_id不在"多选列表"中，重置
+                __change_dataIds_and_sampleIds(null, null)
+                break
+            default:
+                break
+        }
     }
 
     // 提示错误信息
@@ -646,9 +659,6 @@
             all_selected_dataIds_dict = all_selected_dataIds_dict
         }
     }
-    function handleUnselectedAllDataIds(){
-        all_selected_dataIds_dict[params.type] = []
-    }
 
 
     // 修改all_nowValue_of_data_dict中的值
@@ -700,7 +710,7 @@
         page_ModifyField_mouseEnter_dict[id][field] = false
     }
 
-    function __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null){
+    function __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null){
         console.log('<=== __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord begin')
         // 1) 修改此条数据的status
         all_status_of_data_dict[params.type][id] = status
@@ -725,12 +735,18 @@
                     ...unequal_values
                 }
                 // 3) 此条日志id设为为uuidv4生成，添加日志详情
-                let log_edited_id = uuidv4()
-                all_submit_logs_dict[params.type][id] = log_edited_id
-                all_logs_dict[log_edited_id] = {
-                    ids: [id],
-                    ...reason
+                    // 判断是否提供批处理共享的common_log_id
+                if (common_log_id) {
+                    all_submit_logs_dict[params.type][id] = common_log_id
+                }else{
+                    let log_edited_id = uuidv4()
+                    all_submit_logs_dict[params.type][id] = log_edited_id
+                    all_logs_dict[log_edited_id] = {
+                        ids: [id],
+                        ...reason
+                    }
                 }
+
                 // 4) 页面此条可选显示为false
                 page_availableSelect_dict[id] = false
                 // 5) 更新sampleRecord和sheetRecord
@@ -743,11 +759,16 @@
                     delete: true
                 }
                 // 3) 此条日志id设为为uuidv4生成，添加日志详情
-                let log_deleted_id = uuidv4()
-                all_submit_logs_dict[params.type][id] = log_deleted_id
-                all_logs_dict[log_deleted_id] = {
-                    ids: [id],
-                    ...reason
+                // 判断是否提供批处理共享的common_log_id
+                if (common_log_id) {
+                    all_submit_logs_dict[params.type][id] = common_log_id
+                }else{
+                    let log_deleted_id = uuidv4()
+                    all_submit_logs_dict[params.type][id] = log_deleted_id
+                    all_logs_dict[log_deleted_id] = {
+                        ids: [id],
+                        ...reason
+                    }
                 }
                 // 4) 页面此条可选显示为false
                 page_availableSelect_dict[id] = false
@@ -902,27 +923,32 @@
         reasonShow = true
     }
 
-
-
+    function __getSampleIdsDict_by_dataIdsList(id_list){
+        return id_list.reduce((result, id)=>{
+            let sample_id = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
+            result[id]=sample_id
+            return result
+        },{})
+    }
     // 选择列显示时，处理多选时候的审核
-    function handleMultipleAffirm(){
+    function handleMulAffirm(){
         // 只有此页有选中id才进行处理
         if(all_selected_dataIds_dict[params.type].length > 0){
             // 获取selected_dataIds的sampleId的字典
-            let sampleIds_of_selectedDataIds = all_selected_dataIds_dict[params.type].reduce((result, id)=>{
-                let sample_id = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
-                result[id]=sample_id
-                return result
-            },{})
-            // console.log("handleMultipleAffirm", sampleIds_of_selectedDataIds)
+            let sampleIds_dict = __getSampleIdsDict_by_dataIdsList(all_selected_dataIds_dict[params.type])
 
-            if(all_selected_dataIds_dict[params.type].length===1){
-                for (let id in sampleIds_of_selectedDataIds){
-                    // todo
-                }
+            // 先判断id表中，所有项目是否都有修改
+            let all_equal = all_selected_dataIds_dict[params.type].every(id=>__checkModifyFieldEqual(id))
+            if(all_equal){
+                // 如果都没有修改过，每个当做 "单独审核" 处理
+                all_selected_dataIds_dict[params.type].forEach(id=>
+                        __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sampleIds_dict[id], dict.CHECKED))
             }else{
-                // 先判断其中
+                preValue = null
+                preDesc = null
+                reasonShow = true
             }
+
         }
     }
 
@@ -1308,20 +1334,40 @@
                 }else{
                     __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.EDITED, reason, unequal_values)
                 }
-                return
+                break
             case dict.EDIT_SINAFF_REASON:
                 // 仅仅需要更新本条数据的log详情
                 let log_id = all_submit_logs_dict[params.type][id]
                 let log_detail = all_logs_dict[log_id]
                 log_detail[dict.VALUE] = reason[dict.VALUE]
                 log_detail[dict.DESC] = reason[dict.DESC]
-                return
+                break
             case dict.MUL_AFFIRM:
-                return
+                let sampleIds_dict = __getSampleIdsDict_by_dataIdsList(all_selected_dataIds_dict[params.type])
+
+                for (let id of all_selected_dataIds_dict[params.type]) {
+                    let sample_id = sampleIds_dict[id]
+                    // 涉及原因，肯定有不等项了，先获取不等项的值
+                    let unequal_values = __checkModifyFieldEqual(id)
+                    console.log("handleAddReasonSure", unequal_values)
+                    // 不等项目数为0，则为
+                    // 判断不等项中有没有delete，如果有需要明确删除为true, 才能判定位 删除状态
+                    // 否则如果删除是false，可能是删除提交后撤销，当前准备撤销删除或加修改后的提交状态， 编辑状态
+                    if (Object.keys(unequal_values).length===0){
+                        __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.FREE)
+                    }else if(unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]){
+                        let log_id = uuidv4()
+                        __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.DELETED, reason)
+                    }else{
+                        __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.EDITED, reason, unequal_values)
+                    }
+                }
+                break
             case dict.EDIT_MULAFF_REASON:
-                return
+
+                break
             default:
-                return
+                break
         }
     }
 
@@ -1345,20 +1391,24 @@
         // console.log("handleChangeNowDataIdandNowSampleIde", e)
         // click只能是左键产生，哈哈哈
 
-        if(singleAffirmSelectionValues.indexOf(params.type)!==-1){
+        if(singleAffirmSelectionValues.indexOf(all_affirm_status_dict[params.type])!==-1){
             // 非多选的状态下
             __change_dataIds_and_sampleIds(id, sample_id)
         }else{
-            // 多选的状态下
-            let preExisted = all_selected_dataIds_dict[params.type].indexOf(id) !== -1
-            handleMultipleSelect(id)
-            let nowExisted = all_selected_dataIds_dict[params.type].indexOf(id) !== -1
-            // 如果移出多选项，设为初始null
-            if(preExisted && !nowExisted){
-                __change_dataIds_and_sampleIds(null, null)
-            }else{
-                __change_dataIds_and_sampleIds(id, sample_id)
+            if(__check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id)){
+                // 1) 先多选处理
+                let preExisted = all_selected_dataIds_dict[params.type].indexOf(id) !== -1
+                handleMultipleSelect(id)
+                let nowExisted = all_selected_dataIds_dict[params.type].indexOf(id) !== -1
+                // 2) 再结合先后情况，更新id和sampleId如果移出多选项，设为初始null
+                if(preExisted && !nowExisted){
+                    __change_dataIds_and_sampleIds(null, null)
+                }else{
+                    __change_dataIds_and_sampleIds(id, sample_id)
+                }
             }
+
+
         }
     }
 
@@ -1534,50 +1584,43 @@
             // 多选和非多选状态，生成的右键菜单应该不同
             let menu = new remote.Menu
 
-
-            let selectMenuItem = new remote.MenuItem({
-                label: all_selectShow_dict[params.type]?'隐藏选择':'显示选择',
-                click: ()=>{
-                    // 如果当前为已经打开选择列
-                    if(all_selectShow_dict[params.type]){
-                        // 且已经有选择项，点击后清空此页选项id
-                        if (all_selected_dataIds_dict[params.type].length > 0) {
-                            handleUnselectedAllDataIds()
-                        }
-                    }else{
-                        // 当前未打开选择列, 将当前选项作为多选项第一个内容加入
-                        // todo 有待处理，如果id在某个批量提交中的情况
-                        if(id){
-                            handleMultipleSelect(id)
-                        }
-                    }
-
-                    all_selectShow_dict[params.type] = !all_selectShow_dict[params.type]
-                }
-            })
-            menu.append(selectMenuItem)
-
             switch (all_affirm_status_dict[params.type]) {
                 case dict.SIN_AFFIRM:
                     let sin_affrim_MenuItem = new remote.MenuItem({
                         label: '单项审核',
-                        enabled: id===right_id,
+                        enabled: id===right_id && __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id),
                         click: ()=>{
                             handleSinAffirm(id, sample_id)
                         }
                     })
                     menu.append(sin_affrim_MenuItem)
                     break
+                case dict.CANCEL_SINAFF:
+                    let cancel_sinAff_MenuItem = new remote.MenuItem({
+                        label: '取消审核',
+                        enabled: id===right_id && __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id),
+                        click: ()=>{
+                            handleCancelSinAff(id, sample_id)
+                        }
+                    })
+                    menu.append(cancel_sinAff_MenuItem)
+                    break
+                case dict.EDIT_SINAFF_REASON:
+                    let edit_sinAff_MenuItem = new remote.MenuItem({
+                        label: '编辑原因',
+                        enabled: id===right_id && __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id),
+                        click: ()=>{
+                            handleEditSinAffReason(id)
+                        }
+                    })
+                    menu.append(edit_sinAff_MenuItem)
+                    break
                 case dict.MUL_AFFIRM:
                     let mul_affirm_affirmMenuItem = new remote.MenuItem({
-                        label: '',
+                        label: '确认审核',
+                        enabled: all_selected_dataIds_dict[params.type].length>0,
                         click: ()=>{
-                            if(all_selectShow_dict[params.type]){
-                                handleMultipleAffirm()
-                            }else{
-                                //todo 如果本条已经在一组批量审核中，操作因为 '取消本条审核(同批保留)'
-
-                            }
+                            handleMulAffirm()
                         }
                     })
                     menu.append(mul_affirm_affirmMenuItem)
@@ -1643,11 +1686,11 @@
         // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_preValue_of_data_dict)
-        // console.log(all_submit_params_dict, all_submit_logs_dict, all_logs_dict)
+        console.log(all_submit_params_dict, all_submit_logs_dict, all_logs_dict)
         // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type], all_now_data_id[params.type])
         // console.log(all_affirm_status_dict)
         // console.log(page_availableSelect_dict)
-        console.log(all_selected_dataIds_dict)
+        // console.log(all_selected_dataIds_dict)
     }
 
 </script>
@@ -2027,23 +2070,23 @@
         border: 2px solid black;
     }
     .contentRight .rightDataTable .lineData.selected{
-        border: 2px solid #1621fc!important;
+        border: 2px solid red!important;
     }
     .contentRight .rightDataTable .lineData.done{
         background: #aaaaaa;
         color: #cccccc;
     }
     .contentRight .rightDataTable .lineData.checked{
-        background: #c3fff0;
+        background: #d1fcf0;
     }
     .contentRight .rightDataTable .lineData.edited{
-        background: #ff8bd7;
+        background: #ebd7fc;
     }
     .contentRight .rightDataTable .lineData.deleted {
-        background: #ff7f70
+        background: #fcc2b3;
     }
     .contentRight .rightDataTable>tr>th, .contentRight .rightDataTable>tr>td{
-        height: 36px;
+        height: 35px;
         box-sizing: border-box;
         margin: 0;
         padding: 0;
