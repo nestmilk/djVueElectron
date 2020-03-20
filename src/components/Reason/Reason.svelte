@@ -25,11 +25,13 @@
 </div>
 
 <script>
-    import {createEventDispatcher} from 'svelte'
+    import {onMount, createEventDispatcher} from 'svelte'
 
     const dispatch = createEventDispatcher()
 
     export let reasonType_list
+    export let preValue
+    export let preDesc
     // 如果不设默认值，就是第一项
     let value
     // 如果不设默认值，就是显示undefined
@@ -58,6 +60,13 @@
         dispatch('cancel')
     }
 
+    onMount(()=>{
+        console.log('REASON', preValue, preDesc)
+        if (preValue){
+            value = preValue
+            desc = preDesc
+        }
+    })
 </script>
 
 <style>
