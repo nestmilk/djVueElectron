@@ -25,10 +25,15 @@
                     ></div>
                     <div class="leftAffirmSelectWrapper">
                         <button class="commonButton
-                                   {singleAffirmSelectionValues.indexOf(all_affirm_status_dict[params.type]) !== -1?'select':''}"
+                                   {sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1 &&
+                                        singleAffirmSelectionValues.indexOf(all_affirm_status_dict[params.type]) !== -1?
+                                        'select':''}
+                                    "
                             on:click={()=>openAffirmSelectionShow(dict.SINGLE)}
                         >单项审核</button>
-                        {#if singleAffirmSelectionShow}
+                        {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1 &&
+                            singleAffirmSelectionShow
+                        }
                             <div class="AffrimeWrapper singleAffirmWrapper"
                                  on:mouseleave={closeAffirmSelectionShow}
                             >
@@ -53,11 +58,15 @@
                         {/if}
 
                         <button class="commonButton
-                                   {multipleAffirmSelectionValues.indexOf(all_affirm_status_dict[params.type]) !== -1?'select':''}"
+                                   {sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1 &&
+                                        multipleAffirmSelectionValues.indexOf(all_affirm_status_dict[params.type]) !== -1?
+                                        'select':''}"
                                 on:click={()=>openAffirmSelectionShow(dict.MULTIPLE)}
                         >
                             同批审核</button>
-                        {#if multipleAffirmSelectionShow}
+                        {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1 &&
+                            multipleAffirmSelectionShow
+                        }
                             <div class="AffrimeWrapper multipleAffirmWrapper"
                                  on:mouseleave={closeAffirmSelectionShow}
                             >
@@ -148,41 +157,44 @@
                     <div class="titleTableWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)} >
                         <table class="rightDataTable">
                             <tr class="lineTitle">
-                                <!-- 针对确认多项审核 -->
-                                {#if all_affirm_status_dict[params.type] === dict.MUL_AFFIRM}
-                                    <th class="select short hoverGreen">多项审核</th>
+                                {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
+                                    <!-- 针对单项确认审核或取消审核 -->
+                                    {#if all_affirm_status_dict[params.type] === dict.SIN_CANCEL_OR_AFFIRM}
+                                        <th class="affirmed short">单审单消</th>
+                                    {/if}
+                                    <!-- 针对编辑单项修改原因 -->
+                                    {#if all_affirm_status_dict[params.type] === dict.EDIT_SINAFF_REASON}
+                                        <th class="affirmed short">编辑原因</th>
+                                    {/if}
+                                    <!-- 针对查看单项提交的日志 -->
+                                    {#if all_affirm_status_dict[params.type] === dict.CHECK_SINAFF_LOGS}
+                                        <th class="logs short hoverGreen"
+                                            on:click={()=>handleToggleFilter(dict.LOGSEDIT)}
+                                        >
+                                            {subFilter_selections_dict[dict.LOGSEDIT][all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]][dict.CONTENT]}
+                                        </th>
+                                    {/if}
+                                    <!-- 针对取消单项审核的提交 -->
+                                    {#if all_affirm_status_dict[params.type] === dict.CANCEL_SINAFF_DONE}
+                                        <th class="done short hoverGreen"
+                                            on:click={()=>handleToggleFilter(dict.DONE)}
+                                        >
+                                            {subFilter_selections_dict[dict.DONE][all_subFilter_indexes_dict[params.type][dict.DONE][0]][dict.CONTENT]}
+                                        </th>
+                                    {/if}
+
+                                    <!-- 针对确认多项审核 -->
+                                    {#if all_affirm_status_dict[params.type] === dict.MUL_AFFIRM}
+                                        <th class="select short hoverGreen">多项审核</th>
+                                    {/if}
+
+                                    {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
+                                        <th class="delete short">删除此行</th>
+                                    {/if}
                                 {/if}
 
-                                {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
-                                    <th class="logs short hoverGreen"
-                                        on:click={()=>handleToggleFilter(dict.LOGSEDIT)}
-                                    >
-                                        {subFilter_selections_dict[dict.LOGSEDIT][all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]][dict.CONTENT]}
-                                    </th>
-                                {/if}
-                                {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.DONE) !== -1}
-                                    <th class="done short hoverGreen"
-                                        on:click={()=>handleToggleFilter(dict.DONE)}
-                                    >
-                                        {subFilter_selections_dict[dict.DONE][all_subFilter_indexes_dict[params.type][dict.DONE][0]][dict.CONTENT]}
-                                    </th>
-                                {/if}
-                                <!-- 针对单项确认审核 -->
-                                {#if all_affirm_status_dict[params.type] === dict.SIN_AFFIRM}
-                                    <th class="affirmed short">单项审核</th>
-                                {/if}
-                                <!-- 针对单项取消审核 -->
-                                {#if all_affirm_status_dict[params.type] === dict.CANCEL_SINAFF}
-                                    <th class="affirmed short">取消审核</th>
-                                {/if}
-                                <!-- 针对编辑单项修改原因 -->
-                                {#if all_affirm_status_dict[params.type] === dict.EDIT_SINAFF_REASON}
-                                    <th class="affirmed short">编辑原因</th>
-                                {/if}
 
-                                {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
-                                    <th class="delete short">删除此行</th>
-                                {/if}
+
 
                                 {#each all_wholeTitle_list[params.type] as field}
                                     {#if field===dict.SAMPLESN}
@@ -264,49 +276,15 @@
                                     data-id="{line_data.id}"
                                     data-sampleid="{line_data[dict.SAMPLEID]}"
                                 >
-                                    <!-- 针对确认多项审核 -->
-                                    {#if all_affirm_status_dict[params.type] === dict.MUL_AFFIRM}
-                                        <td class="select short noHover">
-                                            {#if page_availableSelect_dict[line_data.id]}
-                                                <button class="{all_selected_dataIds_dict[params.type].indexOf(line_data.id)===-1?
-                                                                'icon-checkbox-unchecked':'icon-checkbox-checked'}">
-                                                </button>
-                                            {/if}
-                                        </td>
-                                    {/if}
-
 
                                     {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
-                                        <td class="logs short">
-                                            <button class="{true?'icon-copy':(line_data.logs.length!==0?'icon-calendar':'icon-info')}"
-                                                    disabled=""
-
-                                            ></button>
-                                        </td>
-                                        <td class="done short">
-                                            <button class="{line_data[dict.DONE]?'icon-lock':'icon-unlocked'}"
-
-                                                    disabled="{panal_unable_handle?'disabled':''}">
-                                            </button>
-                                        </td>
-
-                                        <!-- 针对单项确认审核 -->
-                                        {#if all_affirm_status_dict[params.type] === dict.SIN_AFFIRM}
+                                        <!-- 针对单项确认审核或取消审核 -->
+                                        {#if all_affirm_status_dict[params.type] === dict.SIN_CANCEL_OR_AFFIRM}
                                             <td class="affirmed short">
                                                 {#if page_availableSelect_dict[line_data.id]}
-                                                    <button class="icon-checkbox-unchecked"
-                                                            on:click={()=>handleSinAffirm(line_data.id, line_data.sampleId)}
-                                                    >
-                                                    </button>
-                                                {/if}
-                                            </td>
-                                        {/if}
-                                        <!-- 针对单项取消审核 -->
-                                        {#if all_affirm_status_dict[params.type] === dict.CANCEL_SINAFF}
-                                            <td class="affirmed short">
-                                                {#if page_availableSelect_dict[line_data.id]}
-                                                    <button class="icon-checkbox-checked"
-                                                            on:click={()=>handleCancelSinAff(line_data.id, line_data.sampleId)}
+                                                    <button class="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE?
+                                                                    'icon-checkbox-unchecked':'icon-checkbox-checked'}"
+                                                            on:click={()=>handleSinAffirm_or_Cancel(line_data.id, line_data.sampleId)}
                                                     >
                                                     </button>
                                                 {/if}
@@ -323,13 +301,42 @@
                                                 {/if}
                                             </td>
                                         {/if}
+                                        <!-- 针对查看单项提交的日志 -->
+                                        {#if all_affirm_status_dict[params.type] === dict.CHECK_SINAFF_LOGS}
+                                            <td class="logs short">
+                                                <button class="{true?'icon-copy':(line_data.logs.length!==0?'icon-calendar':'icon-info')}"
+                                                        disabled=""
+
+                                                ></button>
+                                            </td>
+                                        {/if}
+                                        <!-- 针对取消单项审核的提交 -->
+                                        {#if all_affirm_status_dict[params.type] === dict.CANCEL_SINAFF_DONE}
+                                            <td class="done short">
+                                                <button class="{line_data[dict.DONE]?'icon-lock':'icon-unlocked'}"
+
+                                                        disabled="{panal_unable_handle?'disabled':''}">
+                                                </button>
+                                            </td>
+                                        {/if}
+
+                                        <!-- 针对确认多项审核 -->
+                                        {#if all_affirm_status_dict[params.type] === dict.MUL_AFFIRM}
+                                            <td class="select short noHover">
+                                                {#if page_availableSelect_dict[line_data.id]}
+                                                    <button class="{all_selected_dataIds_dict[params.type].indexOf(line_data.id)===-1?
+                                                                'icon-checkbox-unchecked':'icon-checkbox-checked'}">
+                                                    </button>
+                                                {/if}
+                                            </td>
+                                        {/if}
 
 
                                         <td class="delete short" title="实时数据：{line_data[dict.DELETE]?'删除':'保留'}">
                                             <button class="{all_nowValue_of_data_dict[params.type][line_data.id]?
                                                 (all_nowValue_of_data_dict[params.type][line_data.id][dict.DELETE]?'':'undeleted'):''} icon-cross"
-                                                    on:click={(e)=>changeValueInNowPageDataDict(e, line_data.id, dict.DELETE)}
-                                                    disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE?"":'disabled'}"
+                                                    on:click={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data.id, dict.DELETE)}
+                                                    disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE?'':'disabled'}"
                                             >
                                             </button>
                                             <div class="{all_nowValue_of_data_dict[params.type][line_data.id]?
@@ -350,13 +357,15 @@
                                             >
                                                 <input class="dataInput" type={all_titleItemList_dict[params.type][field][dict.TYPE]}
                                                        value="{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}"
-                                                        on:change={(e)=>changeValueInNowPageDataDict(e, line_data.id, field)}
+                                                       disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE?'':'disabled'}"
+
+                                                       on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data.id, field)}
                                                 >
                                                 <div class="upBesideInput icon-warning"></div>
                                                 <div class="downBesideInput icon-undo2
                                                             {page_ModifyField_mouseEnter_dict[line_data.id][field]?'show':''}
                                                             "
-                                                     on:click={()=>recoverValuesInNowPageDataDict([line_data.id],[field])}
+                                                     on:click={()=>recover_values_InNowPageDataDict([line_data.id],[field])}
                                                 ></div>
                                             </td>
                                         {:else}
@@ -461,8 +470,10 @@
         AVAILABLE_EDIT: 'availableEdit', REASON_TYPE: 'reason_type',
         DEFAULT: 'default', IDS: 'ids', NOTHING: 'nothing',
         SINGLE: 'single', MULTIPLE: 'multiple',
-        SIN_AFFIRM: 'single_affirm', CANCEL_SINAFF: 'cancel_single_affirm', EDIT_SINAFF_REASON: "edit_single_affirm_reason",
+        SIN_CANCEL_OR_AFFIRM: "single_cancel_or_affirm", CHECK_SINAFF_LOGS: "check_single_affirm_logs",
+        CANCEL_SINAFF_DONE: "cancel_single_affirm_done", EDIT_SINAFF_REASON: "edit_single_affirm_reason",
         MUL_AFFIRM: "multiple_affirm", CANCEL_MULAFF: 'cancel_multiple_affirm', EDIT_MULAFF_REASON: "edit_multiple_affirm_reason",
+        CHECK_MULAFF_LOGS: "check_multiple_affirm_logs", CANCEL_MULAFF_DONE: "cancel_multiple_affirm_done",
         ADJUST_MULAFF_ITEMS: "adjust_multiple_affirm_items", DESC: 'desc',
     }
     // 获取路径中的：值
@@ -501,7 +512,7 @@
         multipleAffirmSelectionShow = false
     }
     let all_affirm_status_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        result[item[dict.SHEET]] = dict.SIN_AFFIRM
+        result[item[dict.SHEET]] = dict.SIN_CANCEL_OR_AFFIRM
         return result
     },{})))
 
@@ -521,29 +532,42 @@
     function __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id){
         let affirm_status = all_affirm_status_dict[params.type]
         switch (affirm_status) {
-            case dict.SIN_AFFIRM:
+            case dict.SIN_CANCEL_OR_AFFIRM:
+                let status_sin_cancelOrAffirm = all_status_of_data_dict[params.type][id]
                 // 只要状态是free就显示
-                let status_sin_affirm = all_status_of_data_dict[params.type][id]
-                return status_sin_affirm===dict.FREE
-            case dict.CANCEL_SINAFF:
-                // 先判断是不是在批量组内
-                let ifInsideMultiple_cancelSinAff = __checkIfInsideMultipleAffirm(id)
-                let status_cancel_sinaff = all_status_of_data_dict[params.type][id]
-                // 首先不在批量组内，且目前状态是已审核中的一种
-                return !ifInsideMultiple_cancelSinAff &&
-                    [dict.EDITED, dict.CHECKED, dict.DELETED].indexOf(status_cancel_sinaff)!==-1
+                if (status_sin_cancelOrAffirm===dict.FREE) return true
+
+                // 如果是三种已确认审核状态
+                if ([dict.EDITED, dict.CHECKED, dict.DELETED].indexOf(status_sin_cancelOrAffirm)!==-1){
+                    // 再判断是不是在批量组内
+                    let ifInsideMultiple_sin_cancelOrAffirm = __checkIfInsideMultipleAffirm(id)
+                    if (!ifInsideMultiple_sin_cancelOrAffirm) return true
+                }
+                // 其它情况返回false
+                return false
             case dict.EDIT_SINAFF_REASON:
                 // 先判断是不是在批量组内
                 let ifInsideMultiple_editSinAffReason = __checkIfInsideMultipleAffirm(id)
-                // 首先不在批量组内，且有all_submit_logs_dict中存在此id，并且其log_id不为null, 则显示
+                // 首先不在批量组内，且有all_submit_logs_dict中存在此id，并且其log_id不为null（！！强制转化为boolean值）, 则显示
+                console.log(!ifInsideMultiple_editSinAffReason, all_submit_logs_dict[params.type].hasOwnProperty(id), all_submit_logs_dict[params.type][id])
                 return !ifInsideMultiple_editSinAffReason &&
                     all_submit_logs_dict[params.type].hasOwnProperty(id) &&
-                    all_submit_logs_dict[params.type][id]
+                    !!all_submit_logs_dict[params.type][id]
             case dict.MUL_AFFIRM:
+                //如果状态不是free，返回false
                 let status_mul_affirm = all_status_of_data_dict[params.type][id]
-                // 必须是有真修改的（delete false， 删除撤销的不算）才能算 todo 理论上应该要查修改记录的历史值
-                let unequal_values = __checkModifyFieldEqual(id, [...all_modifyTitle_list[params.type]])
-                return status_mul_affirm===dict.FREE && Object.keys(unequal_values).length>0
+                if (status_mul_affirm!==dict.FREE) return false
+
+                let delete_preValue = all_preValue_of_data_dict[params.type][id][dict.DELETE]
+                let delete_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
+                if(!delete_preValue && delete_nowValue){
+                    // 1) free状态下，必须是真删除
+                    return true
+                }else{
+                    // 2) free状态下，必须是有真修改的（delete false， 删除撤销的不算）才能算 todo 理论上应该要查修改记录的历史值
+                    let unequal_values = __check_unequalValues_ofModifiyFields(id, [...all_modifyTitle_list[params.type]])
+                    return Object.keys(unequal_values).length>0
+                }
             default:
                 return false
         }
@@ -551,10 +575,8 @@
     function __check_availSelect_of_oneData_notInsideAllStatusOfDataDict(done){
         let affirm_status = all_affirm_status_dict[params.type]
         switch (affirm_status) {
-            case dict.SIN_AFFIRM:
-                return done?false:true
-            case dict.CANCEL_SINAFF:
-                return false
+            case dict.SIN_CANCEL_OR_AFFIRM:
+                return !done
             case dict.EDIT_SINAFF_REASON:
                 return false
             case dict.MUL_AFFIRM:
@@ -577,8 +599,11 @@
         switch (type) {
             case dict.MUL_AFFIRM:
                 all_selected_dataIds_dict[params.type] = all_selected_dataIds_dict[params.type].filter(id=>__check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id))
-                // 如果当前data_id不在"多选列表"中，重置
-                __change_dataIds_and_sampleIds(null, null)
+                // 如果当前data_id不在"多选列表"中，重置为null
+                let id = all_now_data_id[params.type]
+                if(all_selected_dataIds_dict[params.type].indexOf(id)===-1){
+                    __change_dataIds_and_sampleIds(null, null)
+                }
                 break
             default:
                 break
@@ -661,44 +686,52 @@
 
 
     // 修改all_nowValue_of_data_dict中的值
-    function recoverValuesInNowPageDataDict(id_list, field_list=[]){
-
+    function recover_values_InNowPageDataDict(id_list, field_list=[]){
+        console.log('recoverValuesInNowPageDataDict', id_list, field_list, all_status_of_data_dict[params.type])
         let recover_field_list = all_modifyTitle_list[params.type]
         if (field_list.length > 0) {
             recover_field_list = field_list
         }
         id_list.forEach(id=>{
             // 判断数据条目是否为free状态,free才能修改
-            if (all_status_of_data_dict[params.type][id]!==dict.FREE) {
+            if (all_status_of_data_dict[params.type][id]===dict.FREE) {
                 recover_field_list.forEach(field=>{
+                    console.log('recoverValuesInNowPageDataDict', field, all_nowValue_of_data_dict[params.type][id][field], all_preValue_of_data_dict[params.type][id][field])
                     all_nowValue_of_data_dict[params.type][id][field] = all_preValue_of_data_dict[params.type][id][field]
                 })
             }
         })
     }
-    function changeValueInNowPageDataDict(e, data_id, field){
-        if(field===dict.DELETE){
-            all_nowValue_of_data_dict[params.type][data_id][dict.DELETE] = !all_nowValue_of_data_dict[params.type][data_id][dict.DELETE]
-            // 同时需要将其余已修改的项恢复
-            recoverValuesInNowPageDataDict([data_id])
-        }else{
-            // 操作前先将delete置换为false
-            all_nowValue_of_data_dict[params.type][data_id][dict.DELETE] = false
-            //// 接着修改title的值
-            if ([dict.POSSTART, dict.POSEND].indexOf(field) > -1){
-                all_nowValue_of_data_dict[params.type][data_id][field] = parseInt(e.target.value)
-            }else if (field === dict.FREQ){
-                let eValue = e.target.value
-
-                // console.log(eValue, isNaN(eValue), parseFloat(eValue)>=0, parseFloat(eValue)<=1)
-                if(!isNaN(eValue) && parseFloat(eValue)>=0 && parseFloat(eValue)<=1){
-                    all_nowValue_of_data_dict[params.type][data_id][field] = eValue
-                }else{
-                    remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
-                }
+    function changeValue_In_AllNowvalueOfDataDict(e, id, field, force=false){
+        // 只能状态为free或者人为forece为true，才能修改nowValue
+        if (all_status_of_data_dict[params.type][id]===dict.FREE || force) {
+            if(field===dict.DELETE){
+                let pre_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
+                all_nowValue_of_data_dict[params.type][id][dict.DELETE] = !pre_nowValue
+                // 同时需要将其余已修改的项恢复
+                recover_values_InNowPageDataDict([id])
             }else{
-                all_nowValue_of_data_dict[params.type][data_id][field] = e.target.value
+                // 操作前先将delete置换为false
+                all_nowValue_of_data_dict[params.type][id][dict.DELETE] = false
+                //// 接着修改title的值
+                if ([dict.POSSTART, dict.POSEND].indexOf(field) > -1){
+                    all_nowValue_of_data_dict[params.type][id][field] = parseInt(e.target.value)
+                }else if (field === dict.FREQ){
+                    let eValue = e.target.value
+
+                    // console.log(eValue, isNaN(eValue), parseFloat(eValue)>=0, parseFloat(eValue)<=1)
+                    if(!isNaN(eValue) && parseFloat(eValue)>=0 && parseFloat(eValue)<=1){
+                        all_nowValue_of_data_dict[params.type][id][field] = eValue
+                    }else{
+                        remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
+                    }
+                }else{
+                    all_nowValue_of_data_dict[params.type][id][field] = e.target.value
+                }
             }
+
+            // 更新此条
+            page_availableSelect_dict[id] = __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id)
         }
     }
     // 处理鼠标划入突变的td的状态, 为了触发单元格 恢复按钮
@@ -709,7 +742,7 @@
         page_ModifyField_mouseEnter_dict[id][field] = false
     }
 
-    function __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null){
+    function __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null){
         console.log('<=== __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord begin')
         // 1) 修改此条数据的status
         all_status_of_data_dict[params.type][id] = status
@@ -722,9 +755,8 @@
                 }
                 // 3) 此条日志id设为null
                 all_submit_logs_dict[params.type][id] = null
-                // 4) 页面此条可选显示为false
-                page_availableSelect_dict[id] = false
-                // 5) 更新sampleRecord和sheetRecord
+
+                // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
                 return
             case dict.EDITED:
@@ -746,9 +778,7 @@
                     }
                 }
 
-                // 4) 页面此条可选显示为false
-                page_availableSelect_dict[id] = false
-                // 5) 更新sampleRecord和sheetRecord
+                // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
                 return
             case dict.DELETED:
@@ -769,9 +799,8 @@
                         ...reason
                     }
                 }
-                // 4) 页面此条可选显示为false
-                page_availableSelect_dict[id] = false
-                // 5) 更新sampleRecord和sheetRecord
+
+                // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
                 return
             case dict.FREE:
@@ -784,73 +813,9 @@
                 delete all_submit_logs_dict[params.type][id]
                 // 3）删除此id的提交params
                 delete all_submit_params_dict[params.type][id]
-                // 4) 页面此条可选显示为false
-                page_availableSelect_dict[id] = false
-                // 5) 更新sampleRecord和sheetRecord
+
+                // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA)
-                return
-            default:
-                return
-        }
-    }
-
-    function __change_dataStatus_params_logs_availSelect(id, status, reason=null, unequal_values=null){
-        // 1) 修改此条数据的status
-        all_status_of_data_dict[params.type][id] = status
-
-        switch (status) {
-            case dict.CHECKED:
-                // 2) 添加此id的提交params
-                all_submit_params_dict[params.type][id] = {
-                    done: true
-                }
-                // 3) 此条日志id设为null
-                all_submit_logs_dict[params.type][id] = null
-                // 4) 页面此条可选显示为false
-                page_availableSelect_dict[id] = false
-                return
-            case dict.EDITED:
-                // 2) 添加此id的提交params
-                all_submit_params_dict[params.type][id] = {
-                    done: true,
-                    ...unequal_values
-                }
-                // 3) 此条日志id设为为uuidv4生成，添加日志详情
-                let log_edited_id = uuidv4()
-                all_submit_logs_dict[params.type][id] = log_edited_id
-                all_logs_dict[log_edited_id] = {
-                    ids: [id],
-                    ...reason
-                }
-                // 4) 页面此条可选显示为false
-                page_availableSelect_dict[id] = false
-                return
-            case dict.DELETED:
-                // 2) 添加此id的提交params
-                all_submit_params_dict[params.type][id] = {
-                    done: true,
-                    delete: true
-                }
-                // 3) 此条日志id设为为uuidv4生成，添加日志详情
-                let log_deleted_id = uuidv4()
-                all_submit_logs_dict[params.type][id] = log_deleted_id
-                all_logs_dict[log_deleted_id] = {
-                    ids: [id],
-                    ...reason
-                }
-                // 4) 页面此条可选显示为false
-                page_availableSelect_dict[id] = false
-                return
-            case dict.FREE:
-                // todo 判断此日志如果不是null，目前无论是不是批次还是单次的原因一律删除
-                if (all_submit_logs_dict[params.type][id]){
-                    // todo 最好提醒一下，是批次的是否确定要删除
-                    delete all_logs_dict[all_submit_logs_dict[params.type][id]]
-                }
-                // 删除此data的id的日志名称
-                delete all_submit_logs_dict[params.type][id]
-                // 删除此id的提交params
-                delete all_submit_params_dict[params.type][id]
                 return
             default:
                 return
@@ -867,7 +832,7 @@
         all_sheet_record_dict[params.type][to]++
     }
     // 查看此条数据，所有modifyTitle列表对应的值是否有过修改
-    function __checkModifyFieldEqual(id, modify_list=[], sub_nowData=null, sub_preData=null){
+    function __check_unequalValues_ofModifiyFields(id, modify_list=[], sub_nowData=null, sub_preData=null){
         let default_field_list = [...all_modifyTitle_list[params.type], dict.DELETE]
         if (modify_list.length > 0) {
             default_field_list = modify_list
@@ -885,35 +850,32 @@
         return unequal_fieldValue_dict
     }
 
-    // 处理确认单项审核
-    function handleSinAffirm(id, sample_id){
+    // 处理单项审核的确认或取消
+    function handleSinAffirm_or_Cancel(id, sample_id){
         let status = all_status_of_data_dict[params.type][id]
-        if (status !== dict.FREE) return
+        if (status === dict.FREE) {
+            // 如果数据状态是free，按钮点击为确认审核
+            // 查看是否有修改，如果有修改，弹出修改原因
+            let unequal_values = __check_unequalValues_ofModifiyFields(id)
+            // console.log("handleSingleAffirm", unequal_values)
+            if (Object.keys(unequal_values).length === 0) {
+                // 将状态从free设置为checked
+                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.CHECKED)
+                return
+            }else{
+                // 显示修改原因填写页面, 逻辑跳转handleAddReasonSure处理
+                preValue = null
+                preDesc = null
+                reasonShow = true
+            }
 
-        // 此时必然是 未提交未审核 状态
-        // 查看是否有修改，如果有修改，弹出修改原因
-        let unequal_values = __checkModifyFieldEqual(id)
-        // console.log("handleSingleAffirm", unequal_values)
-        if (Object.keys(unequal_values).length === 0) {
-            //此时必然是 未提交未审核 状态
-            // 将状态从free设置为checked
-            __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.CHECKED)
-            return
-        }else{
-            // 显示修改原因填写页面, 逻辑跳转handleAddReasonSure处理
-            preValue = null
-            preDesc = null
-            reasonShow = true
+        }else if([dict.CHECKED, dict.DELETED, dict.EDITED].indexOf(status) !== -1){
+            // 如果数据状态是已审核中一种，按钮点击为 取消审核确认
+            // 修改状态为free
+            __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.FREE)
         }
+    }
 
-    }
-    // 处理单项取消审核
-    function handleCancelSinAff(id, sample_id){
-        let status = all_status_of_data_dict[params.type][id]
-        if ([dict.CHECKED, dict.DELETED, dict.EDITED].indexOf(status) === -1) return
-        // 修改状态为free
-        __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.FREE)
-    }
     // 处理编辑单项修改的原因
     function handleEditSinAffReason(id){
         let log_id = all_submit_logs_dict[params.type][id]
@@ -938,11 +900,11 @@
             let sampleIds_dict = __getSampleIdsDict_by_dataIdsList(all_selected_dataIds_dict[params.type])
 
             // 先判断id表中，所有项目是否都有修改
-            let all_equal = all_selected_dataIds_dict[params.type].every(id=>Object.keys(__checkModifyFieldEqual(id)).length===0)
+            let all_equal = all_selected_dataIds_dict[params.type].every(id=>Object.keys(__check_unequalValues_ofModifiyFields(id)).length===0)
             if(all_equal){
                 // 如果都没有修改过，每个当做 "单独审核" 处理
                 all_selected_dataIds_dict[params.type].forEach(id=>
-                        __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sampleIds_dict[id], dict.CHECKED))
+                        __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleIds_dict[id], dict.CHECKED))
             }else{
                 preValue = null
                 preDesc = null
@@ -982,7 +944,7 @@
                 // 如果有记录，再判断数据是否外部可能会被人修改了，
                 // 最常见为测试，其次为多人操作
                 // 整个title表都查一遍，反正查了
-                let unequal_values = __checkModifyFieldEqual(id,
+                let unequal_values = __check_unequalValues_ofModifiyFields(id,
                         [...all_wholeTitle_list[params.type], dict.DELETE, dict.DONE], data)
                 if(Object.keys(unequal_values).length>0) {
                     remote.dialog.showMessageBox({
@@ -1339,16 +1301,16 @@
 
         // 根据不同审核状态，分别处理
         switch (all_affirm_status_dict[params.type]) {
-            case dict.SIN_AFFIRM:
+            case dict.SIN_CANCEL_OR_AFFIRM:
                 // 涉及原因，肯定有不等项了，先获取不等项的值
-                let unequal_values = __checkModifyFieldEqual(id)
+                let unequal_values = __check_unequalValues_ofModifiyFields(id)
                 console.log("handleAddReasonSure",unequal_values)
                 // 判断不等项中有没有delete，如果有需要明确删除为true
                 // 否则如果删除是false，可能是删除提交后撤销，当前准备撤销删除或加修改后的提交状态
                 if(unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]){
-                    __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.DELETED, reason)
+                    __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.DELETED, reason)
                 }else{
-                    __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.EDITED, reason, unequal_values)
+                    __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.EDITED, reason, unequal_values)
                 }
                 break
             case dict.EDIT_SINAFF_REASON:
@@ -1364,18 +1326,18 @@
                 for (let id of all_selected_dataIds_dict[params.type]) {
                     let sample_id = sampleIds_dict[id]
                     // 涉及原因，肯定有不等项了，先获取不等项的值
-                    let unequal_values = __checkModifyFieldEqual(id)
+                    let unequal_values = __check_unequalValues_ofModifiyFields(id)
                     console.log("handleAddReasonSure", unequal_values)
                     // 不等项目数为0，则为
                     // 判断不等项中有没有delete，如果有需要明确删除为true, 才能判定位 删除状态
                     // 否则如果删除是false，可能是删除提交后撤销，当前准备撤销删除或加修改后的提交状态， 编辑状态
                     if (Object.keys(unequal_values).length===0){
-                        __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.FREE)
+                        __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.FREE)
                     }else if(unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]){
                         let log_id = uuidv4()
-                        __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.DELETED, reason)
+                        __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.DELETED, reason)
                     }else{
-                        __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord(id, sample_id, dict.EDITED, reason, unequal_values)
+                        __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.EDITED, reason, unequal_values)
                     }
                 }
                 break
@@ -1586,11 +1548,7 @@
         __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex()
         __getPageData()
     }
-    // 只要出现修改，就执行一次
-    $: if(Object.keys(all_nowValue_of_data_dict[params.type]).length>0 &&
-            Object.keys(all_nowValue_of_data_dict[params.type]).any(id=>Object.keys(__checkModifyFieldEqual(id)).length>0)){
-        console.log('页面内存在差异')
-    }
+
 
 
     function __handleContextMenu(e){
@@ -1601,30 +1559,26 @@
             // let sampleId = parseInt(lineData_element.dataset.sampleid)
             let id = all_now_data_id[params.type]
             let sample_id = all_now_sample_id[params.type]
+            let status = all_status_of_data_dict[params.type][id]
 
             // 多选和非多选状态，生成的右键菜单应该不同
             let menu = new remote.Menu
-
+            // enabled 必须接受true，false，保证__check...返回true或false
             switch (all_affirm_status_dict[params.type]) {
-                case dict.SIN_AFFIRM:
+                case dict.SIN_CANCEL_OR_AFFIRM:
                     let sin_affrim_MenuItem = new remote.MenuItem({
-                        label: '单项审核',
+                        label: all_status_of_data_dict[params.type][id]===dict.FREE?
+                                '单项审核':
+                                ([dict.CHECKED, dict.DELETED, dict.EDITED].indexOf(status) !== -1?
+                                    '取消审核':
+                                    ''
+                                ),
                         enabled: id===right_id && __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id),
                         click: ()=>{
-                            handleSinAffirm(id, sample_id)
+                            handleSinAffirm_or_Cancel(id, sample_id)
                         }
                     })
                     menu.append(sin_affrim_MenuItem)
-                    break
-                case dict.CANCEL_SINAFF:
-                    let cancel_sinAff_MenuItem = new remote.MenuItem({
-                        label: '取消审核',
-                        enabled: id===right_id && __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id),
-                        click: ()=>{
-                            handleCancelSinAff(id, sample_id)
-                        }
-                    })
-                    menu.append(cancel_sinAff_MenuItem)
                     break
                 case dict.EDIT_SINAFF_REASON:
                     let edit_sinAff_MenuItem = new remote.MenuItem({
@@ -1708,7 +1662,7 @@
         // console.log(all_affirm_status_dict)
         // console.log(page_availableSelect_dict)
         // console.log(all_selected_dataIds_dict)
-        console.log(all_status_of_data_dict)
+        console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type])
     }
 
 </script>
@@ -1837,6 +1791,7 @@
         right: 1px;
     }
     .navLeft .leftAffirmSelectWrapper .content{
+        font-size: 14px;
         width: 130px;
         text-align: left;
     }
@@ -2095,13 +2050,13 @@
         color: #cccccc;
     }
     .contentRight .rightDataTable .lineData.checked{
-        background: #d1fcf0;
+        background: #82f9fc;
     }
     .contentRight .rightDataTable .lineData.edited{
-        background: #ebd7fc;
+        background: #f791fc;
     }
     .contentRight .rightDataTable .lineData.deleted {
-        background: #fcc2b3;
+        background: #fc8064;
     }
     .contentRight .rightDataTable>tr>th, .contentRight .rightDataTable>tr>td{
         height: 35px;

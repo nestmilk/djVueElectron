@@ -1970,22 +1970,24 @@ export const common_subFilter_selections_dict = {
 
 export const singleAffirmSelectionConfig = [
     {
-        value: "single_affirm",
-        content: '确认审核(单项)'
-
-    }, {
-        value: "cancel_single_affirm",
-        content: '取消审核(单项)'
+        value: "single_cancel_or_affirm",
+        content: '确认/取消审核'
     }, {
         value: "edit_single_affirm_reason",
         content: '编辑原因(单项)'
+    }, {
+        value: "check_single_affirm_logs",
+        content: '查看日志(单项)'
+    }, {
+        value: "cancel_single_affirm_done",
+        content: '取消提交(单项)'
     }
 ]
 
 export const multipleAffirmSelectionConfig = [
     {
         value: "multiple_affirm",
-        content: '确认审核'
+        content: '同批审核(限修改)'
     }, {
         value: "cancel_multiple_affirm",
         content: '取消审核(同批)'
@@ -1995,6 +1997,12 @@ export const multipleAffirmSelectionConfig = [
     }, {
         value: "adjust_multiple_affirm_items",
         content: '增减条目(同批)'
+    }, {
+        value: "check_multiple_affirm_logs",
+        content: '查看日志(同批)'
+    }, {
+        value: "cancel_multiple_affirm_done",
+        content: '取消提交(同批)'
     }
 ]
 
