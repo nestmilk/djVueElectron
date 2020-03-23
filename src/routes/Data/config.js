@@ -2004,6 +2004,7 @@ export const affirmSelectionConfig = [
     }, {
         type: "multiple",
         value: "adjust_multiple_affirm_items",
+        availableEdit: true,
         content: '增减条目(同批)'
     }, {
         type: "multiple",

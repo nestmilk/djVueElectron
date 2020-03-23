@@ -6,6 +6,7 @@ export const dict_translate = {
     cancel: '取消',
     multiple_affirm: '多项审核',
     single_affirm: '单项审核',
+    adjust_items: '增减条目'
 }
 
 

@@ -372,7 +372,7 @@
                                                 {#if page_id_availableSelect_dict[line_data.id]}
                                                     <button class="{all_selected_dataIds_dict[params.type].indexOf(line_data.id)===-1?
                                                                 'icon-checkbox-unchecked':'icon-checkbox-checked'}"
-                                                            on:click={()=>handle_lineTDClick_for_idsInSameCheckedGroup(line_data.id)}
+                                                            on:click={()=>handle_lineTDClick_for_adjuctMulAffItems(line_data.id)}
                                                     >
                                                     </button>
                                                 {/if}
@@ -548,7 +548,8 @@
         MUL_AFFIRM: "multiple_affirm", CANCEL_MULAFF: 'cancel_multiple_affirm', EDIT_MULAFF_REASON: "edit_multiple_affirm_reason",
         CHECK_MULAFF_LOGS: "check_multiple_affirm_logs", CANCEL_MULAFF_DONE: "cancel_multiple_affirm_done",
         ADJUST_MULAFF_ITEMS: "adjust_multiple_affirm_items", DESC: 'desc',
-        CANCEL: 'cancel', MULTIPLE_AFFIRM: "multiple_affirm", SINGLE_AFFIRM: "single_affirm",
+        CANCEL: 'cancel', MULTIPLE_AFFIRM: "multiple_affirm", SINGLE_AFFIRM: "single_affirm", ADJUST_ITEMS: "adjust_items",
+
     }
     // 获取路径中的：值
     export let params = {}
@@ -578,6 +579,11 @@
                     switch (sureOperation) {
                         case dict.CANCEL:
                             __handleCancelMulAffirm()
+                            break
+                        case dict.ADJUST_ITEMS:
+                            console.log('handleSureReply 增减条目')
+                            break
+                        default:
                         break
                     }
                     break
@@ -585,6 +591,7 @@
                     break
             }
         }
+
         sureShow = false
     }
 
@@ -601,6 +608,16 @@
         return result
     }, [])))
     let affirmSelection_dict = JSON.parse(JSON.stringify(arrayToDict(affirmSelectionConfig, 'value')))
+
+    // 用于每页，是否锁定一批审核，以便进行增减条目
+    let all_locked_logId_for_adjustMultipleAffirmItems = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        result[item[dict.SHEET]] = null
+        return result
+    },{})))
+    // 重置当前页的增减项目的锁定
+    function __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems(){
+        all_locked_logId_for_adjustMultipleAffirmItems[params.type] = null
+    }
 
     function openAffirmSelectionShow(type){
         switch (type) {
@@ -638,7 +655,25 @@
             return false
         }
     }
+    function __check_availSelect_if_FreeAndTruelyEdited(id){
+        //如果状态不是free，返回false
+        let status = all_status_of_data_dict[params.type][id]
+        if (status!==dict.FREE) return false
+
+        let delete_preValue = all_preValue_of_data_dict[params.type][id][dict.DELETE]
+        let delete_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
+        if(!delete_preValue && delete_nowValue){
+            // 1) free状态下，必须是真删除，才true
+            return true
+        }else{
+            // 2) free状态下，必须是有真修改的（delete false， 删除撤销的不算）才true, 否则返回false
+            // todo 理论上应该要查修改记录的历史值
+            let unequal_values = __check_unequalValues_ofModifiyFields(id, [...all_modifyTitle_list[params.type]])
+            return Object.keys(unequal_values).length>0
+        }
+    }
     function __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id){
+        // console.log('<===__check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict begin')
         let affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         switch (affirm_status) {
             case dict.SIN_CANCEL_OR_AFFIRM:
@@ -663,45 +698,26 @@
                         all_submit_logs_dict[params.type].hasOwnProperty(id) &&
                         !!all_submit_logs_dict[params.type][id]
             case dict.MUL_AFFIRM:
-                //如果状态不是free，返回false
-                let status_mul_affirm = all_status_of_data_dict[params.type][id]
-                if (status_mul_affirm!==dict.FREE) return false
-                console.log(status_mul_affirm)
-
-                let delete_preValue = all_preValue_of_data_dict[params.type][id][dict.DELETE]
-                let delete_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
-                if(!delete_preValue && delete_nowValue){
-                    // 1) free状态下，必须是真删除，才true
-                    return true
-                }else{
-                    // 2) free状态下，必须是有真修改的（delete false， 删除撤销的不算）才true, 否则返回false
-                    // todo 理论上应该要查修改记录的历史值
-                    let unequal_values = __check_unequalValues_ofModifiyFields(id, [...all_modifyTitle_list[params.type]])
-                    return Object.keys(unequal_values).length>0
-                }
+                return __check_availSelect_if_FreeAndTruelyEdited(id)
             case dict.CANCEL_MULAFF:
-                // 其次，三种审核状态之一
-                let status_cancel_mulAff = all_status_of_data_dict[params.type][id]
-                if ([dict.EDITED, dict.CHECKED, dict.DELETED].indexOf(status_cancel_mulAff)!==-1){
-                    // 再判断必须在批量组内
-                    let ifInsideMultiple_sin_cancel_mulAff = __checkIfInsideMultipleAffirm(id)
-                    if (ifInsideMultiple_sin_cancel_mulAff) return true
-                }
-                return false
+                return __checkIfInsideMultipleAffirm(id)
             case dict.EDIT_MULAFF_REASON:
-                // 其次，三种审核状态之一
-                let status_edit_mulAff_reason = all_status_of_data_dict[params.type][id]
-                if ([dict.EDITED, dict.CHECKED, dict.DELETED].indexOf(status_edit_mulAff_reason)!==-1){
-                    // 再判断必须在批量组内
-                    let ifInsideMultiple_edit_mulAff_reason = __checkIfInsideMultipleAffirm(id)
-                    if (ifInsideMultiple_edit_mulAff_reason) return true
+                return __checkIfInsideMultipleAffirm(id)
+            case dict.ADJUST_MULAFF_ITEMS:
+                let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+                if (locked_logId){
+                    let locked_ids = all_logs_dict[locked_logId][dict.IDS]
+                    return locked_ids.indexOf(id)!==-1 || __check_availSelect_if_FreeAndTruelyEdited(id)
+                }else{
+                    // 在批量组内, 即可
+                    return __checkIfInsideMultipleAffirm(id)
                 }
-                return false
             default:
                 return false
         }
     }
     function __check_availSelect_of_oneData_notInsideAllStatusOfDataDict(done){
+        // console.log('<===__check_availSelect_of_oneData_notInsideAllStatusOfDataDict begin')
         let affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         switch (affirm_status) {
             case dict.SIN_CANCEL_OR_AFFIRM:
@@ -711,6 +727,8 @@
             case dict.MUL_AFFIRM:
                 return false
             case dict.CANCEL_MULAFF:
+                return false
+            case dict.ADJUST_MULAFF_ITEMS:
                 return false
             default:
                 return false
@@ -733,6 +751,7 @@
             page_id_availableEdit_dict[id] = false
         }
     }
+
     function changeAffirmWorkingStatus(type){
         let pre_affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         //1) 先修改当前工作状态
@@ -743,26 +762,45 @@
 
         //3) 确认工作状态切换，需要调整的参数
         switch (type) {
+            case dict.SIN_CANCEL_OR_AFFIRM:
+                // 重置当前页的增减项目的锁定
+                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                break
+            case dict.EDIT_SINAFF_REASON:
+                // 重置当前页的增减项目的锁定
+                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                break
             case dict.MUL_AFFIRM:
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
+                // 重置当前页的增减项目的锁定
+                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 break
             case dict.EDIT_SINAFF_REASON:
                 //当前所有都不能编辑
                 __set_allIds_false_availEdit_inPageIdAvailEditDict()
+                // 重置当前页的增减项目的锁定
+                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 break
             case dict.CANCEL_MULAFF:
                 //当前所有都不能编辑
                 __set_allIds_false_availEdit_inPageIdAvailEditDict()
+                // 重置当前页的增减项目的锁定
+                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
                 break
             case dict.EDIT_MULAFF_REASON:
                 //当前所有都不能编辑
                 __set_allIds_false_availEdit_inPageIdAvailEditDict()
+                // 重置当前页的增减项目的锁定
+                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
                 break
+            case dict.ADJUST_MULAFF_ITEMS:
+                // 清空id多选列表
+                all_selected_dataIds_dict[params.type] = []
             default:
                 break
         }
@@ -1092,14 +1130,26 @@
             __update_oneId_availSelect_inPageIdAvailSelectDict(id)
         }
     }
+    // 针对多选审核增减项目时候
+    function handle_lineTDClick_for_adjuctMulAffItems(id){
+        let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+        if(locked_logId){
+            // 锁定状态下
 
+        }else{
+            // 非锁定状态下
+            let log_id = all_submit_logs_dict[params.type][id]
+            let id_list = all_logs_dict[log_id][dict.IDS]
+            all_selected_dataIds_dict[params.type] = id_list
+        }
+
+    }
 
     // 先前的页面type
     let pre_params_type
     // 判断参数表中是否有panalId的信息，如果没有为第一次加载，手工添加
     function __addPanalIDIfFirstLoad(){
         if (!all_search_params_dict[params.type][dict.PANALID]){
-            // console.log("__getPageData empty")
             all_search_params_dict[params.type][dict.PANALID] = params[dict.PANALID]
         }
     }
@@ -1150,6 +1200,7 @@
 
     }
 
+
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
     async function __getPageData () {
         // console.log('__getPageData begin')
@@ -1175,11 +1226,13 @@
                 result[item[dict.ID]] = status_dict
                 return result
             }, {})))
+            // console.log('__getPageData page_ModifyField_mouseEnter_dict', page_ModifyField_mouseEnter_dict)
             // 当前页各id能否被编辑, 初始化都不能编辑
             page_id_availableEdit_dict =  JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
                 result[item[dict.ID]] = false
                 return result
             }, {})))
+            // console.log('__getPageData page_id_availableEdit_dict', page_id_availableEdit_dict)
             // 需要结合当前审核工作状态，更新页面可选项
             page_id_availableSelect_dict = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
                 let id = item[dict.ID]
@@ -1190,12 +1243,10 @@
                     // 如果本地状态没有，就用数据库状态更新
                     result[id] = __check_availSelect_of_oneData_notInsideAllStatusOfDataDict(item[dict.DONE])
                 }
-
                 return result
             }, {})))
+            // console.log("__getPageData page_id_availableSelect_dict", page_id_availableSelect_dict)
 
-
-            // console.log("__getPageData now_page_data", now_page_data)
             // 更新当前页data_num
             data_count = response.data.count
 
@@ -1206,6 +1257,7 @@
         })
 
         if(success){
+            // console.log('__getPageData success', success)
             // 更新totalPageNums
             __updateTotalPageNums()
 
@@ -1808,6 +1860,32 @@
                     })
                     menu.append(edit_mulAff_reason_MenuItem)
                     break
+                case dict.ADJUST_MULAFF_ITEMS:
+                    let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+                    let lock_adjustItems_MenuItem = new remote.MenuItem({
+                        label: locked_logId?'取消锁定':'锁定批次',
+                        click: ()=>{
+                            if(locked_logId){
+                                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                            }else{
+                                let first_id =  all_selected_dataIds_dict[params.type][0]
+                                all_locked_logId_for_adjustMultipleAffirmItems[params.type] = all_submit_logs_dict[params.type][first_id]
+                            }
+                        }
+                    })
+                    menu.append(lock_adjustItems_MenuItem)
+
+                    let adjust_mulAff_items_menuItem =new remote.MenuItem({
+                        label: "增减条目",
+                        click: ()=>{
+                            sureEvent = dict.MULTIPLE_AFFIRM
+                            sureOperation  = dict.ADJUST_ITEMS
+                            changeSendSureMessage()
+                            reasonShow = true
+                        }
+                    })
+                    menu.append(adjust_mulAff_items_menuItem)
+                    break
                 default:
                     break
             }
@@ -1865,12 +1943,13 @@
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_preValue_of_data_dict)
         // console.log(all_selected_dataIds_dict[params.type])
-        console.log(all_submit_params_dict, all_submit_logs_dict, all_logs_dict)
+        // console.log(all_submit_params_dict, all_submit_logs_dict, all_logs_dict)
         // console.log(all_affirm_status_dict)
         // console.log(page_availableSelect_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type])
         // console.log(page_id_availableEdit_dict)
+        console.log(all_locked_logId_for_adjustMultipleAffirmItems)
     }
 
 </script>
