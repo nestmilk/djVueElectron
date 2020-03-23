@@ -707,7 +707,9 @@
                 let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
                 if (locked_logId){
                     let locked_ids = all_logs_dict[locked_logId][dict.IDS]
-                    return locked_ids.indexOf(id)!==-1 || __check_availSelect_if_FreeAndTruelyEdited(id)
+                    // console.log("__check_availSelect_of_oneData_already...", locked_ids, id, locked_ids.indexOf(id)!==-1, __check_availSelect_if_FreeAndTruelyEdited(id))
+                    // 注意传入的id可能为字符串，需要转为整数！！
+                    return locked_ids.indexOf(parseInt(id))!==-1 || __check_availSelect_if_FreeAndTruelyEdited(id)
                 }else{
                     // 在批量组内, 即可
                     return __checkIfInsideMultipleAffirm(id)
@@ -935,7 +937,7 @@
     }
 
     function __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null){
-        console.log('<=== __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord begin')
+        // console.log('<=== __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord begin')
         // 1) 修改此条数据的status
         all_status_of_data_dict[params.type][id] = status
 
@@ -1130,12 +1132,31 @@
             __update_oneId_availSelect_inPageIdAvailSelectDict(id)
         }
     }
+    function  __check_atLeast_keepOneId_in_lockedLogId(id){
+        //1)原logId包含的ids条目只有一条了
+        let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+        let ids = all_logs_dict[locked_logId][dict.IDS]
+        let left_ids = ids.reduce((result, id)=>{
+            if (all_selected_dataIds_dict[params.type].indexOf(id)!==-1) result.push(id)
+            return result
+        }, [])
+        //2)点击了此唯一的id
+        return left_ids.length===1 && left_ids[0]===id
+    }
     // 针对多选审核增减项目时候
     function handle_lineTDClick_for_adjuctMulAffItems(id){
         let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
         if(locked_logId){
-            // 锁定状态下
-
+            // 锁定状态下, 检查原logId包含的ids条目至少保留一个
+            if(__check_atLeast_keepOneId_in_lockedLogId(id)){
+                remote.dialog.showMessageBox({
+                    type: 'info',
+                    title: '增减同批次条目注意',
+                    message: `目前是仅剩最后一条原始审核条目(id为${id})，不可剔除！`
+                })
+            }else{
+                __handleMultipleSelect(id)
+            }
         }else{
             // 非锁定状态下
             let log_id = all_submit_logs_dict[params.type][id]
@@ -1864,12 +1885,21 @@
                     let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
                     let lock_adjustItems_MenuItem = new remote.MenuItem({
                         label: locked_logId?'取消锁定':'锁定批次',
+                        enabled: locked_logId?true:(all_selected_dataIds_dict[params.type].length>0),
                         click: ()=>{
                             if(locked_logId){
+                                // 恢复selected_ids为logId所包含的ids
+                                all_selected_dataIds_dict[params.type] = all_logs_dict[locked_logId][dict.IDs]
+                                // 当前锁定的logId设为空
                                 __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                                // 更新一遍页面可选
+                                __update_allIds_availSelect_inPageIdAvailSelectDict()
                             }else{
+                                // 设置当前locked_logid为选择的dataIds的共享logId
                                 let first_id =  all_selected_dataIds_dict[params.type][0]
                                 all_locked_logId_for_adjustMultipleAffirmItems[params.type] = all_submit_logs_dict[params.type][first_id]
+                                // 更新一遍页面可选
+                                __update_allIds_availSelect_inPageIdAvailSelectDict()
                             }
                         }
                     })
@@ -1949,7 +1979,7 @@
         // console.log(all_selected_dataIds_dict)
         // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type])
         // console.log(page_id_availableEdit_dict)
-        console.log(all_locked_logId_for_adjustMultipleAffirmItems)
+        console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
     }
 
 </script>
