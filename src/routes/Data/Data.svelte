@@ -26,7 +26,7 @@
                     <div class="leftAffirmSelectWrapper">
                         <button class="commonButton
                                    {sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1 &&
-                                        singleAffirmSelectionValues.indexOf(all_affirm_status_dict[params.type]) !== -1?
+                                        affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.TYPE]===dict.SINGLE?
                                         'select':''}
                                     "
                             on:click={()=>openAffirmSelectionShow(dict.SINGLE)}
@@ -40,14 +40,14 @@
                                 <table>
                                     {#each singleAffirmSelectionConfig as item}
                                         <tr class="selectItemTR"
-                                            on:click={()=>changeAffirmStatus(item[dict.VALUE])}
+                                            on:click={()=>changeAffirmWorkingStatus(item[dict.VALUE])}
                                         >
                                             <td class="content">
                                                 <div class="selectContentDiv">{item[dict.CONTENT]}</div>
                                             </td>
                                             <td class="tick">
                                                 <button class="selectItemButton
-                                                    {all_affirm_status_dict[params.type]===item[dict.VALUE]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
+                                                    {all_affirmWorkingStatus_of_sheet_dict[params.type]===item[dict.VALUE]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
                                                 >
                                                 </button>
                                             </td>
@@ -59,7 +59,7 @@
 
                         <button class="commonButton
                                    {sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1 &&
-                                        multipleAffirmSelectionValues.indexOf(all_affirm_status_dict[params.type]) !== -1?
+                                        affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.TYPE]===dict.MULTIPLE?
                                         'select':''}"
                                 on:click={()=>openAffirmSelectionShow(dict.MULTIPLE)}
                         >
@@ -73,14 +73,14 @@
                                 <table>
                                     {#each multipleAffirmSelectionConfig as item}
                                         <tr class="selectItemTR"
-                                            on:click={()=>changeAffirmStatus(item[dict.VALUE])}
+                                            on:click={()=>changeAffirmWorkingStatus(item[dict.VALUE])}
                                         >
                                             <td class="content">
                                                 <div class="selectContentDiv">{item[dict.CONTENT]}</div>
                                             </td>
                                             <td class="tick">
                                                 <button class="selectItemButton
-                                                        {all_affirm_status_dict[params.type]===item[dict.VALUE]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
+                                                        {all_affirmWorkingStatus_of_sheet_dict[params.type]===item[dict.VALUE]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
                                                 ></button>
                                             </td>
                                         </tr>
@@ -159,15 +159,15 @@
                             <tr class="lineTitle">
                                 {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
                                     <!-- 针对单项确认审核或取消审核 -->
-                                    {#if all_affirm_status_dict[params.type] === dict.SIN_CANCEL_OR_AFFIRM}
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.SIN_CANCEL_OR_AFFIRM}
                                         <th class="affirmed short">单审单消</th>
                                     {/if}
                                     <!-- 针对编辑单项修改原因 -->
-                                    {#if all_affirm_status_dict[params.type] === dict.EDIT_SINAFF_REASON}
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.EDIT_SINAFF_REASON}
                                         <th class="affirmed short">编辑原因</th>
                                     {/if}
                                     <!-- 针对查看单项提交的日志 -->
-                                    {#if all_affirm_status_dict[params.type] === dict.CHECK_SINAFF_LOGS}
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CHECK_SINAFF_LOGS}
                                         <th class="logs short hoverGreen"
                                             on:click={()=>handleToggleFilter(dict.LOGSEDIT)}
                                         >
@@ -175,7 +175,7 @@
                                         </th>
                                     {/if}
                                     <!-- 针对取消单项审核的提交 -->
-                                    {#if all_affirm_status_dict[params.type] === dict.CANCEL_SINAFF_DONE}
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SINAFF_DONE}
                                         <th class="done short hoverGreen"
                                             on:click={()=>handleToggleFilter(dict.DONE)}
                                         >
@@ -184,8 +184,20 @@
                                     {/if}
 
                                     <!-- 针对确认多项审核 -->
-                                    {#if all_affirm_status_dict[params.type] === dict.MUL_AFFIRM}
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.MUL_AFFIRM}
                                         <th class="select short hoverGreen">多项审核</th>
+                                    {/if}
+                                    <!-- 针对取消多项审核 -->
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_MULAFF}
+                                        <th class="select short hoverGreen">取消审核</th>
+                                    {/if}
+                                    <!-- 针对编辑多项审核的原因 -->
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.EDIT_MULAFF_REASON}
+                                        <th class="select short hoverGreen">编辑原因</th>
+                                    {/if}
+                                    <!-- 针对增减多项审核的条目 -->
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.ADJUST_MULAFF_ITEMS}
+                                        <th class="select short hoverGreen">增减条目</th>
                                     {/if}
 
                                     {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
@@ -258,7 +270,10 @@
                             </tr>
                         </table><!--rightDataTable-->
                     </div><!--titleTableWrapper-->
-                    <div class="dataTableWrapper" bind:this={bottomScroll} on:scroll={()=>handleScroll(dict.BOTTOMSCROLL)} >
+                    <div class="dataTableWrapper"
+                         bind:this={bottomScroll}
+                         on:scroll={()=>handleScroll(dict.BOTTOMSCROLL)}
+                    >
                         <table class="downTable rightDataTable">
                             {#each page_data as line_data, index}
                                 <tr class="lineData
@@ -266,7 +281,7 @@
                                     {all_status_of_data_dict[params.type][line_data.id]}
 
                                     "
-                                    on:click|stopPropagation={()=>change_dataIds_and_sampleIds(line_data.id, line_data.sampleId)}
+                                    on:click|stopPropagation={(e)=>handle_lineTR_rightClicked(e, line_data.id, line_data.sampleId)}
 
                                     data-id="{line_data.id}"
                                     data-sampleid="{line_data[dict.SAMPLEID]}"
@@ -274,9 +289,9 @@
 
                                     {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
                                         <!-- 针对单项确认审核或取消审核 -->
-                                        {#if all_affirm_status_dict[params.type] === dict.SIN_CANCEL_OR_AFFIRM}
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.SIN_CANCEL_OR_AFFIRM}
                                             <td class="affirmed short">
-                                                {#if page_availableSelect_dict[line_data.id]}
+                                                {#if page_id_availableSelect_dict[line_data.id]}
                                                     <button class="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE?
                                                                     'icon-checkbox-unchecked':'icon-checkbox-checked'}"
                                                             on:click={()=>handleSinAffirm_or_Cancel(line_data.id, line_data.sampleId)}
@@ -286,9 +301,9 @@
                                             </td>
                                         {/if}
                                         <!-- 针对编辑单项修改原因 -->
-                                        {#if all_affirm_status_dict[params.type] === dict.EDIT_SINAFF_REASON}
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.EDIT_SINAFF_REASON}
                                             <td class="affirmed short">
-                                                {#if page_availableSelect_dict[line_data.id]}
+                                                {#if page_id_availableSelect_dict[line_data.id]}
                                                     <button class="icon-pencil"
                                                             on:click={()=>handleEditSinAffReason(line_data.id)}
                                                     >
@@ -297,7 +312,7 @@
                                             </td>
                                         {/if}
                                         <!-- 针对查看单项提交的日志 -->
-                                        {#if all_affirm_status_dict[params.type] === dict.CHECK_SINAFF_LOGS}
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CHECK_SINAFF_LOGS}
                                             <td class="logs short">
                                                 <button class="{true?'icon-copy':(line_data.logs.length!==0?'icon-calendar':'icon-info')}"
                                                         disabled=""
@@ -306,7 +321,7 @@
                                             </td>
                                         {/if}
                                         <!-- 针对取消单项审核的提交 -->
-                                        {#if all_affirm_status_dict[params.type] === dict.CANCEL_SINAFF_DONE}
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SINAFF_DONE}
                                             <td class="done short">
                                                 <button class="{line_data[dict.DONE]?'icon-lock':'icon-unlocked'}"
 
@@ -316,9 +331,9 @@
                                         {/if}
 
                                         <!-- 针对确认多项审核 -->
-                                        {#if all_affirm_status_dict[params.type] === dict.MUL_AFFIRM}
-                                            <td class="select short noHover">
-                                                {#if page_availableSelect_dict[line_data.id]}
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.MUL_AFFIRM}
+                                            <td class="select short">
+                                                {#if page_id_availableSelect_dict[line_data.id]}
                                                     <button class="{all_selected_dataIds_dict[params.type].indexOf(line_data.id)===-1?
                                                                 'icon-checkbox-unchecked':'icon-checkbox-checked'}"
                                                         on:click={()=>handleMulAffirm_lineTDClick(line_data.id)}
@@ -327,17 +342,60 @@
                                                 {/if}
                                             </td>
                                         {/if}
+                                        <!-- 针对取消多项审核 -->
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_MULAFF}
+                                            <td class="select short">
+                                                {#if page_id_availableSelect_dict[line_data.id]}
+                                                    <button class="{all_selected_dataIds_dict[params.type].indexOf(line_data.id)===-1?
+                                                                'icon-checkbox-unchecked':'icon-checkbox-checked'}"
+                                                            on:click={()=>handle_lineTDClick_for_idsInSameCheckedGroup(line_data.id)}
+                                                    >
+                                                    </button>
+                                                {/if}
+                                            </td>
+                                        {/if}
+                                        <!-- 针对编辑多项审核的原因 -->
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.EDIT_MULAFF_REASON}
+                                            <td class="select short">
+                                                {#if page_id_availableSelect_dict[line_data.id]}
+                                                    <button class="{all_selected_dataIds_dict[params.type].indexOf(line_data.id)===-1?
+                                                                'icon-checkbox-unchecked':'icon-file-text'}"
+                                                            on:click={()=>handle_lineTDClick_for_idsInSameCheckedGroup(line_data.id)}
+                                                    >
+                                                    </button>
+                                                {/if}
+                                            </td>
+                                        {/if}
+                                        <!-- 针对增减多项审核的条目 -->
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.ADJUST_MULAFF_ITEMS}
+                                            <td class="select short">
+                                                {#if page_id_availableSelect_dict[line_data.id]}
+                                                    <button class="{all_selected_dataIds_dict[params.type].indexOf(line_data.id)===-1?
+                                                                'icon-checkbox-unchecked':'icon-checkbox-checked'}"
+                                                            on:click={()=>handle_lineTDClick_for_idsInSameCheckedGroup(line_data.id)}
+                                                    >
+                                                    </button>
+                                                {/if}
+                                            </td>
+                                        {/if}
 
 
-                                        <td class="delete short" title="实时数据：{line_data[dict.DELETE]?'删除':'保留'}">
+                                        <td class="delete short"
+                                            title="实时数据：{line_data[dict.DELETE]?'删除':'保留'}"
+                                        >
                                             <button class="icon-cross
                                                            {all_nowValue_of_data_dict[params.type][line_data.id] &&
                                                                all_nowValue_of_data_dict[params.type][line_data.id][dict.DELETE]?'':'undeleted'}
                                                            {all_nowValue_of_data_dict[params.type][line_data.id] && all_nowValue_of_data_dict[params.type][line_data.id][dict.DELETE]!==
                                                                all_preValue_of_data_dict[params.type][line_data.id][dict.DELETE]?'unequal':''}
+                                                           {all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
+                                                                page_id_availableEdit_dict[line_data.id]?'availableEdit':''}
                                                            "
                                                     on:click={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data.id, dict.DELETE)}
-                                                    disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE?'':'disabled'}"
+                                                    disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
+                                                                    page_id_availableEdit_dict[line_data.id]?
+                                                                    '':'disabled'
+                                                              }"
                                             >
                                             </button>
                                             {#if all_nowValue_of_data_dict[params.type][line_data.id] && all_nowValue_of_data_dict[params.type][line_data.id][dict.DELETE]!==
@@ -348,7 +406,17 @@
                                     {/if}
 
                                     {#each all_wholeTitle_list[params.type] as field}
-                                        {#if all_titleItemList_dict[params.type][field][dict.MODIFY]}
+                                        <!--
+                                            1.首先该filed的config设定为可编辑modify
+                                            2. 该filed在当前页，人为操作设为availableEdit，以便操作
+                                            3. 或者被修改了，强制显示为input状态，呈现差异
+                                        -->
+                                        {#if all_titleItemList_dict[params.type][field][dict.MODIFY] &&
+                                            (
+                                                page_id_availableEdit_dict[line_data.id] ||
+                                                (all_nowValue_of_data_dict[params.type][line_data.id] && all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field])
+                                            )
+                                        }
                                             <td class="{field} containInput
                                                         {all_nowValue_of_data_dict[params.type][line_data.id]?
                                                             (all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]?'unequal':''):''}
@@ -359,13 +427,16 @@
                                             >
                                                 <input class="dataInput" type={all_titleItemList_dict[params.type][field][dict.TYPE]}
                                                        value="{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}"
-                                                       disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE?'':'disabled'}"
+                                                       disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
+                                                                    page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
 
                                                        on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data.id, field)}
                                                 >
                                                 <div class="upBesideInput icon-warning"></div>
                                                 <div class="downBesideInput icon-undo2
-                                                            {page_ModifyField_mouseEnter_dict[line_data.id][field]?'show':''}
+                                                                {page_ModifyField_mouseEnter_dict[line_data.id][field] &&
+                                                                    page_id_availableEdit_dict[line_data.id]?'show':''
+                                                                }
                                                             "
                                                      on:click={()=>recover_values_InNowPageDataDict([line_data.id],[field])}
                                                 ></div>
@@ -400,7 +471,7 @@
     <Loading></Loading>
 {/if}
 {#if sureShow}
-    <Sure ></Sure>
+    <Sure message="{sureMessage}" on:sureReply={handleSureReply}></Sure>
 {/if}
 {#if reasonShow}
     <Reason
@@ -440,7 +511,8 @@
     } from '../../utils/arrays'
     import {getTime, getParentNodeByParentClassName} from "../../utils/common";
     import {sheetDisplayConfigList, common_filter_subFilters_dict, common_subFilter_selections_dict,
-        singleAffirmSelectionConfig, multipleAffirmSelectionConfig} from './config'
+        affirmSelectionConfig} from './config'
+    import {dict_translate} from '../../utils/dict'
     const sheetDisplayConfigDict = JSON.parse(JSON.stringify(arrayToDict(sheetDisplayConfigList, 'sheet')))
 
     // 引入electron相关包
@@ -457,7 +529,7 @@
         ID: 'id', SAMPLE: 'sample', SAMPLESN: 'sampleSn',  TITLE_LIST: 'title_list',
         PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEID: 'sampleId', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
         TITLE: 'title', TRANSLATE: 'translate',
-        TYPE: 'type', CONTENT: 'content', VALUE: 'value',
+        TYPE: 'type', CONTENT: 'content', VALUE: 'value', STATUS: 'status',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll',
         ALLDATA: 'allData', S_ADATA: "subAndAffData", US_ADATA: 'unsubAndAffData', US_UADATA: 'unsubAndUnaffData',
         DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene',
@@ -475,7 +547,8 @@
         CANCEL_SINAFF_DONE: "cancel_single_affirm_done", EDIT_SINAFF_REASON: "edit_single_affirm_reason",
         MUL_AFFIRM: "multiple_affirm", CANCEL_MULAFF: 'cancel_multiple_affirm', EDIT_MULAFF_REASON: "edit_multiple_affirm_reason",
         CHECK_MULAFF_LOGS: "check_multiple_affirm_logs", CANCEL_MULAFF_DONE: "cancel_multiple_affirm_done",
-        ADJUST_MULAFF_ITEMS: "adjust_multiple_affirm_items", DESC: 'desc', AVAILABLE_EDIT: 'availableEdit',
+        ADJUST_MULAFF_ITEMS: "adjust_multiple_affirm_items", DESC: 'desc',
+        CANCEL: 'cancel', MULTIPLE_AFFIRM: "multiple_affirm", SINGLE_AFFIRM: "single_affirm",
     }
     // 获取路径中的：值
     export let params = {}
@@ -491,9 +564,44 @@
     // 控制multipleAffirm显示
     let multipleAffirmSelectionShow = false
 
+    let sureEvent
+    let sureOperation
+    let sureMessage = ''
+    function changeSendSureMessage() {
+        sureMessage = "是否对" + dict_translate[sureEvent] + "进行" + dict_translate[sureOperation] + "相关操作!"
+    }
+    function handleSureReply(e){
+        console.log('handleSureReply', e.detail.status)
+        if (e.detail.status) {
+            switch (sureEvent) {
+                case dict.MULTIPLE_AFFIRM:
+                    switch (sureOperation) {
+                        case dict.CANCEL:
+                            __handleCancelMulAffirm()
+                        break
+                    }
+                    break
+                default:
+                    break
+            }
+        }
+        sureShow = false
+    }
 
-    let singleAffirmSelectionValues = JSON.parse(JSON.stringify(singleAffirmSelectionConfig.map(item=>item[dict.VALUE])))
-    let multipleAffirmSelectionValues = JSON.parse(JSON.stringify(multipleAffirmSelectionConfig.map(item=>item[dict.VALUE])))
+    let singleAffirmSelectionConfig = JSON.parse(JSON.stringify(affirmSelectionConfig.reduce((result,item)=>{
+        if (item[dict.TYPE]===dict.SINGLE){
+            result.push(item)
+        }
+        return result
+    }, [])))
+    let multipleAffirmSelectionConfig = JSON.parse(JSON.stringify(affirmSelectionConfig.reduce((result,item)=>{
+        if (item[dict.TYPE]===dict.MULTIPLE){
+            result.push(item)
+        }
+        return result
+    }, [])))
+    let affirmSelection_dict = JSON.parse(JSON.stringify(arrayToDict(affirmSelectionConfig, 'value')))
+
     function openAffirmSelectionShow(type){
         switch (type) {
             case dict.SINGLE:
@@ -512,7 +620,7 @@
         singleAffirmSelectionShow = false
         multipleAffirmSelectionShow = false
     }
-    let all_affirm_status_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+    let all_affirmWorkingStatus_of_sheet_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         result[item[dict.SHEET]] = dict.SIN_CANCEL_OR_AFFIRM
         return result
     },{})))
@@ -531,7 +639,7 @@
         }
     }
     function __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id){
-        let affirm_status = all_affirm_status_dict[params.type]
+        let affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         switch (affirm_status) {
             case dict.SIN_CANCEL_OR_AFFIRM:
                 let status_sin_cancelOrAffirm = all_status_of_data_dict[params.type][id]
@@ -571,12 +679,30 @@
                     let unequal_values = __check_unequalValues_ofModifiyFields(id, [...all_modifyTitle_list[params.type]])
                     return Object.keys(unequal_values).length>0
                 }
+            case dict.CANCEL_MULAFF:
+                // 其次，三种审核状态之一
+                let status_cancel_mulAff = all_status_of_data_dict[params.type][id]
+                if ([dict.EDITED, dict.CHECKED, dict.DELETED].indexOf(status_cancel_mulAff)!==-1){
+                    // 再判断必须在批量组内
+                    let ifInsideMultiple_sin_cancel_mulAff = __checkIfInsideMultipleAffirm(id)
+                    if (ifInsideMultiple_sin_cancel_mulAff) return true
+                }
+                return false
+            case dict.EDIT_MULAFF_REASON:
+                // 其次，三种审核状态之一
+                let status_edit_mulAff_reason = all_status_of_data_dict[params.type][id]
+                if ([dict.EDITED, dict.CHECKED, dict.DELETED].indexOf(status_edit_mulAff_reason)!==-1){
+                    // 再判断必须在批量组内
+                    let ifInsideMultiple_edit_mulAff_reason = __checkIfInsideMultipleAffirm(id)
+                    if (ifInsideMultiple_edit_mulAff_reason) return true
+                }
+                return false
             default:
                 return false
         }
     }
     function __check_availSelect_of_oneData_notInsideAllStatusOfDataDict(done){
-        let affirm_status = all_affirm_status_dict[params.type]
+        let affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         switch (affirm_status) {
             case dict.SIN_CANCEL_OR_AFFIRM:
                 return !done
@@ -584,35 +710,63 @@
                 return false
             case dict.MUL_AFFIRM:
                 return false
+            case dict.CANCEL_MULAFF:
+                return false
             default:
                 return false
         }
     }
 
     // 重置当前页面某id是否可选
-    function __update_availSelect_inPageAvailableSelectDict(id){
-        page_availableSelect_dict[id] = __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id)
+    function __update_oneId_availSelect_inPageIdAvailSelectDict(id){
+        page_id_availableSelect_dict[id] = __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id)
     }
-    function changeAffirmStatus(type){
-        let pre_affirm_status = all_affirm_status_dict[params.type]
+    // 重置当前页所有id，是否可选
+    function __update_allIds_availSelect_inPageIdAvailSelectDict(){
+        for (let id in page_id_availableSelect_dict) {
+            __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+        }
+    }
+    // 重置当前页所有id，都不可变价
+    function __set_allIds_false_availEdit_inPageIdAvailEditDict(){
+        for (let id in page_id_availableEdit_dict){
+            page_id_availableEdit_dict[id] = false
+        }
+    }
+    function changeAffirmWorkingStatus(type){
+        let pre_affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         //1) 先修改当前工作状态
-        all_affirm_status_dict[params.type] = type
+        all_affirmWorkingStatus_of_sheet_dict[params.type] = type
 
         //2) 调整当前页的数据条目能否操作按钮显示
-        for (let id in page_availableSelect_dict) {
-            __update_availSelect_inPageAvailableSelectDict(id)
-        }
+        __update_allIds_availSelect_inPageIdAvailSelectDict()
 
         //3) 确认工作状态切换，需要调整的参数
-            // 从"单项审核", 切换到"多项审核"，则需要更新下选中的selected_dataIds
-            // (A)将选中的多项中的id条单项审核掉了;
-            // (B)某id条修改全部撤销了，
-        if (pre_affirm_status===dict.SIN_CANCEL_OR_AFFIRM && type===dict.MUL_AFFIRM){
-            console.log('changeAffirmStatus', pre_affirm_status, type)
-            all_selected_dataIds_dict[params.type] = all_selected_dataIds_dict[params.type].filter(id=>
-                __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id)
-            )
+        switch (type) {
+            case dict.MUL_AFFIRM:
+                // 清空id多选列表
+                all_selected_dataIds_dict[params.type] = []
+                break
+            case dict.EDIT_SINAFF_REASON:
+                //当前所有都不能编辑
+                __set_allIds_false_availEdit_inPageIdAvailEditDict()
+                break
+            case dict.CANCEL_MULAFF:
+                //当前所有都不能编辑
+                __set_allIds_false_availEdit_inPageIdAvailEditDict()
+                // 清空id多选列表
+                all_selected_dataIds_dict[params.type] = []
+                break
+            case dict.EDIT_MULAFF_REASON:
+                //当前所有都不能编辑
+                __set_allIds_false_availEdit_inPageIdAvailEditDict()
+                // 清空id多选列表
+                all_selected_dataIds_dict[params.type] = []
+                break
+            default:
+                break
         }
+
     }
 
     // 提示错误信息
@@ -657,9 +811,13 @@
 
     // 当前页面信息列表，用于循环展示
     let page_data = []
-    // 随着页面初始化后更新
+    // 随着页面初始化后更新, 鼠标进入各个id的field后值变为true，初始化为false
     let page_ModifyField_mouseEnter_dict = {}
-    let page_availableSelect_dict = {}
+    // 当前页，各个id当前能否编辑，初始化全为false
+    let page_id_availableEdit_dict = {}
+    // 当前页面的id，能否操作列按钮显示
+    let page_id_availableSelect_dict = {}
+
 
     //用作差异校验, 每页以id为key，value为所有field的字典
     let all_preValue_of_data_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
@@ -727,7 +885,7 @@
             }
 
             // 更新此条
-            __update_availSelect_inPageAvailableSelectDict(id)
+            __update_oneId_availSelect_inPageIdAvailSelectDict(id)
         }
     }
     // 处理鼠标划入突变的td的状态, 为了触发单元格 恢复按钮
@@ -802,8 +960,8 @@
             case dict.FREE:
                 // 2) 此条数据id对应的log_id，删除log详情
                 let log_id = all_submit_logs_dict[params.type][id]
+                    //批次的删除一个，剩余就没法删除，需要判断一下
                 if (all_logs_dict.hasOwnProperty(log_id)){
-                    // todo 最好提醒一下，是批次的是否确定要删除
                     delete all_logs_dict[log_id]
                 }
                 delete all_submit_logs_dict[params.type][id]
@@ -894,7 +1052,7 @@
         __handleMultipleSelect(id)
 
         // 更新此条是否可选的状态
-        __update_availSelect_inPageAvailableSelectDict(id)
+        __update_oneId_availSelect_inPageIdAvailSelectDict(id)
     }
 
     function __getSampleIdsDict_by_dataIdsList(id_list){
@@ -905,7 +1063,7 @@
         },{})
     }
     // 选择列显示时，处理多选时候的审核
-    function handleMulAffirm(){
+    function __handleMulAffirm(){
         // 只有此页有选中id才进行处理，显示原因填写表
         if(all_selected_dataIds_dict[params.type].length > 0){
             preValue = null
@@ -913,6 +1071,28 @@
             reasonShow = true
         }
     }
+    // 针对选择多选组，用于选取同批提交的ids
+    function handle_lineTDClick_for_idsInSameCheckedGroup(id){
+        let log_id = all_submit_logs_dict[params.type][id]
+        let id_list = all_logs_dict[log_id][dict.IDS]
+        all_selected_dataIds_dict[params.type] = id_list
+    }
+    // 用于取消多选同批次的审核
+    function __handleCancelMulAffirm(){
+        let id_list  = all_selected_dataIds_dict[params.type]
+        let sampleId_dict = __getSampleIdsDict_by_dataIdsList(id_list)
+        id_list.forEach(id=>{
+            __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId_dict[id], dict.FREE)
+        })
+
+        //1) 清空id选中列表
+        all_selected_dataIds_dict[params.type] = []
+        //2) 调整当前页的数据条目能否操作按钮显示
+        for (let id in page_id_availableSelect_dict) {
+            __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+        }
+    }
+
 
     // 先前的页面type
     let pre_params_type
@@ -986,6 +1166,7 @@
 
         await api[`list${name}`](all_search_params_dict[params.type]).then(response=>{
             page_data = response.data.results
+            // 当前页每条id的各个可编辑field的鼠标是否进入，初始化为false
             page_ModifyField_mouseEnter_dict = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
                 let status_dict = {}
                 for (let field in item){
@@ -994,8 +1175,13 @@
                 result[item[dict.ID]] = status_dict
                 return result
             }, {})))
+            // 当前页各id能否被编辑, 初始化都不能编辑
+            page_id_availableEdit_dict =  JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
+                result[item[dict.ID]] = false
+                return result
+            }, {})))
             // 需要结合当前审核工作状态，更新页面可选项
-            page_availableSelect_dict = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
+            page_id_availableSelect_dict = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
                 let id = item[dict.ID]
                 // 查看本地是否有状态，如果有就用本地状态判断
                 if (all_status_of_data_dict[params.type].hasOwnProperty(id)){
@@ -1007,6 +1193,7 @@
 
                 return result
             }, {})))
+
 
             // console.log("__getPageData now_page_data", now_page_data)
             // 更新当前页data_num
@@ -1300,7 +1487,7 @@
         let sample_id = all_now_sample_id[params.type]
 
         // 根据不同审核状态，分别处理
-        switch (all_affirm_status_dict[params.type]) {
+        switch (all_affirmWorkingStatus_of_sheet_dict[params.type]) {
             case dict.SIN_CANCEL_OR_AFFIRM:
                 // 涉及原因，肯定有不等项了，先获取不等项的值
                 let unequal_values = __check_unequalValues_ofModifiyFields(id)
@@ -1337,14 +1524,19 @@
                     // 1) 分别修改相关记录，reason不用提交了
                     __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, type, reason=null, unequal_values, log_id_mulAffirm)
                     // 2）重置availableSelect
-                    __update_availSelect_inPageAvailableSelectDict(id)
+                    __update_oneId_availSelect_inPageIdAvailSelectDict(id)
                 }
 
                 // 3) 最后，清空当前页被选中的数据id
                 all_selected_dataIds_dict[params.type] = []
                 break
             case dict.EDIT_MULAFF_REASON:
-
+                // 仅仅需要更新本条数据的log详情
+                let first_id_editMulAffReason =  all_selected_dataIds_dict[params.type][0]
+                let log_id_editMulAffReason = all_submit_logs_dict[params.type][first_id_editMulAffReason]
+                let log_detail_editMulAffReason = all_logs_dict[log_id_editMulAffReason]
+                log_detail_editMulAffReason[dict.VALUE] = reason[dict.VALUE]
+                log_detail_editMulAffReason[dict.DESC] = reason[dict.DESC]
                 break
             default:
                 break
@@ -1360,13 +1552,25 @@
     let all_now_sample_id = JSON.parse(JSON.stringify(all_now_data_id))
     let all_pre_data_id = JSON.parse(JSON.stringify(all_now_data_id))
     let all_pre_sample_id =JSON.parse(JSON.stringify(all_now_data_id))
-    function change_dataIds_and_sampleIds(id, sample_id){
+    function __change_dataIds_and_sampleIds(id, sample_id){
         all_pre_data_id[params.type] = all_now_data_id[params.type]
         all_pre_sample_id[params.type] = all_now_sample_id[params.type]
         all_now_data_id[params.type] = id
         all_now_sample_id[params.type] = sample_id
     }
-
+    function handle_lineTR_rightClicked(e, id, sample_id){
+        let affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
+        if (affirmSelection_dict[affirm_status][dict.AVAILABLE_EDIT] && e.ctrlKey){
+            // 将现在ctrl点击id的设为true,其余遍历设置为false
+            for (let data of page_data){
+                // todo 小心data_id类型为string，id为number
+                // console.log("handle_lindTR_rightClicked", typeof data_id, typeof id)
+                let data_id = data[dict.ID]
+                page_id_availableEdit_dict[data_id] = id === data_id
+            }
+        }
+        __change_dataIds_and_sampleIds(id, sample_id)
+    }
 
     // 加载初始化
     function __setSampleIdList_and_AllSampleRecordDict__allSpecificFilters(data){
@@ -1541,7 +1745,7 @@
             // 多选和非多选状态，生成的右键菜单应该不同
             let menu = new remote.Menu
             // enabled 必须接受true，false，保证__check...返回true或false
-            switch (all_affirm_status_dict[params.type]) {
+            switch (all_affirmWorkingStatus_of_sheet_dict[params.type]) {
                 case dict.SIN_CANCEL_OR_AFFIRM:
                     let sin_affrim_MenuItem = new remote.MenuItem({
                         label: all_status_of_data_dict[params.type][id]===dict.FREE?
@@ -1568,16 +1772,41 @@
                     menu.append(edit_sinAff_MenuItem)
                     break
                 case dict.MUL_AFFIRM:
+                    let num_mulAffrim = all_selected_dataIds_dict[params.type].length
                     let mul_affirm_affirmMenuItem = new remote.MenuItem({
-                        label: '确认审核',
-                        enabled: all_selected_dataIds_dict[params.type].length>0,
+                        label: `确认审核(共${num_mulAffrim}条)`,
+                        enabled: num_mulAffrim>0,
                         click: ()=>{
-                            handleMulAffirm()
+                            __handleMulAffirm()
                         }
                     })
                     menu.append(mul_affirm_affirmMenuItem)
                     break
                 case dict.CANCEL_MULAFF:
+                    let num_cancelMulAff = all_selected_dataIds_dict[params.type].length
+                    let cancel_mulAff_affirm_MenuItem = new remote.MenuItem({
+                        label: `取消审核(共${num_cancelMulAff}条)`,
+                        enabled: num_cancelMulAff>0,
+                        click: ()=>{
+                            sureEvent = dict.MULTIPLE_AFFIRM
+                            sureOperation = dict.CANCEL
+                            changeSendSureMessage()
+                            sureShow = true
+                        }
+                    })
+                    menu.append(cancel_mulAff_affirm_MenuItem)
+                    break
+                case dict.EDIT_MULAFF_REASON:
+                    let num_EditMulAffReason = all_selected_dataIds_dict[params.type].length
+                    let edit_mulAff_reason_MenuItem = new remote.MenuItem({
+                        label: `编辑原因(共${num_EditMulAffReason}条共享)`,
+                        enabled: num_EditMulAffReason>0,
+                        click: ()=>{
+                            let first_id = all_selected_dataIds_dict[params.type][0]
+                            handleEditSinAffReason(first_id)
+                        }
+                    })
+                    menu.append(edit_mulAff_reason_MenuItem)
                     break
                 default:
                     break
@@ -1641,6 +1870,7 @@
         // console.log(page_availableSelect_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type])
+        // console.log(page_id_availableEdit_dict)
     }
 
 </script>
@@ -1648,7 +1878,7 @@
 
 <style>
 
-    /*TODO 高度需要好LeftMenus中高度一致 */
+    /*TODO 高度需要和LeftMenus中高度一致 */
     .middle{
         width: 100%;
         min-height: 900px;
@@ -2005,7 +2235,7 @@
 
     .contentRight .dataTableWrapper{
         overflow: scroll;
-        flex: 0 0 718px;
+        flex: 0 0 750px;
     }
 
     .contentRight .rightDataTable{
@@ -2022,8 +2252,8 @@
         border: 2px solid black;
     }
     .contentRight .rightDataTable .lineData.done{
-        background: #aaaaaa;
-        color: #cccccc;
+        background: #777777;
+        color: white;
     }
     .contentRight .rightDataTable .lineData.checked{
         background: #82f9fc;
@@ -2036,7 +2266,6 @@
     }
     .contentRight .rightDataTable>tr>th, .contentRight .rightDataTable>tr>td{
         height: 35px;
-        box-sizing: border-box;
         margin: 0;
         padding: 0;
         /*padding-top: 0;*/
@@ -2050,6 +2279,9 @@
         color: #cccccc;
     }
     .contentRight .rightDataTable .lineData .icon-cross.unequal{
+        background: #eaffad;
+    }
+    .contentRight .rightDataTable .lineData .icon-cross.availableEdit{
         background: #eaffad;
     }
     /*每行按钮鼠标*/

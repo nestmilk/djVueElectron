@@ -14,9 +14,7 @@
     export let message
 
     function handleClick(status){
-        dispatch('sureMessage', {
-            status: status
-        })
+        dispatch('sureReply', {status})
     }
 </script>
 
@@ -28,26 +26,26 @@
         top: 0;
         left: 0;
         background: #000000;
-        z-index: 999;
+        z-index: 1199;
         filter: alpha(Opacity=0);
         -moz-opacity: 0;
         opacity: 0;
     }
     .sure{
         position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        z-index: 1200;
         width: 200px;
         height: 150px;
         text-align: center;
-        top: 40%;
-        left: 40%;
-        z-index: 1000;
-        background: #cccccc;
-        border: 2px solid gray;
-        border-radius: 10px;
+        background: white;
+        border: 1px solid #666666;
     }
 
     .message{
-        width: 160px;
+        width: 80%;
         height: 40px;
         line-height: 20px;
         margin: 20px auto;
@@ -56,15 +54,17 @@
     }
 
     .buttonWrapper{
-        width: 160px;
+        width: 80%;
         height: 68px;
         line-height: 68px;
         margin: 0 auto;
     }
     button{
-        margin: 0 15px;
-        border: 1px solid black;
-        border-radius: 3px;
+        margin: 0 8px;
+        padding: 0;
+        width: 60px;
+        height: 24px;
+        border: 1px solid #cccccc;
     }
 
 </style>

@@ -1968,39 +1968,49 @@ export const common_subFilter_selections_dict = {
     ],
 }
 
-export const singleAffirmSelectionConfig = [
+export const affirmSelectionConfig = [
     {
+        type: "single",
         value: "single_cancel_or_affirm",
+        availableEdit: true,
         content: '确认/取消审核'
     }, {
+        type: "single",
         value: "edit_single_affirm_reason",
         content: '编辑原因(单项)'
     }, {
+        type: "single",
         value: "check_single_affirm_logs",
         content: '查看日志(单项)'
     }, {
+        type: "single",
         value: "cancel_single_affirm_done",
         content: '取消提交(单项)'
-    }
-]
+    },
 
-export const multipleAffirmSelectionConfig = [
     {
+        type: "multiple",
         value: "multiple_affirm",
+        availableEdit: true,
         content: '同批审核(限修改)'
     }, {
+        type: "multiple",
         value: "cancel_multiple_affirm",
         content: '取消审核(同批)'
     }, {
+        type: "multiple",
         value: "edit_multiple_affirm_reason",
         content: '编辑原因(同批)'
     }, {
+        type: "multiple",
         value: "adjust_multiple_affirm_items",
         content: '增减条目(同批)'
     }, {
+        type: "multiple",
         value: "check_multiple_affirm_logs",
         content: '查看日志(同批)'
     }, {
+        type: "multiple",
         value: "cancel_multiple_affirm_done",
         content: '取消提交(同批)'
     }
