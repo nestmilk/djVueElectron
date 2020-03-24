@@ -4,8 +4,9 @@ import {get} from "svelte/store";
 export const removeFromUniqueArray = (list, item) => {
     // splice 切片处理（start，length)
     // slice （start， end) 不包括end
-    let i = list.indexOf(item)
-    return [].concat(list.slice(0,i), list.slice(i+1))
+    let copied_list = JSON.parse(JSON.stringify(list))
+    let i = copied_list.indexOf(item)
+    return [].concat(copied_list.slice(0,i), copied_list.slice(i+1))
 }
 
 

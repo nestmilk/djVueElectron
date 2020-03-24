@@ -535,7 +535,7 @@
         DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene',
         SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
         TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB",
-        MODIFY: 'modify',
+        MODIFY: 'modify', IFEQUAL: 'ifEqual',
         DELETE: "delete", FREQ: 'freq',
         NOWDISPLAY: 'nowDisplay', DEFAULTDISPLAY: 'defaultDisplay', SELECTDISPLAY: 'selectDisplay',
         FIELD_MOUSE_ENTER: 'field_mouse_enter',
@@ -1079,17 +1079,21 @@
         reasonShow = true
     }
 
-    function __handleMultipleSelect(id){
-        if (all_selected_dataIds_dict[params.type].indexOf(id)>-1){
-            all_selected_dataIds_dict[params.type] = removeFromUniqueArray(all_selected_dataIds_dict[params.type], id)
+    // 无重复列表，
+    // 如果点击的id在列表中，从列表剔除，
+    // 如果点击的id不在列表中，加入列表
+    function __handleMultipleSelect(list, id){
+        let copied_list = JSON.parse(JSON.stringify(list))
+        if (copied_list.indexOf(id)>-1){
+            return removeFromUniqueArray(copied_list, id)
         }else{
-            all_selected_dataIds_dict[params.type].push(id)
-            all_selected_dataIds_dict = all_selected_dataIds_dict
+            copied_list.push(id)
+            return copied_list
         }
     }
     function handleMulAffirm_lineTDClick(id){
         // 处理多选问题
-        __handleMultipleSelect(id)
+        all_selected_dataIds_dict[params.type] = __handleMultipleSelect(all_selected_dataIds_dict[params.type], id)
 
         // 更新此条是否可选的状态
         __update_oneId_availSelect_inPageIdAvailSelectDict(id)
@@ -1132,30 +1136,32 @@
             __update_oneId_availSelect_inPageIdAvailSelectDict(id)
         }
     }
-    function  __check_atLeast_keepOneId_in_lockedLogId(id){
-        //1)原logId包含的ids条目只有一条了
+    function  __check_ifWouldLeftNone_of_originallockedLogId(expected_selected_ids){
         let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
-        let ids = all_logs_dict[locked_logId][dict.IDS]
-        let left_ids = ids.reduce((result, id)=>{
-            if (all_selected_dataIds_dict[params.type].indexOf(id)!==-1) result.push(id)
+        console.log('__check_atLeast_keepOneId_in_lockedLogId', expected_selected_ids, locked_logId, JSON.parse(JSON.stringify(all_logs_dict[locked_logId])))
+        let ids = JSON.parse(JSON.stringify(all_logs_dict[locked_logId][dict.IDS]))
+        let left_ids_of_originalLockedLogId = ids.reduce((result, id)=>{
+            if (expected_selected_ids.indexOf(id)!==-1) result.push(id)
             return result
         }, [])
-        //2)点击了此唯一的id
-        return left_ids.length===1 && left_ids[0]===id
+
+        console.log('__check_atLeast_keepOneId_in_lockedLogId', left_ids_of_originalLockedLogId, JSON.parse(JSON.stringify(all_logs_dict[locked_logId])), all_logs_dict[locked_logId])
+        return left_ids_of_originalLockedLogId.length===0
     }
     // 针对多选审核增减项目时候
     function handle_lineTDClick_for_adjuctMulAffItems(id){
         let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
         if(locked_logId){
             // 锁定状态下, 检查原logId包含的ids条目至少保留一个
-            if(__check_atLeast_keepOneId_in_lockedLogId(id)){
+            let expected_selected_ids = __handleMultipleSelect(all_selected_dataIds_dict[params.type], id)
+            if(__check_ifWouldLeftNone_of_originallockedLogId(expected_selected_ids)){
                 remote.dialog.showMessageBox({
                     type: 'info',
                     title: '增减同批次条目注意',
                     message: `目前是仅剩最后一条原始审核条目(id为${id})，不可剔除！`
                 })
             }else{
-                __handleMultipleSelect(id)
+                all_selected_dataIds_dict[params.type] = expected_selected_ids
             }
         }else{
             // 非锁定状态下
@@ -1803,7 +1809,31 @@
         __getPageData()
     }
 
+    // 查看selected_ids和locked_logId包含的ids的差异
+    function __checkDifference_between_selectedIds_and_lockedIds(){
+        let selected_ids = all_selected_dataIds_dict[params.type]
+        let locked_ids = all_logs_dict[all_locked_logId_for_adjustMultipleAffirmItems[params.type]]
 
+        let deleted_ids = []
+        let left_ids = []
+        let added_ids = []
+        for (let locked_id of locked_ids){
+            if (selected_ids.indexOf(locked_id)===-1){
+                deleted_ids.push(locked_id)
+            }else{
+                left_ids.push(locked_id)
+            }
+        }
+        for (let selected_id of selected_ids){
+            if (locked_ids.indexOf(selected_id)===-1) added_ids.push(selected_id)
+        }
+        return {
+            ifEqual: deleted_ids.length===0 && added_ids.length===0,
+            deleted_ids,
+            left_ids,
+            added_ids
+        }
+    }
 
     function __handleContextMenu(e){
         if (document.querySelector('.downTable').contains(e.target)){
@@ -1882,12 +1912,14 @@
                     menu.append(edit_mulAff_reason_MenuItem)
                     break
                 case dict.ADJUST_MULAFF_ITEMS:
+                    //每次打开都会更新一次locked_logId
                     let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
                     let lock_adjustItems_MenuItem = new remote.MenuItem({
                         label: locked_logId?'取消锁定':'锁定批次',
                         enabled: locked_logId?true:(all_selected_dataIds_dict[params.type].length>0),
                         click: ()=>{
                             if(locked_logId){
+                                console.log('__handleContextMenu have locked_logId 取消锁定', locked_logId, all_logs_dict)
                                 // 恢复selected_ids为logId所包含的ids
                                 all_selected_dataIds_dict[params.type] = all_logs_dict[locked_logId][dict.IDs]
                                 // 当前锁定的logId设为空
@@ -1895,6 +1927,7 @@
                                 // 更新一遍页面可选
                                 __update_allIds_availSelect_inPageIdAvailSelectDict()
                             }else{
+                                console.log('__handleContextMenu does not have locked_logId 开始锁定', locked_logId, all_logs_dict)
                                 // 设置当前locked_logid为选择的dataIds的共享logId
                                 let first_id =  all_selected_dataIds_dict[params.type][0]
                                 all_locked_logId_for_adjustMultipleAffirmItems[params.type] = all_submit_logs_dict[params.type][first_id]
@@ -1905,8 +1938,11 @@
                     })
                     menu.append(lock_adjustItems_MenuItem)
 
+                    let ifEqual = __checkDifference_between_selectedIds_and_lockedIds()[dict.IFEQUAL]
+                    // todo enabled需要查看selected_ids与原来locked_ids是否有差异！
                     let adjust_mulAff_items_menuItem =new remote.MenuItem({
                         label: "增减条目",
+                        enabled: locked_logId && !ifEqual?true:false,
                         click: ()=>{
                             sureEvent = dict.MULTIPLE_AFFIRM
                             sureOperation  = dict.ADJUST_ITEMS
@@ -1973,13 +2009,15 @@
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_preValue_of_data_dict)
         // console.log(all_selected_dataIds_dict[params.type])
-        // console.log(all_submit_params_dict, all_submit_logs_dict, all_logs_dict)
+        // console.log(all_submit_params_dict)
+        console.log(all_submit_logs_dict, all_logs_dict)
         // console.log(all_affirm_status_dict)
         // console.log(page_availableSelect_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type])
         // console.log(page_id_availableEdit_dict)
         console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
+        console.log(__checkDifference_between_selectedIds_and_lockedIds())
     }
 
 </script>
