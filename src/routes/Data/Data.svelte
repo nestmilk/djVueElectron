@@ -549,7 +549,7 @@
         CHECK_MULAFF_LOGS: "check_multiple_affirm_logs", CANCEL_MULAFF_DONE: "cancel_multiple_affirm_done",
         ADJUST_MULAFF_ITEMS: "adjust_multiple_affirm_items", DESC: 'desc',
         CANCEL: 'cancel', MULTIPLE_AFFIRM: "multiple_affirm", SINGLE_AFFIRM: "single_affirm", ADJUST_ITEMS: "adjust_items",
-
+        DELETED_IDS: "deleted_ids", LEFT_IDS: "left_ids", ADDED_IDS: "added_ids",
     }
     // 获取路径中的：值
     export let params = {}
@@ -615,7 +615,7 @@
         return result
     },{})))
     // 重置当前页的增减项目的锁定
-    function __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems(){
+    function __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems(){
         all_locked_logId_for_adjustMultipleAffirmItems[params.type] = null
     }
 
@@ -645,7 +645,7 @@
     function __checkIfInsideMultipleAffirm(id){
         let log_id = all_submit_logs_dict[params.type][id]
         if(log_id){
-            if(all_logs_dict[log_id][dict.IDS].length>1){
+            if(logs_together_dict[log_id][dict.IDS].length>1){
                 return true
             }else{
                 return false
@@ -706,7 +706,7 @@
             case dict.ADJUST_MULAFF_ITEMS:
                 let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
                 if (locked_logId){
-                    let locked_ids = all_logs_dict[locked_logId][dict.IDS]
+                    let locked_ids = logs_together_dict[locked_logId][dict.IDS]
                     // console.log("__check_availSelect_of_oneData_already...", locked_ids, id, locked_ids.indexOf(id)!==-1, __check_availSelect_if_FreeAndTruelyEdited(id))
                     // 注意传入的id可能为字符串，需要转为整数！！
                     return locked_ids.indexOf(parseInt(id))!==-1 || __check_availSelect_if_FreeAndTruelyEdited(id)
@@ -766,29 +766,29 @@
         switch (type) {
             case dict.SIN_CANCEL_OR_AFFIRM:
                 // 重置当前页的增减项目的锁定
-                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 break
             case dict.EDIT_SINAFF_REASON:
                 // 重置当前页的增减项目的锁定
-                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 break
             case dict.MUL_AFFIRM:
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
                 // 重置当前页的增减项目的锁定
-                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 break
             case dict.EDIT_SINAFF_REASON:
                 //当前所有都不能编辑
                 __set_allIds_false_availEdit_inPageIdAvailEditDict()
                 // 重置当前页的增减项目的锁定
-                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 break
             case dict.CANCEL_MULAFF:
                 //当前所有都不能编辑
                 __set_allIds_false_availEdit_inPageIdAvailEditDict()
                 // 重置当前页的增减项目的锁定
-                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
                 break
@@ -796,7 +796,7 @@
                 //当前所有都不能编辑
                 __set_allIds_false_availEdit_inPageIdAvailEditDict()
                 // 重置当前页的增减项目的锁定
-                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
                 break
@@ -936,7 +936,7 @@
         page_ModifyField_mouseEnter_dict[id][field] = false
     }
 
-    function __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null){
+    function __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null, adjust_mulAff_items=false){
         // console.log('<=== __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord begin')
         // 1) 修改此条数据的status
         all_status_of_data_dict[params.type][id] = status
@@ -966,10 +966,14 @@
                 }else{
                     let log_edited_id = uuidv4()
                     all_submit_logs_dict[params.type][id] = log_edited_id
-                    all_logs_dict[log_edited_id] = {
+                    logs_together_dict[log_edited_id] = {
                         ids: [id],
                         ...reason
                     }
+                }
+                // 针对调整多项审核条目数目
+                if(adjust_mulAff_items){
+                    logs_together_dict[common_log_id][dict.IDS] = [...logs_together_dict[common_log_id][dict.IDS], id]
                 }
 
                 // 4) 更新sampleRecord和sheetRecord
@@ -988,10 +992,14 @@
                 }else{
                     let log_deleted_id = uuidv4()
                     all_submit_logs_dict[params.type][id] = log_deleted_id
-                    all_logs_dict[log_deleted_id] = {
+                    logs_together_dict[log_deleted_id] = {
                         ids: [id],
                         ...reason
                     }
+                }
+                // 针对调整多项审核条目数目
+                if(adjust_mulAff_items){
+                    logs_together_dict[common_log_id][dict.IDS] = [...logs_together_dict[common_log_id][dict.IDS], id]
                 }
 
                 // 4) 更新sampleRecord和sheetRecord
@@ -1000,11 +1008,17 @@
             case dict.FREE:
                 // 2) 此条数据id对应的log_id，删除log详情
                 let log_id = all_submit_logs_dict[params.type][id]
+                if(!adjust_mulAff_items){
                     //批次的删除一个，剩余就没法删除，需要判断一下
-                if (all_logs_dict.hasOwnProperty(log_id)){
-                    delete all_logs_dict[log_id]
+                    if (logs_together_dict.hasOwnProperty(log_id)){
+                        delete logs_together_dict[log_id]
+                    }
+                    delete all_submit_logs_dict[params.type][id]
+                }else{
+                    // 针对多项审核条目删除, 将日志详情里面的ids列表剔除此id
+                    logs_together_dict[log_id][dict.IDS] = removeFromUniqueArray(logs_together_dict[log_id][dict.IDS], id)
                 }
-                delete all_submit_logs_dict[params.type][id]
+
                 // 3）删除此id的提交params
                 delete all_submit_params_dict[params.type][id]
 
@@ -1073,7 +1087,7 @@
     // 处理编辑单项修改的原因
     function handleEditSinAffReason(id){
         let log_id = all_submit_logs_dict[params.type][id]
-        let log_detail = all_logs_dict[log_id]
+        let log_detail = logs_together_dict[log_id]
         preValue = log_detail[dict.VALUE]
         preDesc = log_detail[dict.DESC]
         reasonShow = true
@@ -1118,7 +1132,7 @@
     // 针对选择多选组，用于选取同批提交的ids
     function handle_lineTDClick_for_idsInSameCheckedGroup(id){
         let log_id = all_submit_logs_dict[params.type][id]
-        let id_list = all_logs_dict[log_id][dict.IDS]
+        let id_list = logs_together_dict[log_id][dict.IDS]
         all_selected_dataIds_dict[params.type] = id_list
     }
     // 用于取消多选同批次的审核
@@ -1138,14 +1152,14 @@
     }
     function  __check_ifWouldLeftNone_of_originallockedLogId(expected_selected_ids){
         let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
-        console.log('__check_atLeast_keepOneId_in_lockedLogId', expected_selected_ids, locked_logId, JSON.parse(JSON.stringify(all_logs_dict[locked_logId])))
-        let ids = JSON.parse(JSON.stringify(all_logs_dict[locked_logId][dict.IDS]))
+        console.log('__check_atLeast_keepOneId_in_lockedLogId', expected_selected_ids, locked_logId, JSON.parse(JSON.stringify(logs_together_dict[locked_logId])))
+        let ids = JSON.parse(JSON.stringify(logs_together_dict[locked_logId][dict.IDS]))
         let left_ids_of_originalLockedLogId = ids.reduce((result, id)=>{
             if (expected_selected_ids.indexOf(id)!==-1) result.push(id)
             return result
         }, [])
 
-        console.log('__check_atLeast_keepOneId_in_lockedLogId', left_ids_of_originalLockedLogId, JSON.parse(JSON.stringify(all_logs_dict[locked_logId])), all_logs_dict[locked_logId])
+        console.log('__check_atLeast_keepOneId_in_lockedLogId', left_ids_of_originalLockedLogId, JSON.parse(JSON.stringify(logs_together_dict[locked_logId])), logs_together_dict[locked_logId])
         return left_ids_of_originalLockedLogId.length===0
     }
     // 针对多选审核增减项目时候
@@ -1166,7 +1180,7 @@
         }else{
             // 非锁定状态下
             let log_id = all_submit_logs_dict[params.type][id]
-            let id_list = all_logs_dict[log_id][dict.IDS]
+            let id_list = logs_together_dict[log_id][dict.IDS]
             all_selected_dataIds_dict[params.type] = id_list
         }
 
@@ -1525,7 +1539,7 @@
     // 同上，每页中key为数据dataId号，value为log的logId号
     let all_submit_logs_dict = JSON.parse(JSON.stringify(all_submit_params_dict))
     // log的实际内容, 不分页key使用的logId, ids为所在dataId列表
-    let all_logs_dict = {}
+    let logs_together_dict = {}
 
     // 有编辑记录筛选项的每页，提交原因类型的列表的字典
     let all_reasonType_list_dict =  JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
@@ -1581,15 +1595,15 @@
             case dict.EDIT_SINAFF_REASON:
                 // 仅仅需要更新本条数据的log详情
                 let log_id_editSinAffReason = all_submit_logs_dict[params.type][id]
-                let log_detail = all_logs_dict[log_id_editSinAffReason]
+                let log_detail = logs_together_dict[log_id_editSinAffReason]
                 log_detail[dict.VALUE] = reason[dict.VALUE]
                 log_detail[dict.DESC] = reason[dict.DESC]
                 break
             case dict.MUL_AFFIRM:
                 let sampleIds_dict = __getSampleIdsDict_by_dataIdsList(all_selected_dataIds_dict[params.type])
                 let log_id_mulAffirm = uuidv4()
-                all_logs_dict[log_id_mulAffirm] = JSON.parse(JSON.stringify(reason))
-                all_logs_dict[log_id_mulAffirm][dict.IDS] = JSON.parse(JSON.stringify(all_selected_dataIds_dict[params.type]))
+                logs_together_dict[log_id_mulAffirm] = JSON.parse(JSON.stringify(reason))
+                logs_together_dict[log_id_mulAffirm][dict.IDS] = JSON.parse(JSON.stringify(all_selected_dataIds_dict[params.type]))
 
                 for (let id of all_selected_dataIds_dict[params.type]) {
                     let sample_id = sampleIds_dict[id]
@@ -1601,7 +1615,7 @@
                     let type = unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]?dict.DELETED:dict.EDITED
 
                     // 1) 分别修改相关记录，reason不用提交了
-                    __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, type, reason=null, unequal_values, log_id_mulAffirm)
+                    __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, type, null, unequal_values, log_id_mulAffirm)
                     // 2）重置availableSelect
                     __update_oneId_availSelect_inPageIdAvailSelectDict(id)
                 }
@@ -1613,9 +1627,34 @@
                 // 仅仅需要更新本条数据的log详情
                 let first_id_editMulAffReason =  all_selected_dataIds_dict[params.type][0]
                 let log_id_editMulAffReason = all_submit_logs_dict[params.type][first_id_editMulAffReason]
-                let log_detail_editMulAffReason = all_logs_dict[log_id_editMulAffReason]
+                let log_detail_editMulAffReason = logs_together_dict[log_id_editMulAffReason]
                 log_detail_editMulAffReason[dict.VALUE] = reason[dict.VALUE]
                 log_detail_editMulAffReason[dict.DESC] = reason[dict.DESC]
+                break
+            case dict.ADJUST_MULAFF_ITEMS:
+                let difference = JSON.parse(JSON.stringify(__checkDifference_between_selectedIds_and_lockedIds()))
+                let sample_ids = __getSampleIdsDict_by_dataIdsList([...difference[dict.DELETED_IDS], ...difference[dict.LEFT_IDS], ...difference[dict.ADDED_IDS]])
+                let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+                console.log('handleAddReasonSure', difference, sample_ids)
+                // 统一修改日志详情的类型和原因
+                let locked_log_detail = logs_together_dict[locked_logId]
+                locked_log_detail[dict.VALUE] = reason[dict.VALUE]
+                locked_log_detail[dict.DESC] = reason[dict.DESC]
+
+                difference[dict.DELETED_IDS].forEach(id=>{
+                    __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_ids[id], dict.FREE, null, null, null, true)
+                    __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+                })
+                difference[dict.ADDED_IDS].forEach(id=>{
+                    // 同上，判断修改类型
+                    let unequal_values = __check_unequalValues_ofModifiyFields(id)
+                    let type = unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]?dict.DELETED:dict.EDITED
+                    console.log('handleAddReasonSure', unequal_values, type, id)
+                    // 1) 分别修改相关记录，reason不用提交了
+                    __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_ids[id], type, null, unequal_values, locked_logId, true)
+                    __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+                })
+
                 break
             default:
                 break
@@ -1811,8 +1850,11 @@
 
     // 查看selected_ids和locked_logId包含的ids的差异
     function __checkDifference_between_selectedIds_and_lockedIds(){
+        let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+        if(!locked_logId) return
+
+        let locked_ids = logs_together_dict[locked_logId][dict.IDS]
         let selected_ids = all_selected_dataIds_dict[params.type]
-        let locked_ids = all_logs_dict[all_locked_logId_for_adjustMultipleAffirmItems[params.type]]
 
         let deleted_ids = []
         let left_ids = []
@@ -1827,6 +1869,7 @@
         for (let selected_id of selected_ids){
             if (locked_ids.indexOf(selected_id)===-1) added_ids.push(selected_id)
         }
+        console.log('__checkDifference_between_selectedIds_and_lockedIds', deleted_ids, left_ids, added_ids)
         return {
             ifEqual: deleted_ids.length===0 && added_ids.length===0,
             deleted_ids,
@@ -1919,15 +1962,15 @@
                         enabled: locked_logId?true:(all_selected_dataIds_dict[params.type].length>0),
                         click: ()=>{
                             if(locked_logId){
-                                console.log('__handleContextMenu have locked_logId 取消锁定', locked_logId, all_logs_dict)
+                                console.log('__handleContextMenu have locked_logId 取消锁定', locked_logId, logs_together_dict)
                                 // 恢复selected_ids为logId所包含的ids
-                                all_selected_dataIds_dict[params.type] = all_logs_dict[locked_logId][dict.IDs]
+                                all_selected_dataIds_dict[params.type] = logs_together_dict[locked_logId][dict.IDS]
                                 // 当前锁定的logId设为空
-                                __set_lockedIds_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                                __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                                 // 更新一遍页面可选
                                 __update_allIds_availSelect_inPageIdAvailSelectDict()
                             }else{
-                                console.log('__handleContextMenu does not have locked_logId 开始锁定', locked_logId, all_logs_dict)
+                                console.log('__handleContextMenu does not have locked_logId 开始锁定', locked_logId, logs_together_dict)
                                 // 设置当前locked_logid为选择的dataIds的共享logId
                                 let first_id =  all_selected_dataIds_dict[params.type][0]
                                 all_locked_logId_for_adjustMultipleAffirmItems[params.type] = all_submit_logs_dict[params.type][first_id]
@@ -1938,7 +1981,7 @@
                     })
                     menu.append(lock_adjustItems_MenuItem)
 
-                    let ifEqual = __checkDifference_between_selectedIds_and_lockedIds()[dict.IFEQUAL]
+                    let ifEqual = locked_logId?__checkDifference_between_selectedIds_and_lockedIds()[dict.IFEQUAL]:true
                     // todo enabled需要查看selected_ids与原来locked_ids是否有差异！
                     let adjust_mulAff_items_menuItem =new remote.MenuItem({
                         label: "增减条目",
@@ -2010,14 +2053,13 @@
         // console.log(all_preValue_of_data_dict)
         // console.log(all_selected_dataIds_dict[params.type])
         // console.log(all_submit_params_dict)
-        console.log(all_submit_logs_dict, all_logs_dict)
+        console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_affirm_status_dict)
         // console.log(page_availableSelect_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type])
         // console.log(page_id_availableEdit_dict)
         console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
-        console.log(__checkDifference_between_selectedIds_and_lockedIds())
     }
 
 </script>
