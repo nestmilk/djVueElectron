@@ -1013,12 +1013,11 @@
                     if (logs_together_dict.hasOwnProperty(log_id)){
                         delete logs_together_dict[log_id]
                     }
-                    delete all_submit_logs_dict[params.type][id]
                 }else{
                     // 针对多项审核条目删除, 将日志详情里面的ids列表剔除此id
                     logs_together_dict[log_id][dict.IDS] = removeFromUniqueArray(logs_together_dict[log_id][dict.IDS], id)
                 }
-
+                delete all_submit_logs_dict[params.type][id]
                 // 3）删除此id的提交params
                 delete all_submit_params_dict[params.type][id]
 
