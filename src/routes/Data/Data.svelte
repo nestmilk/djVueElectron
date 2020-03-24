@@ -1151,14 +1151,14 @@
     }
     function  __check_ifWouldLeftNone_of_originallockedLogId(expected_selected_ids){
         let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
-        console.log('__check_atLeast_keepOneId_in_lockedLogId', expected_selected_ids, locked_logId, JSON.parse(JSON.stringify(logs_together_dict[locked_logId])))
+        // console.log('__check_atLeast_keepOneId_in_lockedLogId', expected_selected_ids, locked_logId, JSON.parse(JSON.stringify(logs_together_dict[locked_logId])))
         let ids = JSON.parse(JSON.stringify(logs_together_dict[locked_logId][dict.IDS]))
         let left_ids_of_originalLockedLogId = ids.reduce((result, id)=>{
             if (expected_selected_ids.indexOf(id)!==-1) result.push(id)
             return result
         }, [])
 
-        console.log('__check_atLeast_keepOneId_in_lockedLogId', left_ids_of_originalLockedLogId, JSON.parse(JSON.stringify(logs_together_dict[locked_logId])), logs_together_dict[locked_logId])
+        // console.log('__check_atLeast_keepOneId_in_lockedLogId', left_ids_of_originalLockedLogId, JSON.parse(JSON.stringify(logs_together_dict[locked_logId])), logs_together_dict[locked_logId])
         return left_ids_of_originalLockedLogId.length===0
     }
     // 针对多选审核增减项目时候
@@ -1648,7 +1648,7 @@
                     // 同上，判断修改类型
                     let unequal_values = __check_unequalValues_ofModifiyFields(id)
                     let type = unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]?dict.DELETED:dict.EDITED
-                    console.log('handleAddReasonSure', unequal_values, type, id)
+                    // console.log('handleAddReasonSure', unequal_values, type, id)
                     // 1) 分别修改相关记录，reason不用提交了
                     __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_ids[id], type, null, unequal_values, locked_logId, true)
                     __update_oneId_availSelect_inPageIdAvailSelectDict(id)
