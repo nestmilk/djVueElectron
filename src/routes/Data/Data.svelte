@@ -454,7 +454,7 @@
                                             <td class="{field}"
                                                 title="实时数据：{line_data[field]}{field==='sampleSn'?' '+line_data[dict.ID]:''}"
                                             >
-                                                <div class="inside">{line_data[field]}</div>
+                                                <div class="inside">{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}</div>
                                             </td>
                                         {/if}
                                     {/each}
@@ -558,7 +558,7 @@
         CHECK_MULAFF_LOGS: "check_multiple_affirm_logs", CANCEL_MULAFF_DONE: "cancel_multiple_affirm_done",
         ADJUST_MULAFF_ITEMS: "adjust_multiple_affirm_items", DESC: 'desc',
         CANCEL: 'cancel', MULTIPLE_AFFIRM: "multiple_affirm", SINGLE_AFFIRM: "single_affirm", ADJUST_ITEMS: "adjust_items",
-        DELETED_IDS: "deleted_ids", LEFT_IDS: "left_ids", ADDED_IDS: "added_ids",
+        DELETED_IDS: "deleted_ids", LEFT_IDS: "left_ids", ADDED_IDS: "added_ids", UPDATE: 'update',
     }
     // 获取路径中的：值
     export let params = {}
@@ -756,7 +756,11 @@
             __update_oneId_availSelect_inPageIdAvailSelectDict(id)
         }
     }
-    // 重置当前页所有id，都不可变价
+    // 重置当前页某id为不可编辑
+    function __set_oneId_false_availEdit_inPageIdAvailEditDict(id){
+        page_id_availableEdit_dict[id] = false
+    }
+    // 重置当前页所有id，都不可编辑
     function __set_allIds_false_availEdit_inPageIdAvailEditDict(){
         for (let id in page_id_availableEdit_dict){
             page_id_availableEdit_dict[id] = false
@@ -949,6 +953,7 @@
         // console.log('<=== __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord begin')
         // 1) 修改此条数据的status
         all_status_of_data_dict[params.type][id] = status
+        __set_oneId_false_availEdit_inPageIdAvailEditDict(id)
 
         switch (status) {
             case dict.CHECKED:
@@ -961,6 +966,9 @@
 
                 // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
+
+                // 5) 将done的nowValue改为true
+                all_nowValue_of_data_dict[params.type][id][dict.DONE] = true
                 return
             case dict.EDITED:
                 // 2) 添加此id的提交params
@@ -987,6 +995,9 @@
 
                 // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
+
+                // 5) 将done的nowValue改为true
+                all_nowValue_of_data_dict[params.type][id][dict.DONE] = true
                 return
             case dict.DELETED:
                 // 2) 添加此id的提交params
@@ -1013,6 +1024,9 @@
 
                 // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
+
+                // 5) 将done的nowValue改为true
+                all_nowValue_of_data_dict[params.type][id][dict.DONE] = true
                 return
             case dict.FREE:
                 // 2) 此条数据id对应的log_id，删除log详情
@@ -1032,6 +1046,23 @@
 
                 // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA)
+
+                // 5) 将done的nowValue改为false
+                all_nowValue_of_data_dict[params.type][id][dict.DONE] = false
+                return
+            case dict.DONE:
+                // 2) preValue使用nowValue进行替换
+                for (let field in all_submit_params_dict[params.type][id]){
+                    all_preValue_of_data_dict[params.type][id][field] = all_nowValue_of_data_dict[params.type][id][field]
+                }
+
+                //3) 删除submit_params和submit_logs
+                delete all_submit_params_dict[params.type][id]
+                delete all_submit_logs_dict[params.type][id]
+
+                //4) 更新sampleRecord和sheetRecord
+                let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
+                __moveCountFromToInAllSampleRecordandAllSheetRecord(sampleId, dict.US_ADATA, dict.S_ADATA)
                 return
             default:
                 return
@@ -1218,13 +1249,22 @@
         for (let data of page_data) {
             let id = data[dict.ID]
 
-            //先本地是否有此条记录
-            if (all_status_of_data_dict[params.type].hasOwnProperty(id)) {
+            //1) 本地无此条记录 2) 或者此页需要每次都强制更新每条数据
+            if (!all_status_of_data_dict[params.type].hasOwnProperty(id) || sheetDisplayConfigDict[params.type][dict.UPDATE]) {
+                // 插入新数据的nowValue
+                all_nowValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
+                // 插入新数据的preValue
+                all_preValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
+                // 插入新数据的状态大表
+                all_status_of_data_dict[params.type][id] = data[dict.DONE]?dict.DONE:dict.FREE
+            }else{
                 // 如果有记录，再判断数据是否外部可能会被人修改了，
                 // 最常见为测试，其次为多人操作
                 // 整个title表都查一遍，反正查了
+                console.log('__update_allDataStatusDict_allNowVal... do not update')
                 let unequal_values = __check_unequalValues_ofModifiyFields(id,
                         [...all_wholeTitle_list[params.type], dict.DELETE, dict.DONE], data)
+
                 if(Object.keys(unequal_values).length>0) {
                     remote.dialog.showMessageBox({
                         type: 'info',
@@ -1237,13 +1277,6 @@
                     })
                 }
                 // todo 后期要根据done状态修改
-            }else{
-                // 插入新数据的nowValue
-                all_nowValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
-                // 插入新数据的preValue
-                all_preValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
-                // 插入新数据的状态大表
-                all_status_of_data_dict[params.type][id] = data[dict.DONE]?dict.DONE:dict.FREE
             }
         }
 
@@ -1412,11 +1445,14 @@
     //     }
     // }
     function __set_all_specfic_Params_in_AllSearchParamsDict() {
+        // console.log("<=== __set_all_specfic_Params...")
         // sheet为页面
         for(let sheet in all_subFilter_indexes_dict){
+            // console.log("__set_all_specfic_Params... 按页begin", sheet)
             let subFilter_indexes = all_subFilter_indexes_dict[sheet]
             // filter为筛选项的大名， ordering: [0, 0, 0, 0]
             for(let filter in subFilter_indexes) {
+                // console.log("__set_all_specfic_Params... 按大过滤begin", filter)
                 let indexes = subFilter_indexes[filter]
                 let value_list = []
                 let i = 0
@@ -1435,9 +1471,11 @@
                 }else{
                     all_search_params_dict[sheet][filter] = value_list.join(',')
                 }
+                // console.log("__set_all_specfic_Params... 按大过滤end", filter)
             }
-
+            // console.log("__set_all_specfic_Params... 按页end", sheet)
         }
+        // console.log("__set_all_specfic_Params... ===>")
     }
     // 切换filter的项
     async function handleToggleFilter(subFilter){
@@ -1578,7 +1616,11 @@
         result[item[dict.SHEET]] = []
         return result
     },{})))
+
+
     async function submitAffirmedData(){
+        loadingShow = true
+
         //先上传log
         let success_logs = []
         let fail_logs = []
@@ -1607,23 +1649,40 @@
         let fail_ids = []
         let name = params.type
         name = name.slice(0, 1).toUpperCase() + name.slice(1)
-        for (let id in all_status_of_data_dict[params.type]){
-            await  api[`update${name}`](all_submit_params_dict[params.type][id]).then(response=>{
+        for (let id in all_submit_params_dict[params.type]){
+            let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
+            let success = false
+            await api[`update${name}`](id,
+                {
+                    log_id: all_submit_logs_dict[params.type][id],
+                    ...all_submit_params_dict[params.type][id]
+                }
+            ).then(response=>{
+                success = true
                 success_ids.push(id)
+                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
             }).catch(error=>{
                 console.log(`submitAffirmedData update${name}`, error)
                 fail_ids.push(id)
             })
 
+            let time = getTime()
             all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'已上传。':'上传失败！'}`]
-
-            if(success){
-
-            }
         }
+        console.log("submitAffirmedData success_ids fail_ids", success_ids, fail_ids)
 
-        //
+        // 1) seletect_ids清空
+        all_selected_dataIds_dict[params.type] = []
+        success_ids.forEach(id=>{
+            // 2) 更新页面的availableSelect
+            __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+            // 3) availableEdit修改为false
+            __set_oneId_false_availEdit_inPageIdAvailEditDict(id)
+        })
+
+        loadingShow = false
     }
+
 
     // 传递给Reason组件的值
     let preValue
@@ -1742,7 +1801,10 @@
     }
     function handle_lineTR_rightClicked(e, id, sample_id){
         let affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
-        if (affirmSelection_dict[affirm_status][dict.AVAILABLE_EDIT] && e.ctrlKey){
+        // 1.必须id状态为free；2.必须affrim工作状态允许编辑 3.按住ctrl键
+        if (all_status_of_data_dict[params.type][id]===dict.FREE &&
+                affirmSelection_dict[affirm_status][dict.AVAILABLE_EDIT] &&
+                e.ctrlKey){
             // 将现在ctrl点击id的设为true,其余遍历设置为false
             for (let data of page_data){
                 // todo 小心data_id类型为string，id为number
@@ -1799,15 +1861,19 @@
             all_subFilter_names_dict[sheet][dict.EXONICFUNCREFGENE] = [`${sheet.toLowerCase()}_exonicfuncRefgene`]
 
             let values = data[`${sheet.toLowerCase()}_exonicfuncRefgenes`]
-            // 如果没有，就不麻烦添加表了
-            if (values) {
+
+            // 就算values没有，也要添加默认项
+            let new_selections = []
+            if(values){
                 let value_list = values.split(';')
-                let new_selections = value_list.map(value=>({
+                value_list.forEach(value=>new_selections.push({
                     value: value,
                     content: value
                 }))
-                subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
             }
+
+            subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
+
         }
         // 顺便更新所有的页面搜索参数初始化
         __set_all_specfic_Params_in_AllSearchParamsDict()
@@ -1878,7 +1944,7 @@
             __setSampleIdList_and_AllSampleRecordDict__allSpecificFilters(response.data)
 
         }).catch(error=>{
-            console.log("getPanalSummary", error)
+            console.log("getSampleList", error)
         })
 
         loadingShow = false

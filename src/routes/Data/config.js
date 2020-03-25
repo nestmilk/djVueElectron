@@ -12,6 +12,7 @@ export const common_filters = ["page","page_size","sampleIds","panalId","search"
 export const sheetDisplayConfigList = [
     {
         sheet: "sampleInfoInPanal",
+        update: true,
         filters: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: '总览',
         title_list: [

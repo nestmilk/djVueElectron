@@ -943,8 +943,12 @@
 
 
     function __setsampleListQC(){
+        console.log("__setsampleListQC", qc_list, sample_dict)
         qc_list.forEach(qc=>{
-            sample_dict[qc.sample][dict.QC] = qc
+            // qc表数据可能比sample中的样本多
+            if(sample_dict.hasOwnProperty(qc.sample)){
+                sample_dict[qc.sample][dict.QC] = qc
+            }
         })
     }
 
