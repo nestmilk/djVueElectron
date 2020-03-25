@@ -49,7 +49,10 @@ DoneFilter.prototype.toggleNowId = function () {
 // console.log(done.value, done.content)
 // done.toggleNowId()
 // console.log(done.value, done.content)
-function show(a, b=null, c=null){
-    console.log(a,b,c)
-}
-show(a=1,c=3)
+// function show(a, b=null, c=null){
+//     console.log(a,b,c)
+// }
+// show(a=1,c=3)
+const uuidv4 = require('uuid/v4')
+
+console.log(uuidv4())

@@ -132,10 +132,19 @@
                             <div class="title">
                                 {all_sheet_record_dict[params.type][dict.S_ADATA]}条已提交，{all_sheet_record_dict[params.type][dict.US_ADATA]}条待提交，{all_sheet_record_dict[params.type][dict.US_UADATA]}条待审核
                             </div>
-                            <div class="uploadButtomWrapper">
-
-                            </div>
-
+                            <div class="uploadMessageWrapper">
+                                <div class="uploadMessage" bind:this={uploadMessageDiv}>
+                                    {#each all_uploadMessage_dict[params.type] as message}
+                                        {message}<br>
+                                    {/each}
+                                </div>
+                                <div class="uploadBnWrapper">
+                                    <button class="icon-cloud-upload {panal_unable_handle || all_sheet_record_dict[params.type][dict.US_ADATA] === 0?'disabled':''}"
+                                            disabled="{panal_unable_handle || all_sheet_record_dict[params.type][dict.US_ADATA] === 0?'disabled':''}"
+                                            on:click={submitAffirmedData}
+                                    >&nbsp;提交</button>
+                                </div>
+                            </div><!--uploadMessageWrapper-->
                         </div>
                     </div>
                     <div class="leftSelectFileWrapper">
@@ -281,7 +290,7 @@
                                     {all_status_of_data_dict[params.type][line_data.id]}
 
                                     "
-                                    on:click|stopPropagation={(e)=>handle_lineTR_rightClicked(e, line_data.id, line_data.sampleId)}
+                                    on:click={(e)=>handle_lineTR_rightClicked(e, line_data.id, line_data.sampleId)}
 
                                     data-id="{line_data.id}"
                                     data-sampleid="{line_data[dict.SAMPLEID]}"
@@ -1560,6 +1569,62 @@
         return result
     }, {})))
 
+
+    // 绑定上传信息的div
+    let uploadMessageDiv
+    let autoscroll
+    // 上传数据的结果信息列表
+    let all_uploadMessage_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        result[item[dict.SHEET]] = []
+        return result
+    },{})))
+    async function submitAffirmedData(){
+        //先上传log
+        let success_logs = []
+        let fail_logs = []
+        for (let log_id in logs_together_dict){
+            let success = false
+            let log_detail = logs_together_dict[log_id]
+            await api.createLog({
+                log_id,
+                type: log_detail[dict.VALUE],
+                desc: log_detail[dict.DESC]
+            }).then(response=>{
+                success = true
+                success_logs.push(log_id)
+            }).catch(error=>{
+                console.log("submitAffirmedData createLog", error)
+                fail_logs.push(log_id)
+            })
+
+            let time = getTime()
+            all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 日志(${log_id.split('-')[0]}...)${success?'已上传。':'上传失败！'}`]
+        }
+        console.log("submitAffirmedData success_logs fail_logs", success_logs, fail_logs)
+
+        //开始上传数据
+        let success_ids = []
+        let fail_ids = []
+        let name = params.type
+        name = name.slice(0, 1).toUpperCase() + name.slice(1)
+        for (let id in all_status_of_data_dict[params.type]){
+            await  api[`update${name}`](all_submit_params_dict[params.type][id]).then(response=>{
+                success_ids.push(id)
+            }).catch(error=>{
+                console.log(`submitAffirmedData update${name}`, error)
+                fail_ids.push(id)
+            })
+
+            all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'已上传。':'上传失败！'}`]
+
+            if(success){
+
+            }
+        }
+
+        //
+    }
+
     // 传递给Reason组件的值
     let preValue
     let preDesc
@@ -2024,6 +2089,15 @@
         document.removeEventListener('contextmenu', __handleContextMenu)
     })
 
+    beforeUpdate(()=>{
+        // TODO offsetHeight为含边框的div高度，scrollTop为元素被上边框遮住的部分，scrollHeight为内容高度
+        autoscroll = uploadMessageDiv && (uploadMessageDiv.offsetHeight + uploadMessageDiv.scrollTop) < uploadMessageDiv.scrollHeight
+    })
+
+    afterUpdate(()=>{
+        if (autoscroll) uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
+    })
+
 
     // 测试使用
     function test() {
@@ -2051,14 +2125,14 @@
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_preValue_of_data_dict)
         // console.log(all_selected_dataIds_dict[params.type])
-        // console.log(all_submit_params_dict)
+        console.log(all_submit_params_dict)
         console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_affirm_status_dict)
         // console.log(page_availableSelect_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type])
         // console.log(page_id_availableEdit_dict)
-        console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
+        // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
     }
 
 </script>
@@ -2291,7 +2365,7 @@
 
     .navLeft .leftMessageWrapper{
         flex: 0 0 228px;
-        width: 308px;
+        width: 304px;
         border-bottom: 1px solid black;
     }
     .navLeft .leftMessageWrapper .messageWrapper{
@@ -2304,7 +2378,7 @@
         font-size: 14px;
         border-bottom: 1px solid #cccccc;
     }
-    .navLeft .leftMessageWrapper .messageWrapper .uploadButtomWrapper{
+    .navLeft .leftMessageWrapper .messageWrapper .uploadMessageWrapper{
         height: 182px
     }
 
@@ -2316,11 +2390,11 @@
         float: left;
     }
     .navLeft .leftMessageWrapper .messageWrapper .uploadBnWrapper{
-        width: 62px;
+        width: 58px;
         float: left;
     }
     .navLeft .leftMessageWrapper .messageWrapper .uploadBnWrapper button{
-        margin: 3px 3px 0 3px;
+        margin: 2px 3px 0 2px;
         padding: 0px;
         height: 30px;
         line-height: 30px;

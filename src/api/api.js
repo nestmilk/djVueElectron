@@ -21,23 +21,25 @@ export const excelUpload = form => {return axios.post(`${host()}/panals/`, form,
 export const updatePanal = (id, params) => {return axios.patch(`${host()}/panals/${id}/`, params)}
 // 根据panal_id获取单张panal的samples信息
 export const retrievePanal = (id) => {return axios.get(`${host()}/panals/${id}/`)}
+
 // 获取sample的所有mutant信息
 export const retrieveSample = (id)=>{ return axios.get(`${host()}/samples/${id}/`)}
 // 获取sample的列表
 export const listSample = params => {return axios.get(`${host()}/samples/`, {params: params})}
+
+// 创建日志log
+export const createLog = params => {return axios.post(`${host()}/logs/`, params)}
+
 // 获取mutant列表
 export const mutantList = params => {return axios.get(`${host()}/mutants/`, {params: params})}
 export const listTarget = params => {return axios.get(`${host()}/mutants/`, {params: params})}
 export const listHereditary = params => {return axios.get(`${host()}/mutants/`, {params: params})}
 export const listTMB = params => {return axios.get(`${host()}/mutants/`, {params: params})}
-
-
 // 修改mutant的值
 export const updateMutant = (id, params) => {return axios.patch(`${host()}/mutants/${id}/`, params)}
-// 生成结果excel
-export const createExcel = (id, type) => {return axios.get(`${host()}/excel/${type}/${id}/`)}
-// 复制一条mutant
-export const copyMutant = (mutant_id, user_id) => {return axios.get(`${host()}/copy/${mutant_id}/${user_id}/`)}
+export const updateTarget = (id, params) => {return axios.patch(`${host()}/mutants/${id}/`, params)}
+export const updateHereditary = (id, params) => {return axios.patch(`${host()}/mutants/${id}/`, params)}
+export const updateTMB = (id, params) => {return axios.patch(`${host()}/mutants/${id}/`, params)}
 
 // 获取sampleInfoInPanal的列表
 export const listSampleInfoInPanal = params => {return axios.get(`${host()}/sampleinfoinpanals/`, {params: params})}
@@ -63,3 +65,9 @@ export const listClinicaltrials = params => {return axios.get(`${host()}/clinica
 export const listHLA = params => {return axios.get(`${host()}/hlas/`, {params: params})}
 //获取sampleInfo列表
 export const listSampleInfo = params => {return axios.get(`${host()}/samples/`, {params: params})}
+
+
+// 生成结果excel
+export const createExcel = (id, type) => {return axios.get(`${host()}/excel/${type}/${id}/`)}
+// 复制一条mutant
+export const copyMutant = (mutant_id, user_id) => {return axios.get(`${host()}/copy/${mutant_id}/${user_id}/`)}
