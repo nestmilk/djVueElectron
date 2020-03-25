@@ -1650,7 +1650,6 @@
         let name = params.type
         name = name.slice(0, 1).toUpperCase() + name.slice(1)
         for (let id in all_submit_params_dict[params.type]){
-            let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
             let success = false
             await api[`update${name}`](id,
                 {
@@ -1660,7 +1659,6 @@
             ).then(response=>{
                 success = true
                 success_ids.push(id)
-                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
             }).catch(error=>{
                 console.log(`submitAffirmedData update${name}`, error)
                 fail_ids.push(id)
@@ -1670,6 +1668,42 @@
             all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'已上传。':'上传失败！'}`]
         }
         console.log("submitAffirmedData success_ids fail_ids", success_ids, fail_ids)
+
+        //提示整体情况
+        let time = getTime()
+        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 数据提交${success_ids.length}条，失败${fail_ids.length}条`]
+
+        let failed_log_ids = []
+        for (let id of success_ids){
+            let log_id = all_submit_logs_dict[params.type][id]
+            let log_ids = logs_together_dict[log_id][dict.IDS]
+            // 如果这批log_ids中，在提交失败表中找不到，就说明这批提交成功了，对应log详情就可以删除了
+            let success_submit = log_ids.every(id=>fail_ids.indexOf(id)===-1)
+            if(success_submit){
+                delete logs_together_dict[log_id]
+            }else{
+                // 针对批量审核的提交失败
+                if (log_ids.length>1) {
+                    // 判断其中是否存在提交成功的
+                    let partial_success_submit = success_ids.some(id=>log_ids.indexOf(id)!==-1)
+                    if (partial_success_submit){
+                        // 需要把提交成功的从详情表ids中剔除出去
+                        logs_together_dict[log_id][dict.IDS] = JSON.parse(JSON.stringify(log_ids.reduce((result, id)=>{
+                            if (success_ids.indexOf(id)===-1) result.push(id)
+                            return result
+                        }, [])))
+                        // 添加到失败列表中
+                        if(failed_log_ids.indexOf(log_id)===-1){
+                            failed_log_ids.push(log_id)
+                        }
+                    }
+                }
+            }
+
+            // 统一改变id的相关参数
+            let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
+            __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
+        }
 
         // 1) seletect_ids清空
         all_selected_dataIds_dict[params.type] = []
@@ -1681,6 +1715,17 @@
         })
 
         loadingShow = false
+
+        // 给出批量审核中失败的log号，以及其失败而未提交的id号
+        let failed_log_id_dict = failed_log_ids.reduce((result, log_id)=>{
+            result[log_id] = logs_together_dict[log_id][dict.IDS]
+            return result
+        }, {})
+        await remote.dialog.showMessageBox({
+            type: 'info',
+            title: '存在批量审核部分提交失败！',
+            message: `注意以下数据：${JSON.stringify(failed_log_id_dict)}`
+        })
     }
 
 
