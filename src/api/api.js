@@ -47,12 +47,26 @@ export const listSampleInfoInPanal = params => {return axios.get(`${host()}/samp
 export const listQC = params => {return axios.get(`${host()}/qcs/`, {params: params})}
 // 获取immune列表
 export const listImmune = params => {return axios.get(`${host()}/immunes/`, {params: params})}
+// 更新immune数据
+export const updateImmune = (id, params) => {return axios.patch(`${host()}/immunes/${id}/`, params)}
+
 // 获取TNB列表
 export const listTNB = params => {return axios.get(`${host()}/tnbs/`, {params: params})}
+// 更新TNB数据
+export const updateTNB = (id, params) => {return axios.patch(`${host()}/tnbs/${id}/`, params)}
+
+
 // 获取fusion列表
 export const listFusion = params => {return axios.get(`${host()}/fusions/`, {params: params})}
+// 更新fusion数据
+export const updateFusion = (id, params) => {return axios.patch(`${host()}/fusions/${id}/`, params)}
+
 // 获取CNA列表
 export const listCNA = params => {return axios.get(`${host()}/cnas/`, {params: params})}
+// 更新CNA数据
+export const updateCNA = (id, params) => {return axios.patch(`${host()}/cnas/${id}/`, params)}
+
+
 // 获取chemical列表
 export const listChemical = params => {return axios.get(`${host()}/chemicals/`, {params: params})}
 // 获取MSI列表

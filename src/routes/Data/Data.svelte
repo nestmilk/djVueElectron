@@ -679,7 +679,7 @@
         }else{
             // 2) free状态下，必须是有真修改的（delete false， 删除撤销的不算）才true, 否则返回false
             // todo 理论上应该要查修改记录的历史值
-            let unequal_values = __check_unequalValues_ofModifiyFields(id, [...all_modifyTitle_list[params.type]])
+            let unequal_values = __check_unequalValues_ofModifiyFields(id, [...all_modifyTitle_list_dict[params.type]])
             return Object.keys(unequal_values).length>0
         }
     }
@@ -854,7 +854,7 @@
         return result
     }, {})))
     // 每页需要修改的title列表
-    let all_modifyTitle_list = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+    let all_modifyTitle_list_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         result[item[dict.SHEET]] = item[dict.TITLE_LIST].reduce((title_result, title)=>{
             if (title[dict.MODIFY]){
                 title_result.push(title[dict.TITLE])
@@ -898,7 +898,7 @@
     // 修改all_nowValue_of_data_dict中的值
     function recover_values_InNowPageDataDict(id_list, field_list=[]){
         // console.log('recoverValuesInNowPageDataDict', id_list, field_list, all_status_of_data_dict[params.type])
-        let recover_field_list = all_modifyTitle_list[params.type]
+        let recover_field_list = all_modifyTitle_list_dict[params.type]
         if (field_list.length > 0) {
             recover_field_list = field_list
         }
@@ -1082,7 +1082,7 @@
     }
     // 查看此条数据，所有modifyTitle列表对应的值是否有过修改
     function __check_unequalValues_ofModifiyFields(id, modify_list=[], sub_nowData=null, sub_preData=null){
-        let default_field_list = [...all_modifyTitle_list[params.type], dict.DELETE]
+        let default_field_list = [...all_modifyTitle_list_dict[params.type], dict.DELETE]
         if (modify_list.length > 0) {
             default_field_list = modify_list
         }
@@ -2231,7 +2231,7 @@
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
-        // console.log(all_modifyTitle_list)
+        console.log(all_modifyTitle_list_dict)
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(uuidv4())
