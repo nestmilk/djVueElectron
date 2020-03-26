@@ -1921,9 +1921,15 @@ export const common_subFilter_selections_dict = {
             value: null,
             content: '全部记录'
         }, {
-            value: 'True',
-            content: '修改记录'
-        }
+            value: 'delete',
+            content: '包含删除'
+        }, {
+            value: 'edit',
+            content: '包含修改'
+        }, {
+            value: 'copy',
+            content: '包含拷贝'
+        },
     ],
     'sample__id': [
         {

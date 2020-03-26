@@ -322,13 +322,15 @@
                                                 {/if}
                                             </td>
                                         {/if}
-                                        <!-- 针对查看单项提交的日志 -->
+                                        <!-- 针对查看单项提交的过往日志 -->
                                         {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CHECK_SINSUB_LOGS}
                                             <td class="logs short">
-                                                <button class="{true?'icon-copy':(line_data.logs.length!==0?'icon-calendar':'icon-info')}"
-                                                        disabled=""
+                                                {#if page_id_availableSelect_dict[line_data.id]}
+                                                    <button class="icon-book"
+                                                            disabled=""
 
-                                                ></button>
+                                                    ></button>
+                                                {/if}
                                             </td>
                                         {/if}
                                         <!-- 针对取消单项审核的提交 -->
@@ -686,7 +688,8 @@
             return Object.keys(unequal_values).length>0
         }
     }
-    function __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id){
+    function __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(str_id){
+        let id = parseInt(str_id)
         // console.log('<===__check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict begin')
         let affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         switch (affirm_status) {
@@ -722,12 +725,14 @@
                 if (locked_logId){
                     let locked_ids = logs_together_dict[locked_logId][dict.IDS]
                     // console.log("__check_availSelect_of_oneData_already...", locked_ids, id, locked_ids.indexOf(id)!==-1, __check_availSelect_if_FreeAndTruelyEdited(id))
-                    // 注意传入的id可能为字符串，需要转为整数！！
-                    return locked_ids.indexOf(parseInt(id))!==-1 || __check_availSelect_if_FreeAndTruelyEdited(id)
+                    // 注意传入的id可能为字符串，需要提前转为整数！！
+                    return locked_ids.indexOf(id)!==-1 || __check_availSelect_if_FreeAndTruelyEdited(id)
                 }else{
                     // 在批量组内, 即可
                     return __checkIfInsideMultipleAffirm(id)
                 }
+            case dict.CHECK_SINSUB_LOGS:
+                return all_previous_logs_dict[params.type][id] && all_previous_logs_dict[params.type][id].length!==0
             default:
                 return false
         }
@@ -843,15 +848,18 @@
             console.log('__getPageSubmitLogs', errors)
         })
 
+        //更新完logs日志，肯定需要更新一下页面可选项
+        __update_allIds_availSelect_inPageIdAvailSelectDict()
+
         loadingShow = false
     }
     // 改变审核的工作环境
-    function changeAffirmWorkingStatus(type){
+    async function changeAffirmWorkingStatus(type){
         let pre_affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         //1) 先修改当前工作状态
         all_affirmWorkingStatus_of_sheet_dict[params.type] = type
 
-        //2) 调整当前页的数据条目能否操作按钮显示
+        // 2) 调整当前页的数据条目能否操作按钮显示
         __update_allIds_availSelect_inPageIdAvailSelectDict()
 
         //3) 确认工作状态切换，需要调整的参数
@@ -904,7 +912,7 @@
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
 
-                __getPageSubmitLogs()
+                await __getPageSubmitLogs()
                 break
             default:
                 break
@@ -1052,7 +1060,13 @@
                     done: true
                 }
                 // 3) 此条日志id设为null
-                all_submit_logs_dict[params.type][id] = null
+                let log_checked_id = uuidv4()
+                all_submit_logs_dict[params.type][id] = log_checked_id
+                logs_together_dict[log_checked_id] = {
+                    ids: [id],
+                    value: 'check',
+                    desc: ""
+                }
 
                 // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
@@ -1816,7 +1830,7 @@
         // b. seletect_ids清空
         all_selected_dataIds_dict[params.type] = []
 
-        // 针对污染数据发出提醒 todo 之后需要改为自动取消提交
+        // todo 针对污染数据发出提醒 todo 之后需要改为自动取消提交
         Object.keys(dirty_ids_dict).forEach(log_id=>{
             remote.dialog.showMessageBox({
                 type: 'info',
