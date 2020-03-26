@@ -12,7 +12,7 @@ export const common_filters = ["page","page_size","sampleIds","panalId","search"
 export const sheetDisplayConfigList = [
     {
         sheet: "sampleInfoInPanal",
-        update: true,
+        preValue_nowValue_update: true,
         filters: ["page", "page_size", "sampleIds", "panalId", ],
         submenu_translate: '总览',
         title_list: [
@@ -1981,11 +1981,12 @@ export const affirmSelectionConfig = [
         content: '编辑原因(单项)'
     }, {
         type: "single",
-        value: "check_single_affirm_logs",
-        content: '查看日志(单项)'
+        value: "check_single_submit_logs",
+        previous_log_update: true,
+        content: '查看提交日志(单项)'
     }, {
         type: "single",
-        value: "cancel_single_affirm_done",
+        value: "cancel_single_submit_done",
         content: '取消提交(单项)'
     },
 
@@ -2009,11 +2010,7 @@ export const affirmSelectionConfig = [
         content: '增减条目(同批)'
     }, {
         type: "multiple",
-        value: "check_multiple_affirm_logs",
-        content: '查看日志(同批)'
-    }, {
-        type: "multiple",
-        value: "cancel_multiple_affirm_done",
+        value: "cancel_multiple_submit_done",
         content: '取消提交(同批)'
     }
 ]

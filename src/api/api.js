@@ -29,6 +29,9 @@ export const listSample = params => {return axios.get(`${host()}/samples/`, {par
 
 // 创建日志log
 export const createLog = params => {return axios.post(`${host()}/logs/`, params)}
+// 获取日志log列表
+export const listLog = params => {return axios.get(`${host()}/logs/`, {params: params})}
+
 
 // 获取mutant列表
 export const mutantList = params => {return axios.get(`${host()}/mutants/`, {params: params})}

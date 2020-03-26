@@ -175,8 +175,8 @@
                                     {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.EDIT_SINAFF_REASON}
                                         <th class="affirmed short">编辑原因</th>
                                     {/if}
-                                    <!-- 针对查看单项提交的日志 -->
-                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CHECK_SINAFF_LOGS}
+                                    <!-- 针对查看单项提交的过往日志 -->
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CHECK_SINSUB_LOGS}
                                         <th class="logs short hoverGreen"
                                             on:click={()=>handleToggleFilter(dict.LOGSEDIT)}
                                         >
@@ -184,7 +184,7 @@
                                         </th>
                                     {/if}
                                     <!-- 针对取消单项审核的提交 -->
-                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SINAFF_DONE}
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SINSUB_DONE}
                                         <th class="done short hoverGreen"
                                             on:click={()=>handleToggleFilter(dict.DONE)}
                                         >
@@ -323,7 +323,7 @@
                                             </td>
                                         {/if}
                                         <!-- 针对查看单项提交的日志 -->
-                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CHECK_SINAFF_LOGS}
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CHECK_SINSUB_LOGS}
                                             <td class="logs short">
                                                 <button class="{true?'icon-copy':(line_data.logs.length!==0?'icon-calendar':'icon-info')}"
                                                         disabled=""
@@ -332,7 +332,7 @@
                                             </td>
                                         {/if}
                                         <!-- 针对取消单项审核的提交 -->
-                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SINAFF_DONE}
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SINSUB_DONE}
                                             <td class="done short">
                                                 <button class="{line_data[dict.DONE]?'icon-lock':'icon-unlocked'}"
 
@@ -551,16 +551,19 @@
         NOWDISPLAY: 'nowDisplay', DEFAULTDISPLAY: 'defaultDisplay', SELECTDISPLAY: 'selectDisplay',
         FIELD_MOUSE_ENTER: 'field_mouse_enter',
         FREE: 'free', CHECKED: 'checked', DELETED: 'deleted', EDITED: 'edited',
-        AVAILABLE_EDIT: 'availableEdit', REASON_TYPE: 'reason_type',
+        AVAILABLE_EDIT: 'availableEdit', REASON_TYPE: 'reason_type', REASON_DESC: 'reason_desc', LOG_ID: 'log_id',
         DEFAULT: 'default', IDS: 'ids', NOTHING: 'nothing',
         SINGLE: 'single', MULTIPLE: 'multiple',
-        SIN_CANCEL_OR_AFFIRM: "single_cancel_or_affirm", CHECK_SINAFF_LOGS: "check_single_affirm_logs",
-        CANCEL_SINAFF_DONE: "cancel_single_affirm_done", EDIT_SINAFF_REASON: "edit_single_affirm_reason",
+        SIN_CANCEL_OR_AFFIRM: "single_cancel_or_affirm", CHECK_SINSUB_LOGS: "check_single_submit_logs",
+        CANCEL_SINSUB_DONE: "cancel_single_submit_done", EDIT_SINAFF_REASON: "edit_single_affirm_reason",
         MUL_AFFIRM: "multiple_affirm", CANCEL_MULAFF: 'cancel_multiple_affirm', EDIT_MULAFF_REASON: "edit_multiple_affirm_reason",
-        CHECK_MULAFF_LOGS: "check_multiple_affirm_logs", CANCEL_MULAFF_DONE: "cancel_multiple_affirm_done",
+        CANCEL_MULSUB_DONE: "cancel_multiple_submit_done",
         ADJUST_MULAFF_ITEMS: "adjust_multiple_affirm_items", DESC: 'desc',
         CANCEL: 'cancel', MULTIPLE_AFFIRM: "multiple_affirm", SINGLE_AFFIRM: "single_affirm", ADJUST_ITEMS: "adjust_items",
-        DELETED_IDS: "deleted_ids", LEFT_IDS: "left_ids", ADDED_IDS: "added_ids", UPDATE: 'update',
+        DELETED_IDS: "deleted_ids", LEFT_IDS: "left_ids", ADDED_IDS: "added_ids", PREVALUE_NOWVALUE_UPDATE: 'preValue_nowValue_update',
+        LOG_DETAILS: "log_details", SUBJECT_ID: 'subject_id', SUBJECT_FIELD_NAME: "subject_field_name",
+        NEW_VALUE: 'new_value', OLD_VALUE: 'old_value', PREVIOUS_LOG_UPDATE: "previous_log_update",
+        EDITOR: 'editor',
     }
     // 获取路径中的：值
     export let params = {}
@@ -769,6 +772,80 @@
         }
     }
 
+    // 所有可编辑页面的过往日志记录
+    let all_previous_logs_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        let sheet = item[dict.SHEET]
+        if (item[dict.FILTERS].indexOf(dict.LOGSEDIT)> -1){
+            result[sheet] = {}
+        }
+        return result
+    }, {})))
+    // 按单个id获取的新log数据，更新ll_previous_logs_dict
+    function __update_allPreviousLogsDict(result){
+        //每个log的列表
+        all_previous_logs_dict[params.type][result.id] = []
+        for (let log of result.data){
+            let ids = []
+            let log_details = {}
+            for (let detail of log[dict.LOG_DETAILS]){
+                let subject_id = detail[dict.SUBJECT_ID]
+                if(ids.indexOf(subject_id)===-1) {
+                    ids.push(subject_id)
+                }
+
+                if(subject_id===result.id){
+                    log_details[detail[dict.SUBJECT_FIELD_NAME]] = {
+                        new_Value: detail[dict.NEW_VALUE],
+                        old_Value: detail[dict.OLD_VALUE]
+                    }
+                }
+            }
+            all_previous_logs_dict[params.type][result.id].push({
+                id: log[dict.ID],
+                log_id: log[dict.LOG_ID],
+                ids,
+                log_details,
+                editor: log[dict.EDITOR],
+                type: log[dict.REASON_TYPE],
+                desc: log[dict.REASON_DESC]
+            })
+        }
+
+    }
+
+    // 获取某id的日志的promise
+    let __getLogPromise = (id)=>{
+        return new Promise((resolve,reject)=>{
+            api.listLog({
+                modelName: params.type,
+                subjectIds: id
+            }).then(
+                response=>resolve({
+                    id,
+                    data: response.data
+                })
+            ).catch(error=> {
+                // console.log('__getLogPromise', error)
+                reject(error)
+            })
+        })
+    }
+    async function __getPageSubmitLogs(){
+        loadingShow = true
+
+        let pageDataGetPromiseArr = page_data.map(data=>__getLogPromise(data.id))
+
+        await Promise.all(pageDataGetPromiseArr).then(datas=>datas.forEach(data=>{
+            // console.log("__getPageSubmitLogs", data)
+            __update_allPreviousLogsDict(data)
+        })).catch(errors=>{
+            // 只报了第一个，errors居然不是数组 todo
+            console.log('__getPageSubmitLogs', errors)
+        })
+
+        loadingShow = false
+    }
+    // 改变审核的工作环境
     function changeAffirmWorkingStatus(type){
         let pre_affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         //1) 先修改当前工作状态
@@ -818,6 +895,17 @@
             case dict.ADJUST_MULAFF_ITEMS:
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
+                break
+            case dict.CHECK_SINSUB_LOGS:
+                //当前所有都不能编辑
+                __set_allIds_false_availEdit_inPageIdAvailEditDict()
+                // 重置当前页的增减项目的锁定
+                __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                // 清空id多选列表
+                all_selected_dataIds_dict[params.type] = []
+
+                __getPageSubmitLogs()
+                break
             default:
                 break
         }
@@ -1252,7 +1340,7 @@
             let id = data[dict.ID]
 
             //1) 本地无此条记录 2) 或者此页需要每次都强制更新每条数据
-            if (!all_status_of_data_dict[params.type].hasOwnProperty(id) || sheetDisplayConfigDict[params.type][dict.UPDATE]) {
+            if (!all_status_of_data_dict[params.type].hasOwnProperty(id) || sheetDisplayConfigDict[params.type][dict.PREVALUE_NOWVALUE_UPDATE]) {
                 // 插入新数据的nowValue
                 all_nowValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
                 // 插入新数据的preValue
@@ -1347,7 +1435,15 @@
 
             // 更新 all_data_status_dict 中数据状态
             __update_allDataStatusDict_allNowValueOfDataDict_allPreValueOfDataDict()
+
+            //如果当前审核工作状态需要更新之前的过往日志
+            if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
+                console.log('__getPageData 审核工作状态 开始更新日志')
+                await __getPageSubmitLogs()
+            }
         }
+
+        //如果目前affirm工作状态
         loadingShow = false
     }
 
@@ -2248,6 +2344,7 @@
         // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type])
         // console.log(page_id_availableEdit_dict)
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
+        console.log(all_previous_logs_dict)
     }
 
 </script>

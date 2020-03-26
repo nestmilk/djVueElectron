@@ -700,6 +700,13 @@
         // excel2json 回调函数是异步的
         // __setFileSheetDict()
 
+        let __getJsonFromExcel = (file) => {
+            return new Promise(function(resolve, reject){
+                excel2json([file[dict.FILE]], (data) => {
+                    resolve([file, data])
+                }, 'excel2json')
+            })
+        }
         // todo 使用Promise.all处理
         let jsonGetPromiseArr = file_list.map(file=>{
             return __getJsonFromExcel(file)
