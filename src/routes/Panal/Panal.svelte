@@ -82,7 +82,11 @@
                 </div>
 
                 <div class="searchWrapper">
-                    <input type="text" placeholder="请填写样本编号、病人姓名、Panal名查询" bind:value={search} />
+                    <input type="text"
+                           placeholder="请填写样本编号、病人姓名、Panal名查询"
+                           bind:value={search}
+                           on:keydown={handleSearchKeydown}
+                    />
                     <div class="searchSpanWrapper" on:click={handleSearch}>
                         <span class="icon-search "></span>
                     </div>
@@ -449,7 +453,7 @@
         delete: false,
         done: null,
     }
-    let search = ''
+    let search = null
 
     function test() {
         // console.log(filterParams)
@@ -518,7 +522,15 @@
     }
 
     async function handleSearch() {
-        await getPanalList({search: search})
+        await getPanalList()
+        search = null
+    }
+
+    function handleSearchKeydown(event){
+        // tab键就是9，回车是13
+        if (event.which !== 13) return;
+        event.preventDefault();
+        handleSearch()
     }
 
     // TODO 此处确定对象类型，事件类型，对象id，对象目的值
@@ -884,7 +896,10 @@
 
         let success = false
 
-        await api.listPanal(panalsFilterParams).then((response) => {
+        await api.listPanal({
+            search,
+            ...panalsFilterParams
+        }).then((response) => {
             // console.log(response.data)
             panal_list = response.data.results
             num = response.data.count

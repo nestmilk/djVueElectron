@@ -288,7 +288,9 @@
                                 <tr class="lineData
                                     {all_now_data_id[params.type]===line_data.id?'current':''}
                                     {all_status_of_data_dict[params.type][line_data.id]}
-
+                                    {all_nowValue_of_data_dict[params.type][line_data.id] &&
+                                        all_nowValue_of_data_dict[params.type][line_data.id][dict.DELETE]?'trueDelete':''
+                                    }
                                     "
                                     on:click={(e)=>handle_lineTR_rightClicked(e, line_data.id, line_data.sampleId)}
 
@@ -451,7 +453,7 @@
                                                 ></div>
                                             </td>
                                         {:else}
-                                            <td class="{field}"
+                                            <td class="{field} contentTD"
                                                 title="实时数据：{line_data[field]}{field==='sampleSn'?' '+line_data[dict.ID]:''}"
                                             >
                                                 <div class="inside">{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}</div>
@@ -965,7 +967,7 @@
                 all_submit_logs_dict[params.type][id] = null
 
                 // 4) 更新sampleRecord和sheetRecord
-                __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
+                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
 
                 // 5) 将done的nowValue改为true
                 all_nowValue_of_data_dict[params.type][id][dict.DONE] = true
@@ -994,7 +996,7 @@
                 }
 
                 // 4) 更新sampleRecord和sheetRecord
-                __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
+                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
 
                 // 5) 将done的nowValue改为true
                 all_nowValue_of_data_dict[params.type][id][dict.DONE] = true
@@ -1023,7 +1025,7 @@
                 }
 
                 // 4) 更新sampleRecord和sheetRecord
-                __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
+                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
 
                 // 5) 将done的nowValue改为true
                 all_nowValue_of_data_dict[params.type][id][dict.DONE] = true
@@ -1045,7 +1047,7 @@
                 delete all_submit_params_dict[params.type][id]
 
                 // 4) 更新sampleRecord和sheetRecord
-                __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA)
+                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA)
 
                 // 5) 将done的nowValue改为false
                 all_nowValue_of_data_dict[params.type][id][dict.DONE] = false
@@ -1062,7 +1064,7 @@
 
                 //4) 更新sampleRecord和sheetRecord
                 let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
-                __moveCountFromToInAllSampleRecordandAllSheetRecord(sampleId, dict.US_ADATA, dict.S_ADATA)
+                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sampleId, dict.US_ADATA, dict.S_ADATA)
                 return
             default:
                 return
@@ -1070,7 +1072,7 @@
     }
 
     // 将sample_record_dict和sheet_record_dict中相关总数进行增减
-    function __moveCountFromToInAllSampleRecordandAllSheetRecord(sample_id, from, to){
+    function __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, from, to){
         // console.log("__moveCountFromToInAllSampleRecordandAllSheetRecord", sample_id, all_sample_record_dict, all_sheet_record_dict, from, to)
         all_sample_record_dict[params.type][sample_id][from]--
         all_sample_record_dict[params.type][sample_id][to]++
@@ -1645,87 +1647,89 @@
         console.log("submitAffirmedData success_logs fail_logs", success_logs, fail_logs)
 
         //开始上传数据
-        let success_ids = []
-        let fail_ids = []
+        // key为log_id, value为成功提交的ids列表
+        let success_num = 0
+        let fail_num = 0
+        let success_ids_dict = {}
         let name = params.type
         name = name.slice(0, 1).toUpperCase() + name.slice(1)
-        for (let id in all_submit_params_dict[params.type]){
+        for (let str_id in all_submit_params_dict[params.type]){
+            let id = parseInt(str_id)
             let success = false
+            let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
+            let log_id = all_submit_logs_dict[params.type][id]
             await api[`update${name}`](id,
                 {
-                    log_id: all_submit_logs_dict[params.type][id],
+                    log_id,
                     ...all_submit_params_dict[params.type][id]
                 }
             ).then(response=>{
                 success = true
-                success_ids.push(id)
+                success_num++
+                if(success_ids_dict.hasOwnProperty(log_id)){
+                    success_ids_dict[log_id].push(id)
+                }else{
+                    success_ids_dict[log_id] = [id]
+                }
+                // 1) 更新相关参数
+                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
+                // 2) 更新页面的availableSelect
+                __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+                // 3) availableEdit修改为false
+                __set_oneId_false_availEdit_inPageIdAvailEditDict(id)
             }).catch(error=>{
+                fail_num++
                 console.log(`submitAffirmedData update${name}`, error)
-                fail_ids.push(id)
             })
 
             let time = getTime()
             all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'已上传。':'上传失败！'}`]
         }
-        console.log("submitAffirmedData success_ids fail_ids", success_ids, fail_ids)
+        console.log("submitAffirmedData success_ids fail_ids", success_ids_dict)
 
-        //提示整体情况
-        let time = getTime()
-        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 数据提交${success_ids.length}条，失败${fail_ids.length}条`]
-
-        let failed_log_ids = []
-        for (let id of success_ids){
-            let log_id = all_submit_logs_dict[params.type][id]
-            let log_ids = logs_together_dict[log_id][dict.IDS]
-            // 如果这批log_ids中，在提交失败表中找不到，就说明这批提交成功了，对应log详情就可以删除了
-            let success_submit = log_ids.every(id=>fail_ids.indexOf(id)===-1)
-            if(success_submit){
-                delete logs_together_dict[log_id]
-            }else{
-                // 针对批量审核的提交失败
-                if (log_ids.length>1) {
-                    // 判断其中是否存在提交成功的
-                    let partial_success_submit = success_ids.some(id=>log_ids.indexOf(id)!==-1)
-                    if (partial_success_submit){
-                        // 需要把提交成功的从详情表ids中剔除出去
-                        logs_together_dict[log_id][dict.IDS] = JSON.parse(JSON.stringify(log_ids.reduce((result, id)=>{
-                            if (success_ids.indexOf(id)===-1) result.push(id)
-                            return result
-                        }, [])))
-                        // 添加到失败列表中
-                        if(failed_log_ids.indexOf(log_id)===-1){
-                            failed_log_ids.push(log_id)
-                        }
-                    }
+        // 1) 找出全部提交成功的logId号
+        let complete_logIds = []
+        let dirty_ids_dict = {}
+        for (let log_id in logs_together_dict) {
+            if(success_ids_dict.hasOwnProperty(log_id)){
+                let ori_ids = JSON.parse(JSON.stringify(logs_together_dict[log_id][dict.IDS]))
+                let success_ids = JSON.parse(JSON.stringify(success_ids_dict[log_id]))
+                if (ori_ids.length===success_ids.length){
+                    //长度一样完全删除
+                    complete_logIds.push(log_id)
+                }else{
+                    dirty_ids_dict[log_id] = success_ids
+                    // 不完全删除，删除详情中成功提交的
+                    logs_together_dict[log_id][dict.IDS] = ori_ids.reduce((result, id)=>{
+                        if (success_ids.indexOf(id)===-1) result.push(id)
+                        return result
+                    }, [])
                 }
             }
 
-            // 统一改变id的相关参数
-            let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
-            __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
         }
+        // 2）完全成功提交的删除log详情
+        complete_logIds.forEach(log_id=>{
+            delete logs_together_dict[log_id]
+        })
 
-        // 1) seletect_ids清空
+
+        // a. 消息提示整体情况
+        let time = getTime()
+        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 数据提交${success_num}条，失败${fail_num}条`]
+        // b. seletect_ids清空
         all_selected_dataIds_dict[params.type] = []
-        success_ids.forEach(id=>{
-            // 2) 更新页面的availableSelect
-            __update_oneId_availSelect_inPageIdAvailSelectDict(id)
-            // 3) availableEdit修改为false
-            __set_oneId_false_availEdit_inPageIdAvailEditDict(id)
+
+        // 针对污染数据发出提醒 todo 之后需要改为自动取消提交
+        Object.keys(dirty_ids_dict).forEach(log_id=>{
+            remote.dialog.showMessageBox({
+                type: 'info',
+                title: '存在批量审核不完全提交！',
+                message: `请记录后撤回污染数据的提交：${JSON.stringify(dirty_ids_dict[log_id])}`
+            })
         })
 
         loadingShow = false
-
-        // 给出批量审核中失败的log号，以及其失败而未提交的id号
-        let failed_log_id_dict = failed_log_ids.reduce((result, log_id)=>{
-            result[log_id] = logs_together_dict[log_id][dict.IDS]
-            return result
-        }, {})
-        await remote.dialog.showMessageBox({
-            type: 'info',
-            title: '存在批量审核部分提交失败！',
-            message: `注意以下数据：${JSON.stringify(failed_log_id_dict)}`
-        })
     }
 
 
@@ -2620,6 +2624,9 @@
         /*固定td宽度*/
         table-layout: fixed;
         /*word-break: break-all;*/
+    }
+    .contentRight .rightDataTable .trueDelete .contentTD{
+        text-decoration: line-through;
     }
     .contentRight .rightDataTable .lineData.current{
         border: 2px solid black;
