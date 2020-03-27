@@ -1,5 +1,3 @@
-<!--<Header></Header>-->
-
 <div class="middle"
 
 >
@@ -327,8 +325,7 @@
                                             <td class="logs short">
                                                 {#if page_id_availableSelect_dict[line_data.id]}
                                                     <button class="icon-book"
-                                                            disabled=""
-
+                                                            on:click={()=>handleSingleDataLogdetailsShow(line_data.id)}
                                                     ></button>
                                                 {/if}
                                             </td>
@@ -495,6 +492,17 @@
         on:sure={handleAddReasonSure}
     ></Reason>
 {/if}
+{#if singleDataLogdetailsShow}
+    <SingleDataLogdetails
+        id="{singleData_id}"
+        logs="{singleData_related_logs_forShow}"
+        fieldList="{all_modifyTitle_list_dict[params.type]}"
+        titleDict="{all_titleItemList_dict[params.type]}"
+        on:close={handleClosesingleDataLogdetailsShow}
+    >
+    </SingleDataLogdetails>
+{/if}
+
 <script>
     import uuidv4 from 'uuid/v4'
 
@@ -512,6 +520,7 @@
     import Page from '../../components/Page/Page3.svelte'
     import Sure from '../../components/Sure/Sure.svelte'
     import Reason from '../../components/Reason/Reason.svelte'
+    import SingleDataLogdetails from '../../components/SingleDataLogdetails/SingleDataLogdetails.svelte'
 
 
     // 引入本地脚本
@@ -565,7 +574,7 @@
         DELETED_IDS: "deleted_ids", LEFT_IDS: "left_ids", ADDED_IDS: "added_ids", PREVALUE_NOWVALUE_UPDATE: 'preValue_nowValue_update',
         LOG_DETAILS: "log_details", SUBJECT_ID: 'subject_id', SUBJECT_FIELD_NAME: "subject_field_name",
         NEW_VALUE: 'new_value', OLD_VALUE: 'old_value', PREVIOUS_LOG_UPDATE: "previous_log_update",
-        EDITOR: 'editor',
+        EDITOR: 'editor', ADD_TIME: "add_time",
     }
     // 获取路径中的：值
     export let params = {}
@@ -580,6 +589,8 @@
     let singleAffirmSelectionShow = false
     // 控制multipleAffirm显示
     let multipleAffirmSelectionShow = false
+    // 控制单数据过往logdetails显示
+    let singleDataLogdetailsShow = false
 
     let sureEvent
     let sureOperation
@@ -793,15 +804,17 @@
             let ids = []
             let log_details = {}
             for (let detail of log[dict.LOG_DETAILS]){
+                // ids把这个log中，所有log_detail的数据id（同批审核成员）收集在一起
                 let subject_id = detail[dict.SUBJECT_ID]
                 if(ids.indexOf(subject_id)===-1) {
                     ids.push(subject_id)
                 }
 
+                // 把这个数据id的所有修改过的字段，重新整理下，放在log_details字典中，key为字段名
                 if(subject_id===result.id){
                     log_details[detail[dict.SUBJECT_FIELD_NAME]] = {
-                        new_Value: detail[dict.NEW_VALUE],
-                        old_Value: detail[dict.OLD_VALUE]
+                        new_value: detail[dict.NEW_VALUE],
+                        old_value: detail[dict.OLD_VALUE]
                     }
                 }
             }
@@ -811,6 +824,7 @@
                 ids,
                 log_details,
                 editor: log[dict.EDITOR],
+                add_time: log[dict.ADD_TIME],
                 type: log[dict.REASON_TYPE],
                 desc: log[dict.REASON_DESC]
             })
@@ -835,12 +849,15 @@
             })
         })
     }
-    async function __getPageSubmitLogs(){
+    async function __getIdsPreviousLogs(id_list=null){
         loadingShow = true
+        let ids = page_data.map(data=>data.id)
+        if(id_list){
+            ids = id_list
+        }
+        let allLogsPromiseArray = ids.map(id=>__getLogPromise(id))
 
-        let pageDataGetPromiseArr = page_data.map(data=>__getLogPromise(data.id))
-
-        await Promise.all(pageDataGetPromiseArr).then(datas=>datas.forEach(data=>{
+        await Promise.all(allLogsPromiseArray).then(datas=>datas.forEach(data=>{
             // console.log("__getPageSubmitLogs", data)
             __update_allPreviousLogsDict(data)
         })).catch(errors=>{
@@ -912,7 +929,7 @@
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
 
-                await __getPageSubmitLogs()
+                await __getIdsPreviousLogs()
                 break
             default:
                 break
@@ -979,11 +996,6 @@
     let all_nowValue_of_data_dict = JSON.parse(JSON.stringify(all_preValue_of_data_dict))
 
 
-    // 每页多选列是否显示的状态
-    let all_selectShow_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        result[item[dict.SHEET]] = false
-        return result
-    }, {})))
     // 每页同批多选的id号
     let all_selected_dataIds_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result,item)=>{
         result[item[dict.SHEET]] = []
@@ -1328,6 +1340,60 @@
         }
 
     }
+    let singleData_related_logs_forShow = {}
+    let singleData_id
+    // 单个数据过往信息显示
+    async function handleSingleDataLogdetailsShow(id){
+        singleData_id = id
+        let logs = all_previous_logs_dict[params.type][id]
+        let related_logs = {[id]: logs}
+        // 遍历本数据id的历史logs，加入同批审核的其它logs
+        let unloaded_ids = []
+        Object.keys(logs).forEach(logId=>{
+            let ids = logs[logId][dict.IDS]
+            ids.forEach(dataId=>{
+                // 非本条，已有logs中没有
+                if(dataId!==id) {
+                    if(all_previous_logs_dict[params.type].hasOwnProperty(dataId)){
+                        related_logs[dataId] = all_previous_logs_dict[params.type][dataId]
+                    }else{
+                        unloaded_ids.push(dataId)
+                    }
+                }
+            })
+        })
+        // 下载没有loaded的id的log
+        await __getIdsPreviousLogs(unloaded_ids)
+        unloaded_ids.forEach(id=>{
+            related_logs[id] = all_previous_logs_dict[params.type][id]
+        })
+        // 对logs中每个id自己的logs按log的id排下序，其中当前id的log中ids去除自身id再排下序
+        for (let data_id in related_logs){
+            let logs = related_logs[data_id]
+            logs.sort((a,b)=>a.id-b.id)
+            if (parseInt(data_id)===id){
+                logs.forEach(log=>{
+                    log[dict.IDS] = removeFromUniqueArray(log[dict.IDS], id)
+                    log[dict.IDS].sort((a,b)=>a-b)
+                })
+                singleData_related_logs_forShow[data_id] = logs
+            }else{
+                let logs_dict = logs.reduce((result, log)=>{
+                    result[log[dict.ID]] = log
+                    return result
+                },{})
+               singleData_related_logs_forShow[data_id] = logs_dict
+            }
+        }
+
+        // console.log('handleSingleDataLogdetailsShow', singleData_related_logs_forShow)
+
+        singleDataLogdetailsShow = true
+    }
+    // 关闭
+    function handleClosesingleDataLogdetailsShow(){
+        singleDataLogdetailsShow = false
+    }
 
     // 先前的页面type
     let pre_params_type
@@ -1453,7 +1519,7 @@
             //如果当前审核工作状态需要更新之前的过往日志
             if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
                 console.log('__getPageData 审核工作状态 开始更新日志')
-                await __getPageSubmitLogs()
+                await __getIdsPreviousLogs()
             }
         }
 

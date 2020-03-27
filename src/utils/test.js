@@ -53,6 +53,12 @@ DoneFilter.prototype.toggleNowId = function () {
 //     console.log(a,b,c)
 // }
 // show(a=1,c=3)
-const uuidv4 = require('uuid/v4')
+// const uuidv4 = require('uuid/v4')
+//
+// console.log(uuidv4())
 
-console.log(uuidv4())
+let l = [{id: 1}, {id: 3}, {id: 2}, {id: 4}]
+
+console.log(l.sort((a, b)=>a.id-b.id))
+
+console.log(l)
