@@ -21,7 +21,9 @@
         <div bind:this={bottomScroll} class="dataTableWrapper" on:scroll={()=>handleScroll('bottomScroll')}>
             <table>
                 {#each logs[id] as log}
-                    <tr>
+                    <tr on:click={()=>changeCurrentLogId(log.id)}
+                        class="hoverGreen {current_logId===log.id?'now':''}"
+                    >
                         <td class="small">{log.id}</td>
                         <td class="small">{id}</td>
                         <td class="small" title="{log.log_details.done?'修改前：'+log.log_details.done.old_value:''}">
@@ -40,26 +42,29 @@
                         <td>{log.editor.username}</td>
                         <td class="long">{log.add_time}</td>
                     </tr>
-                    {#each log.ids as other_id}
-                        <tr>
-                            <td class="small">{log.id}</td>
-                            <td class="small">{other_id}</td>
-                            <td class="small" title="{logs[other_id][log.id].log_details.done?'修改前：'+logs[other_id][log.id].log_details.done.old_value:''}">
-                                {logs[other_id][log.id].log_details.done?logs[other_id][log.id].log_details.done.new_value:''}
-                            </td>
-                            <td class="small" title="{logs[other_id][log.id].log_details.delete?'修改前：'+logs[other_id][log.id].log_details.delete.old_value:''}">
-                                {logs[other_id][log.id].log_details.delete?logs[other_id][log.id].log_details.delete.new_value:''}
-                            </td>
-                            {#each fieldList as field}
-                                <td title="{logs[other_id][log.id].log_details[field]?'修改前：'+logs[other_id][log.id].log_details[field].old_value:''}">
-                                    {logs[other_id][log.id].log_details[field]?logs[other_id][log.id].log_details[field].new_value:''}
+
+                    {#if current_logId===log.id}
+                        {#each log.ids as other_id}
+                            <tr class="group">
+                                <td class="small">{log.id}</td>
+                                <td class="small">{other_id}</td>
+                                <td class="small" title="{logs[other_id][log.id].log_details.done?'修改前：'+logs[other_id][log.id].log_details.done.old_value:''}">
+                                    {logs[other_id][log.id].log_details.done?logs[other_id][log.id].log_details.done.new_value:''}
                                 </td>
-                            {/each}
-                            <td class="long" title="原因描述：{logs[other_id][log.id].desc}">{logs[other_id][log.id].type}</td>
-                            <td>{logs[other_id][log.id].editor.username}</td>
-                            <td class="long">{logs[other_id][log.id].add_time}</td>
-                        </tr>
-                    {/each}
+                                <td class="small" title="{logs[other_id][log.id].log_details.delete?'修改前：'+logs[other_id][log.id].log_details.delete.old_value:''}">
+                                    {logs[other_id][log.id].log_details.delete?logs[other_id][log.id].log_details.delete.new_value:''}
+                                </td>
+                                {#each fieldList as field}
+                                    <td title="{logs[other_id][log.id].log_details[field]?'修改前：'+logs[other_id][log.id].log_details[field].old_value:''}">
+                                        {logs[other_id][log.id].log_details[field]?logs[other_id][log.id].log_details[field].new_value:''}
+                                    </td>
+                                {/each}
+                                <td class="long" title="原因描述：{logs[other_id][log.id].desc}">{logs[other_id][log.id].type}</td>
+                                <td>{logs[other_id][log.id].editor.username}</td>
+                                <td class="long">{logs[other_id][log.id].add_time}</td>
+                            </tr>
+                        {/each}
+                    {/if}
                 {/each}
             </table>
         </div>
@@ -82,20 +87,23 @@
         }
     }
 
+    let current_logId = null
+    function changeCurrentLogId(logId){
+        // console.log('SingleDataLogdetails changeCurrentLogId', current_logId, logId)
+        current_logId = current_logId===logId?null:logId
+    }
+
     const dispatch = createEventDispatcher()
     export let id
     export let logs
     export let fieldList
     export let titleDict
-    console.log('SingleDataLogdetails', id, logs, fieldList, titleDict)
+    // console.log('SingleDataLogdetails', id, logs, fieldList, titleDict)
 
-    let titles = ['logId', 'id', 'done', 'delete', ...fieldList, 'type', 'editor', 'editTime']
     let title_translates = Object.keys(titleDict).reduce((result, title)=>{
         result[title] = titleDict[title]['translate']
         return result
     }, {})
-    let titleTranslates = {logId: "日志Id", id: "数据Id", done: '提交', delete: '删除',
-        editor: '操作人员', editTime: '操作时间'}
 
     function handleClose(){
         dispatch("close")
@@ -175,6 +183,17 @@
         min-width: 70px!important;
         max-width: 70px!important;
     }
+    .contentWrapper table .hoverGreen:hover{
+        background: #69ca60!important;
+    }
+    .contentWrapper table .group{
+        background: #eaffad;
+        font-style: italic;
+    }
+    .contentWrapper table .now{
+        background: #eaffad;
+    }
+
     .icon-cancel-circle{
         float: right;
         margin: 3px;

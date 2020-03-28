@@ -333,10 +333,12 @@
                                         <!-- 针对取消单项审核的提交 -->
                                         {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SINSUB_DONE}
                                             <td class="done short">
-                                                <button class="{line_data[dict.DONE]?'icon-lock':'icon-unlocked'}"
+                                                {#if page_id_availableSelect_dict[line_data.id]}
+                                                    <button class="{line_data[dict.DONE]?'icon-lock':'icon-unlocked'}"
 
-                                                        disabled="{panal_unable_handle?'disabled':''}">
-                                                </button>
+                                                            disabled="{panal_unable_handle?'disabled':''}">
+                                                    </button>
+                                                {/if}
                                             </td>
                                         {/if}
 
@@ -495,14 +497,13 @@
 {#if singleDataLogdetailsShow}
     <SingleDataLogdetails
         id="{singleData_id}"
-        logs="{singleData_related_logs_forShow}"
+        logs="{singleDataRelatedIds_Logs_forShow}"
         fieldList="{all_modifyTitle_list_dict[params.type]}"
         titleDict="{all_titleItemList_dict[params.type]}"
         on:close={handleClosesingleDataLogdetailsShow}
     >
     </SingleDataLogdetails>
 {/if}
-
 <script>
     import uuidv4 from 'uuid/v4'
 
@@ -611,7 +612,7 @@
                             console.log('handleSureReply 增减条目')
                             break
                         default:
-                        break
+                            break
                     }
                     break
                 default:
@@ -743,7 +744,14 @@
                     return __checkIfInsideMultipleAffirm(id)
                 }
             case dict.CHECK_SINSUB_LOGS:
-                return all_previous_logs_dict[params.type][id] && all_previous_logs_dict[params.type][id].length!==0
+                return all_previousLog_list_dict[params.type][id] && all_previousLog_list_dict[params.type][id].length!==0
+            case dict.CANCEL_SINSUB_DONE:
+                let status_cancel_sinSub_done = all_status_of_data_dict[params.type][id]
+                if(status_cancel_sinSub_done === dict.DONE){
+                    __update_allRecentlyPreviousLogDict()
+                }else{
+                    return false
+                }
             default:
                 return false
         }
@@ -789,28 +797,59 @@
     }
 
     // 所有可编辑页面的过往日志记录
-    let all_previous_logs_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+    let all_previousLog_list_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         let sheet = item[dict.SHEET]
         if (item[dict.FILTERS].indexOf(dict.LOGSEDIT)> -1){
             result[sheet] = {}
         }
         return result
     }, {})))
+    //只包含最后一次previousLog的id字典
+    let all_latestPreviousLog_dict = JSON.parse(JSON.stringify(all_previousLog_list_dict))
+    // 切换审核工作状态时调用，更新all_latestPreviousLog_dict，
+    // 其中同样更新了不在当前页面的相关id的logs
+    async function __update_allRecentlyPreviousLogDict(){
+        loadingShow = true
+
+        let unloaded_ids = []
+
+        for (let id in all_previousLog_list_dict[params.type]){
+            let logs = JSON.parse(JSON.stringify(all_previousLog_list_dict[params.type][id]))
+            if(logs.length>0){
+                // 挑选日志最近的
+                let recent_log = logs.sort((a,b)=>b.id-a.id)[0]
+                let ids = recent_log[dict.IDS].sort((a,b)=>a-b)
+                // console.log("__update_allrecentlyPreviousLogDict recent_log logId ids", recent_log, ids)
+                ids.forEach(id=>{
+                    if(!all_previousLog_list_dict[params.type].hasOwnProperty(id)) unloaded_ids.push(id)
+                })
+            }
+        }
+
+        console.log("__update_allrecentlyPreviousLogDict", unloaded_ids)
+        //更新没有的id的过往logs数据，todo 非本页，固没有更新当前页面availSelect状态
+        if(unloaded_ids.length>0){
+            await __update_Ids_and_relatedIds_PreviousLogs(unloaded_ids)
+        }
+
+        loadingShow = false
+    }
     // 按单个id获取的新log数据，更新ll_previous_logs_dict
-    function __update_allPreviousLogsDict(result){
+    function __update_oneId_inAllPreviousLogListDict(result){
         //每个log的列表
-        all_previous_logs_dict[params.type][result.id] = []
+        all_previousLog_list_dict[params.type][result.id] = []
+        let related_ids = []
         for (let log of result.data){
             let ids = []
             let log_details = {}
             for (let detail of log[dict.LOG_DETAILS]){
-                // ids把这个log中，所有log_detail的数据id（同批审核成员）收集在一起
+                // 1) ids把这个log中，所有log_detail的数据id（同批审核成员）收集在一起
                 let subject_id = detail[dict.SUBJECT_ID]
                 if(ids.indexOf(subject_id)===-1) {
                     ids.push(subject_id)
                 }
 
-                // 把这个数据id的所有修改过的字段，重新整理下，放在log_details字典中，key为字段名
+                // 2) 把这个数据id的所有修改过的字段，重新整理下，放在log_details字典中，key为字段名
                 if(subject_id===result.id){
                     log_details[detail[dict.SUBJECT_FIELD_NAME]] = {
                         new_value: detail[dict.NEW_VALUE],
@@ -818,9 +857,12 @@
                     }
                 }
             }
-            all_previous_logs_dict[params.type][result.id].push({
+
+            // 将结构调整后的log数据推入 all_previousLog_list_dict 数组
+            all_previousLog_list_dict[params.type][result.id].push({
                 id: log[dict.ID],
                 log_id: log[dict.LOG_ID],
+                data_id: result.id,
                 ids,
                 log_details,
                 editor: log[dict.EDITOR],
@@ -828,8 +870,14 @@
                 type: log[dict.REASON_TYPE],
                 desc: log[dict.REASON_DESC]
             })
+
+            // 将log的ids推入related_ids
+            for(let id of ids){
+                if(related_ids.indexOf(id)===-1) related_ids.push(id)
+            }
         }
 
+        return related_ids
     }
 
     // 获取某id的日志的promise
@@ -839,34 +887,59 @@
                 modelName: params.type,
                 subjectIds: id
             }).then(
-                response=>resolve({
-                    id,
-                    data: response.data
-                })
+                    response=>resolve({
+                        id,
+                        data: response.data
+                    })
             ).catch(error=> {
                 // console.log('__getLogPromise', error)
                 reject(error)
             })
         })
     }
-    async function __getIdsPreviousLogs(id_list=null){
-        loadingShow = true
-        let ids = page_data.map(data=>data.id)
-        if(id_list){
-            ids = id_list
-        }
+    async function __get_UnloadedIds_updatePreviousLogs(ids){
+        // ids的logs中涉及的ids，除开查询本身的ids
+        let all_absolutelyRelated_ids = []
         let allLogsPromiseArray = ids.map(id=>__getLogPromise(id))
 
         await Promise.all(allLogsPromiseArray).then(datas=>datas.forEach(data=>{
-            // console.log("__getPageSubmitLogs", data)
-            __update_allPreviousLogsDict(data)
+            // console.log("__getIdsPreviousLogs", data)
+            // 利用获取到的某id的data，更新对应all_previousLog_list_dict中对应的id的previousLog列表
+            let related_ids = __update_oneId_inAllPreviousLogListDict(data)
+            // 将每个id的logs中的related_ids列表，除开ids表中，unloaded推入总表all_related_ids
+            related_ids.forEach(id=>{
+                if(all_absolutelyRelated_ids.indexOf(id)===-1 && ids.indexOf(id)===-1) all_absolutelyRelated_ids.push(id)
+            })
         })).catch(errors=>{
             // 只报了第一个，errors居然不是数组 todo
             console.log('__getPageSubmitLogs', errors)
         })
 
-        //更新完logs日志，肯定需要更新一下页面可选项
-        __update_allIds_availSelect_inPageIdAvailSelectDict()
+        return all_absolutelyRelated_ids
+    }
+    async function __update_Ids_and_relatedIds_PreviousLogs(id_list=null, updateAvailSelect=false){
+        loadingShow = true
+
+        // 默认使用当前页的所有id进行更新
+        let ids = page_data.map(data=>data.id)
+        if(id_list){
+            ids = id_list
+        }
+
+        // 收集回传的查询ids的logs中涉及的非查询ids本身的 id列表
+        let unloaded_ids = []
+        // A) 先加载ids，返回获取相关但没有下载的id表(unloaded_ids)
+        await __get_UnloadedIds_updatePreviousLogs(ids).then(ids=>unloaded_ids=ids)
+
+        // B) 再次加载unloaded_ids
+        await __get_UnloadedIds_updatePreviousLogs(unloaded_ids).then(ids=>{
+            console.log("__getIdsPreviousLogs unloaded_ids second_unloaded_ids all_previousLog_list_dict", unloaded_ids, ids, all_previousLog_list_dict)
+        })
+
+        if(updateAvailSelect){
+            //更新完logs日志，肯定需要更新一下页面可选项
+            __update_allIds_availSelect_inPageIdAvailSelectDict()
+        }
 
         loadingShow = false
     }
@@ -929,7 +1002,17 @@
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
 
-                await __getIdsPreviousLogs()
+                // 更新当前页的相关previousLogs
+                await __update_Ids_and_relatedIds_PreviousLogs(null, true)
+                break
+            case dict.CANCEL_SINSUB_DONE:
+                //当前所有都不能编辑
+                __set_allIds_false_availEdit_inPageIdAvailEditDict()
+                // 重置当前页的增减项目的锁定
+                __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
+                // 清空id多选列表
+                all_selected_dataIds_dict[params.type] = []
+
                 break
             default:
                 break
@@ -1340,53 +1423,47 @@
         }
 
     }
-    let singleData_related_logs_forShow = {}
+    let singleDataRelatedIds_Logs_forShow = {}
     let singleData_id
     // 单个数据过往信息显示
     async function handleSingleDataLogdetailsShow(id){
         singleData_id = id
-        let logs = all_previous_logs_dict[params.type][id]
-        let related_logs = {[id]: logs}
-        // 遍历本数据id的历史logs，加入同批审核的其它logs
-        let unloaded_ids = []
+        let logs = all_previousLog_list_dict[params.type][id]
+        let related_logs = {}
+        // 遍历本数据id的历史logs
         Object.keys(logs).forEach(logId=>{
             let ids = logs[logId][dict.IDS]
-            ids.forEach(dataId=>{
-                // 非本条，已有logs中没有
-                if(dataId!==id) {
-                    if(all_previous_logs_dict[params.type].hasOwnProperty(dataId)){
-                        related_logs[dataId] = all_previous_logs_dict[params.type][dataId]
-                    }else{
-                        unloaded_ids.push(dataId)
-                    }
+            ids.forEach(related_id=>{
+                if(!related_logs.hasOwnProperty(related_id)) {
+                    related_logs[related_id] = all_previousLog_list_dict[params.type][related_id]
                 }
             })
         })
-        // 下载没有loaded的id的log
-        await __getIdsPreviousLogs(unloaded_ids)
-        unloaded_ids.forEach(id=>{
-            related_logs[id] = all_previous_logs_dict[params.type][id]
-        })
-        // 对logs中每个id自己的logs按log的id排下序，其中当前id的log中ids去除自身id再排下序
+        console.log("handleSingleDataLogdetailsShow unloaded_ids related_logs", related_logs)
+
+        // 1)当前id的每个log中ids去除自身id，2)非当前id的其它id的log转化为字典
         for (let data_id in related_logs){
             let logs = related_logs[data_id]
-            logs.sort((a,b)=>a.id-b.id)
+
             if (parseInt(data_id)===id){
+                // 3)防止当前id的log数组排序混乱，排一下序
+                logs.sort((a,b)=>a.id-b.id)
                 logs.forEach(log=>{
                     log[dict.IDS] = removeFromUniqueArray(log[dict.IDS], id)
+                    //4) 去除自身id后，以防外一，排下序
                     log[dict.IDS].sort((a,b)=>a-b)
                 })
-                singleData_related_logs_forShow[data_id] = logs
+                singleDataRelatedIds_Logs_forShow[data_id] = logs
             }else{
                 let logs_dict = logs.reduce((result, log)=>{
                     result[log[dict.ID]] = log
                     return result
                 },{})
-               singleData_related_logs_forShow[data_id] = logs_dict
+                singleDataRelatedIds_Logs_forShow[data_id] = logs_dict
             }
         }
 
-        // console.log('handleSingleDataLogdetailsShow', singleData_related_logs_forShow)
+        console.log('handleSingleDataLogdetailsShow singleDataRelatedIds_Logs_forShow', singleDataRelatedIds_Logs_forShow)
 
         singleDataLogdetailsShow = true
     }
@@ -1516,14 +1593,13 @@
             // 更新 all_data_status_dict 中数据状态
             __update_allDataStatusDict_allNowValueOfDataDict_allPreValueOfDataDict()
 
-            //如果当前审核工作状态需要更新之前的过往日志
+            //如果当前 审核工作状态, 需要更新之前的过往日志
             if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
                 console.log('__getPageData 审核工作状态 开始更新日志')
-                await __getIdsPreviousLogs()
+                await __update_Ids_and_relatedIds_PreviousLogs(null, true)
             }
         }
 
-        //如果目前affirm工作状态
         loadingShow = false
     }
 
@@ -1835,10 +1911,10 @@
             let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
             let log_id = all_submit_logs_dict[params.type][id]
             await api[`update${name}`](id,
-                {
-                    log_id,
-                    ...all_submit_params_dict[params.type][id]
-                }
+                    {
+                        log_id,
+                        ...all_submit_params_dict[params.type][id]
+                    }
             ).then(response=>{
                 success = true
                 success_num++
@@ -2424,10 +2500,12 @@
         // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type])
         // console.log(page_id_availableEdit_dict)
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
-        console.log(all_previous_logs_dict)
+        console.log(all_previousLog_list_dict)
+        console.log(all_latestPreviousLog_dict)
     }
 
 </script>
+
 
 
 <style>
