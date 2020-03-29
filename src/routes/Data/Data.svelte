@@ -748,7 +748,7 @@
             case dict.CANCEL_SINSUB_DONE:
                 let status_cancel_sinSub_done = all_status_of_data_dict[params.type][id]
                 if(status_cancel_sinSub_done === dict.DONE){
-                    __update_allRecentlyPreviousLogDict()
+
                 }else{
                     return false
                 }
@@ -804,36 +804,7 @@
         }
         return result
     }, {})))
-    //只包含最后一次previousLog的id字典
-    let all_latestPreviousLog_dict = JSON.parse(JSON.stringify(all_previousLog_list_dict))
-    // 切换审核工作状态时调用，更新all_latestPreviousLog_dict，
-    // 其中同样更新了不在当前页面的相关id的logs
-    async function __update_allRecentlyPreviousLogDict(){
-        loadingShow = true
 
-        let unloaded_ids = []
-
-        for (let id in all_previousLog_list_dict[params.type]){
-            let logs = JSON.parse(JSON.stringify(all_previousLog_list_dict[params.type][id]))
-            if(logs.length>0){
-                // 挑选日志最近的
-                let recent_log = logs.sort((a,b)=>b.id-a.id)[0]
-                let ids = recent_log[dict.IDS].sort((a,b)=>a-b)
-                // console.log("__update_allrecentlyPreviousLogDict recent_log logId ids", recent_log, ids)
-                ids.forEach(id=>{
-                    if(!all_previousLog_list_dict[params.type].hasOwnProperty(id)) unloaded_ids.push(id)
-                })
-            }
-        }
-
-        console.log("__update_allrecentlyPreviousLogDict", unloaded_ids)
-        //更新没有的id的过往logs数据，todo 非本页，固没有更新当前页面availSelect状态
-        if(unloaded_ids.length>0){
-            await __update_Ids_and_relatedIds_PreviousLogs(unloaded_ids)
-        }
-
-        loadingShow = false
-    }
     // 按单个id获取的新log数据，更新ll_previous_logs_dict
     function __update_oneId_inAllPreviousLogListDict(result){
         //每个log的列表
@@ -1013,6 +984,8 @@
                 // 清空id多选列表
                 all_selected_dataIds_dict[params.type] = []
 
+                // 更新当前页的相关previousLogs
+                await __update_Ids_and_relatedIds_PreviousLogs(null, true)
                 break
             default:
                 break
@@ -2501,7 +2474,6 @@
         // console.log(page_id_availableEdit_dict)
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
         console.log(all_previousLog_list_dict)
-        console.log(all_latestPreviousLog_dict)
     }
 
 </script>
