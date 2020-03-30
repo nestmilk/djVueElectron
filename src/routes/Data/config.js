@@ -1992,8 +1992,9 @@ export const affirmSelectionConfig = [
         content: '查看提交日志(单项)'
     }, {
         type: "single",
-        value: "cancel_single_submit_done",
-        content: '取消提交(单项)'
+        value: "cancel_submit_done",
+        previous_log_update: true,
+        content: '取消提交'
     },
 
     {
@@ -2014,10 +2015,6 @@ export const affirmSelectionConfig = [
         value: "adjust_multiple_affirm_items",
         availableEdit: true,
         content: '增减条目(同批)'
-    }, {
-        type: "multiple",
-        value: "cancel_multiple_submit_done",
-        content: '取消提交(同批)'
-    }
+    },
 ]
 

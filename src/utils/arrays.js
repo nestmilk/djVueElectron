@@ -151,8 +151,11 @@ export const ifContentEqualArrays = (arrayA, arrayB) => {
 }
 
 // field的值用于生成key, 返回的对象，如果对obj的值修改，同样会改变array中的值
-export const arrayToDict = (array, field) => {
-    return JSON.parse(JSON.stringify(array)).reduce((obj, item)=>{
+export const arrayToDict = (array, field, keepContact=false) => {
+    if (!keepContact){
+        array = JSON.parse(JSON.stringify(array))
+    }
+    return array.reduce((obj, item)=>{
         obj[item[field]] = item
         return obj
     }, {})

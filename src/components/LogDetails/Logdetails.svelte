@@ -1,107 +1,84 @@
 <div class="floatLayer"></div>
 
 <div class="contentWrapper">
-    <div class="leftWrapper">
-        <div bind:this={topScroll} class="titleTableWrapper" on:scroll={()=>handleScroll('topScroll')}>
-            <table>
-                <tr class="show">
-                    <th class="small">日志ID</th>
-                    <th class="small">数据ID</th>
-                    <th class="small">完成</th>
-                    <th class="small">删除</th>
-                    {#each fieldList as field}
-                        <th>{title_translates[field]}</th>
-                    {/each}
-                    <th class="long">提交类型</th>
-                    <th>操作人员</th>
-                    <th class="long">操作时间</th>
-                </tr>
-            </table>
-        </div>
-        <div bind:this={bottomScroll} class="dataTableWrapper" on:scroll={()=>handleScroll('bottomScroll')}>
-            <table>
-                {#each idLogIds as {logId, ids}}
-                    {#each ids as id, index}
-                        <tr on:click={()=>changeCurrentLogId(logId)}
-                            class="{current_logId===logId ?'current':''}
+    <div class="upsideWrapper">
+        <div class="leftWrapper">
+            <div bind:this={topScroll} class="titleTableWrapper" on:scroll={()=>handleScroll('topScroll')}>
+                <table>
+                    <tr class="show">
+                        {#if cancelSubmit}
+                            <th class="select"></th>
+                        {/if}
+                        <th class="small">日志ID</th>
+                        <th class="small">数据ID</th>
+                        <th class="small">完成</th>
+                        <th class="small">删除</th>
+                        {#each fieldList as field}
+                            <th>{title_translates[field]}</th>
+                        {/each}
+                        <th class="long">提交类型</th>
+                        <th>操作人员</th>
+                        <th class="long">操作时间</th>
+                    </tr>
+                </table>
+            </div>
+            <div bind:this={bottomScroll} class="dataTableWrapper" on:scroll={()=>handleScroll('bottomScroll')}>
+                <table>
+                    {#each idLogIds as {logId, ids}}
+                        {#each ids as id, index}
+                            <tr on:click={()=>changeCurrentLogId(logId)}
+                                class="{current_logId===logId ?'current':''}
                                     {index===0?'show first':''}"
-                        >
-                            <td class="small">{logId}</td>
-                            <td class="small">{id}</td>
-                            <td class="small" title="{logs[id][logId].log_details.done?'修改前：'+logs[id][logId].log_details.done.old_value:''}">
-                                {logs[id][logId].log_details.done?logs[id][logId].log_details.done.new_value:''}
-                            </td>
-                            <td class="small"title="{logs[id][logId].log_details.delete?'修改前：'+logs[id][logId].log_details.delete.old_value:''}">
-                                {logs[id][logId].log_details.delete?logs[id][logId].log_details.delete.new_value:''}
-                            </td>
-                            {#each fieldList as field}
-                                <td title="{logs[id][logId].log_details[field]?'修改前：'+logs[id][logId].log_details[field].old_value:''}">
-                                    {logs[id][logId].log_details[field]?logs[id][logId].log_details[field].new_value:''}
+                            >
+                                {#if cancelSubmit}
+                                    <td class="select">
+                                        <button class="{selected_ids.indexOf(id)!==-1?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
+                                                on:click={(e)=>handleSelect(e, id)}
+                                        ></button>
+                                    </td>
+                                {/if}
+                                <td class="small">{logId}</td>
+                                <td class="small">{id}</td>
+                                <td class="small" title="{logs[id][logId].log_details.done?'修改前：'+logs[id][logId].log_details.done.old_value:''}">
+                                    {logs[id][logId].log_details.done?logs[id][logId].log_details.done.new_value:''}
                                 </td>
-                            {/each}
-                            <td class="long" title="原因描述：{logs[id][logId].desc}">{logs[id][logId].type}
-                            </td>
-                            <td>{logs[id][logId].editor.username}</td>
-                            <td class="long">{logs[id][logId].add_time}</td>
-                        </tr>
+                                <td class="small"title="{logs[id][logId].log_details.delete?'修改前：'+logs[id][logId].log_details.delete.old_value:''}">
+                                    {logs[id][logId].log_details.delete?logs[id][logId].log_details.delete.new_value:''}
+                                </td>
+                                {#each fieldList as field}
+                                    <td title="{logs[id][logId].log_details[field]?'修改前：'+logs[id][logId].log_details[field].old_value:''}">
+                                        {logs[id][logId].log_details[field]?logs[id][logId].log_details[field].new_value:''}
+                                    </td>
+                                {/each}
+                                <td class="long" title="原因描述：{logs[id][logId].desc}">{logs[id][logId].type}
+                                </td>
+                                <td>{logs[id][logId].editor.username}</td>
+                                <td class="long">{logs[id][logId].add_time}</td>
+                            </tr>
+                        {/each}
                     {/each}
-                {/each}
-<!--                {#each logs[id] as log}-->
-<!--                    <tr on:click={()=>changeCurrentLogId(log.id)}-->
-<!--                        class="hoverGreen {current_logId===log.id?'now':''}"-->
-<!--                    >-->
-<!--                        <td class="small">{log.id}</td>-->
-<!--                        <td class="small">{id}</td>-->
-<!--                        <td class="small" title="{log.log_details.done?'修改前：'+log.log_details.done.old_value:''}">-->
-<!--                            {log.log_details.done?log.log_details.done.new_value:''}-->
-<!--                        </td>-->
-<!--                        <td class="small"title="{log.log_details.delete?'修改前：'+log.log_details.delete.old_value:''}">-->
-<!--                            {log.log_details.delete?log.log_details.delete.new_value:''}-->
-<!--                        </td>-->
-<!--                        {#each fieldList as field}-->
-<!--                            <td title="{log.log_details[field]?'修改前：'+log.log_details[field].old_value:''}">-->
-<!--                                {log.log_details[field]?log.log_details[field].new_value:''}-->
-<!--                            </td>-->
-<!--                        {/each}-->
-<!--                        <td class="long" title="原因描述：{log.desc}">{log.type}-->
-<!--                        </td>-->
-<!--                        <td>{log.editor.username}</td>-->
-<!--                        <td class="long">{log.add_time}</td>-->
-<!--                    </tr>-->
-
-<!--                    {#if current_logId===log.id}-->
-<!--                        {#each log.ids as other_id}-->
-<!--                            <tr class="group">-->
-<!--                                <td class="small">{log.id}</td>-->
-<!--                                <td class="small">{other_id}</td>-->
-<!--                                <td class="small" title="{logs[other_id][log.id].log_details.done?'修改前：'+logs[other_id][log.id].log_details.done.old_value:''}">-->
-<!--                                    {logs[other_id][log.id].log_details.done?logs[other_id][log.id].log_details.done.new_value:''}-->
-<!--                                </td>-->
-<!--                                <td class="small" title="{logs[other_id][log.id].log_details.delete?'修改前：'+logs[other_id][log.id].log_details.delete.old_value:''}">-->
-<!--                                    {logs[other_id][log.id].log_details.delete?logs[other_id][log.id].log_details.delete.new_value:''}-->
-<!--                                </td>-->
-<!--                                {#each fieldList as field}-->
-<!--                                    <td title="{logs[other_id][log.id].log_details[field]?'修改前：'+logs[other_id][log.id].log_details[field].old_value:''}">-->
-<!--                                        {logs[other_id][log.id].log_details[field]?logs[other_id][log.id].log_details[field].new_value:''}-->
-<!--                                    </td>-->
-<!--                                {/each}-->
-<!--                                <td class="long" title="原因描述：{logs[other_id][log.id].desc}">{logs[other_id][log.id].type}</td>-->
-<!--                                <td>{logs[other_id][log.id].editor.username}</td>-->
-<!--                                <td class="long">{logs[other_id][log.id].add_time}</td>-->
-<!--                            </tr>-->
-<!--                        {/each}-->
-<!--                    {/if}-->
-<!--                {/each}-->
-            </table>
+                </table>
+            </div>
         </div>
+
+        <button class="icon-cancel-circle" on:click={handleClose}></button>
     </div>
-    <button class="icon-cancel-circle"
-            on:click={handleClose}
-    ></button>
+
+    {#if cancelSubmit}
+        <div class="cancelWrapper">
+            <button class="cancelBn"
+                on:click={handleCancelSelectedIds}
+            >
+                撤销{selected_ids.length>1?selected_ids.length:'此'}条提交
+            </button>
+        </div>
+    {/if}
+
 </div>
 
 <script>
     import {createEventDispatcher} from 'svelte'
+    import {removeFromUniqueArray}  from '../../utils/arrays'
 
     let topScroll
     let bottomScroll
@@ -124,15 +101,33 @@
     export let logs
     export let fieldList
     export let titleDict
-    console.log('SingleDataLogdetails', idLogIds, logs)
+    export let cancelSubmit
+    // console.log('SingleDataLogdetails', idLogIds, logs)
+
+    let selected_ids = [idLogIds[0].ids[0]]
 
     let title_translates = Object.keys(titleDict).reduce((result, title)=>{
         result[title] = titleDict[title]['translate']
         return result
     }, {})
 
+    function handleSelect(e, id){
+        e.stopPropagation()
+        if(id!==idLogIds[0].ids[0]){
+            if(selected_ids.indexOf(id)===-1){
+                selected_ids.push(id)
+            }else{
+                selected_ids = removeFromUniqueArray(selected_ids, id)
+            }
+        }
+        selected_ids = selected_ids
+    }
     function handleClose(){
         dispatch("close")
+    }
+
+    function handleCancelSelectedIds(){
+        dispatch("cancel", {ids: selected_ids})
     }
 
 </script>
@@ -157,10 +152,14 @@
         transform: translate(-50%,-50%);
         z-index: 1000;
         width: 900px;
-        height: 450px;
+        min-height: 450px;
         font-size: 14px;
         background: white;
         border: 1px solid #666666;
+    }
+    .contentWrapper .upsideWrapper{
+        width: 100%;
+        height: 450px;
     }
     .contentWrapper .leftWrapper{
         float: left;
@@ -207,6 +206,23 @@
         min-width: 70px!important;
         max-width: 70px!important;
     }
+    .contentWrapper table .select{
+        min-width: 25px!important;
+        max-width: 25px!important;
+        padding: 0!important;
+    }
+    .contentWrapper table .select button{
+        display: table-cell;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        vertical-align: middle;
+        width: 100%;
+        height: 100%;
+        font-size: 16px;
+        background: none;
+        border: none;
+    }
 
     .contentWrapper table tr{
         display: none;
@@ -227,6 +243,25 @@
         background: #eaffad;
         display: block;
         font-style: italic;
+    }
+
+    .contentWrapper .cancelWrapper{
+        width: 100%;
+        height: 40px;
+        background: #eaffad;
+    }
+    .contentWrapper .cancelWrapper .cancelBn{
+        padding: 0 10px;
+        /*不知道为啥不能用auto*/
+        margin: 4px 390px;
+        width: 120px;
+        line-height: 30px;
+        background: white;
+        border: 1px solid black;
+    }
+    .contentWrapper .cancelWrapper .cancelBn:hover{
+        background: #69ca60;
+        color: white;
     }
 
     .icon-cancel-circle{

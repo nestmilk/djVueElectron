@@ -988,7 +988,10 @@
             }).then(response=>{
                 // console.log('listSample: ', response.data)
                 sample_list = response.data.results
-                sample_dict = arrayToDict(sample_list, "id")
+                sample_dict = arrayToDict(sample_list, "id", true)
+                // sample_dict = sample_list.reduce((result, sample)=>{
+                //     result[sample.id] = sample
+                // }, {})
                 sample_success = true
             }).catch(error=>{
                 console.error('getSampleList api.listSample', error)

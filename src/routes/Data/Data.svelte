@@ -173,7 +173,7 @@
                                     {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.EDIT_SINAFF_REASON}
                                         <th class="affirmed short">编辑原因</th>
                                     {/if}
-                                    <!-- 针对查看单项提交的过往日志 -->
+                                    <!-- 针对查看提交的过往日志 -->
                                     {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CHECK_SINSUB_LOGS}
                                         <th class="logs short hoverGreen"
                                             on:click={()=>handleToggleFilter(dict.LOGSEDIT)}
@@ -182,7 +182,7 @@
                                         </th>
                                     {/if}
                                     <!-- 针对取消单项审核的提交 -->
-                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SINSUB_DONE}
+                                    {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SUBMIT_DONE}
                                         <th class="done short hoverGreen"
                                             on:click={()=>handleToggleFilter(dict.DONE)}
                                         >
@@ -320,24 +320,24 @@
                                                 {/if}
                                             </td>
                                         {/if}
-                                        <!-- 针对查看单项提交的过往日志 -->
+                                        <!-- 针对查看提交的过往日志 -->
                                         {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CHECK_SINSUB_LOGS}
                                             <td class="logs short">
                                                 {#if page_id_availableSelect_dict[line_data.id]}
                                                     <button class="icon-book"
-                                                            on:click={()=>handleOpenLogdetailsShow(line_data.id)}
+                                                            on:click={()=>handleCheckSingleSubmitLogs(line_data.id)}
                                                     ></button>
                                                 {/if}
                                             </td>
                                         {/if}
                                         <!-- 针对取消单项审核的提交 -->
-                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SINSUB_DONE}
+                                        {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.CANCEL_SUBMIT_DONE}
                                             <td class="done short">
                                                 {#if page_id_availableSelect_dict[line_data.id]}
                                                     <button class="{all_status_of_data_dict[params.type][line_data.id]===dict.DONE?'icon-lock':''}"
-
-                                                            disabled="{panal_unable_handle?'disabled':''}">
-                                                    </button>
+                                                            disabled="{panal_unable_handle?'disabled':''}"
+                                                            on:click={()=>handleCancelSubmitDone(line_data.id)}
+                                                    ></button>
                                                 {/if}
                                             </td>
                                         {/if}
@@ -371,7 +371,7 @@
                                             <td class="select short">
                                                 {#if page_id_availableSelect_dict[line_data.id]}
                                                     <button class="{all_selected_dataIds_dict[params.type].indexOf(line_data.id)===-1?
-                                                                'icon-checkbox-unchecked':'icon-file-text'}"
+                                                                'icon-checkbox-unchecked':'icon-checkbox-checked'}"
                                                             on:click={()=>handle_lineTDClick_for_idsInSameCheckedGroup(line_data.id)}
                                                     >
                                                     </button>
@@ -494,16 +494,6 @@
         on:sure={handleAddReasonSure}
     ></Reason>
 {/if}
-<!--{#if singleDataLogdetailsShow}-->
-<!--    <SingleDataLogdetails-->
-<!--        id="{singleData_id}"-->
-<!--        logs="{singleDataRelatedIds_Logs_forShow}"-->
-<!--        fieldList="{all_modifyTitle_list_dict[params.type]}"-->
-<!--        titleDict="{all_titleItemList_dict[params.type]}"-->
-<!--        on:close={handleClosesingleDataLogdetailsShow}-->
-<!--    >-->
-<!--    </SingleDataLogdetails>-->
-<!--{/if}-->
 
 {#if logDetailsShow}
     <LogDetails
@@ -511,7 +501,9 @@
         logs="{previousLogs_dicts}"
         fieldList="{all_modifyTitle_list_dict[params.type]}"
         titleDict="{all_titleItemList_dict[params.type]}"
+        cancelSubmit="{cancelSubmit}"
         on:close={handleCloseLogdetailsShow}
+        on:cancel={__handleCancelDispatch_fromLogDetailsPage}
     >
     </LogDetails>
 {/if}
@@ -547,7 +539,7 @@
     import {sheetDisplayConfigList, common_filter_subFilters_dict, common_subFilter_selections_dict,
         affirmSelectionConfig} from './config'
     import {dict_translate} from '../../utils/dict'
-    const sheetDisplayConfigDict = JSON.parse(JSON.stringify(arrayToDict(sheetDisplayConfigList, 'sheet')))
+    const sheetDisplayConfigDict = arrayToDict(sheetDisplayConfigList, 'sheet')
 
     // 引入electron相关包
     const { ipcRenderer, remote } =window.require('electron')
@@ -578,9 +570,8 @@
         DEFAULT: 'default', IDS: 'ids', NOTHING: 'nothing',
         SINGLE: 'single', MULTIPLE: 'multiple',
         SIN_CANCEL_OR_AFFIRM: "single_cancel_or_affirm", CHECK_SINSUB_LOGS: "check_single_submit_logs",
-        CANCEL_SINSUB_DONE: "cancel_single_submit_done", EDIT_SINAFF_REASON: "edit_single_affirm_reason",
+        CANCEL_SUBMIT_DONE: "cancel_submit_done", EDIT_SINAFF_REASON: "edit_single_affirm_reason",
         MUL_AFFIRM: "multiple_affirm", CANCEL_MULAFF: 'cancel_multiple_affirm', EDIT_MULAFF_REASON: "edit_multiple_affirm_reason",
-        CANCEL_MULSUB_DONE: "cancel_multiple_submit_done",
         ADJUST_MULAFF_ITEMS: "adjust_multiple_affirm_items", DESC: 'desc',
         CANCEL: 'cancel', MULTIPLE_AFFIRM: "multiple_affirm", SINGLE_AFFIRM: "single_affirm", ADJUST_ITEMS: "adjust_items",
         DELETED_IDS: "deleted_ids", LEFT_IDS: "left_ids", ADDED_IDS: "added_ids", PREVALUE_NOWVALUE_UPDATE: 'preValue_nowValue_update',
@@ -619,13 +610,20 @@
                         case dict.CANCEL:
                             __handleCancelMulAffirm()
                             break
-                        case dict.ADJUST_ITEMS:
-                            console.log('handleSureReply 增减条目')
-                            break
                         default:
                             break
                     }
                     break
+                case dict.CANCEL_SUBMIT_DONE:
+                    switch (sureOperation) {
+                        case dict.CANCEL:
+                            // console.log('handleSureReply 取消相关提交', selected_ids_forCancelDone)
+                            __handleCancelSelectedIdsDone()
+                            logDetailsShow = false
+                            break
+                        default:
+                            break
+                    }
                 default:
                     break
             }
@@ -646,7 +644,7 @@
         }
         return result
     }, [])))
-    let affirmSelection_dict = JSON.parse(JSON.stringify(arrayToDict(affirmSelectionConfig, 'value')))
+    let affirmSelection_dict = arrayToDict(affirmSelectionConfig, 'value')
 
     // 用于每页，是否锁定一批审核，以便进行增减条目
     let all_locked_logId_for_adjustMultipleAffirmItems = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
@@ -757,16 +755,17 @@
             case dict.CHECK_SINSUB_LOGS:
                 // console.log("__check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict 查看提交过往记录")
                 return all_previousLog_list_dict[params.type][id] && all_previousLog_list_dict[params.type][id].length!==0
-            case dict.CANCEL_SINSUB_DONE:
+            case dict.CANCEL_SUBMIT_DONE:
                 let status_cancel_sinSub_done = all_status_of_data_dict[params.type][id]
                 if(status_cancel_sinSub_done === dict.DONE &&
                         all_previousLog_list_dict[params.type].hasOwnProperty(id) &&
                         all_previousLog_list_dict[params.type][id].length>0
                 ){
-                    let logs_cancel_sinSub_done = JSON.parse(JSON.stringify(all_previousLog_list_dict[params.type][id]))
-                    let latest_ids = logs_cancel_sinSub_done.sort((a, b)=>b.id-a.id)[0][dict.IDS]
-                    // console.log("__check_availSelect_of_oneData_alreadyInsideA...", latest_ids)
-                    return latest_ids.length===1
+                    return true
+                    // let logs_cancel_sinSub_done = JSON.parse(JSON.stringify(all_previousLog_list_dict[params.type][id]))
+                    // let latest_ids = logs_cancel_sinSub_done.sort((a, b)=>b.id-a.id)[0][dict.IDS]
+                    // // console.log("__check_availSelect_of_oneData_alreadyInsideA...", latest_ids)
+                    // return latest_ids.length===1
                 }else{
                     return false
                 }
@@ -994,7 +993,7 @@
                 // 更新当前页的相关previousLogs
                 await __update_Ids_and_relatedIds_PreviousLogs()
                 break
-            case dict.CANCEL_SINSUB_DONE:
+            case dict.CANCEL_SUBMIT_DONE:
                 //当前所有都不能编辑
                 __set_allIds_false_availEdit_inPageIdAvailEditDict()
                 // 重置当前页的增减项目的锁定
@@ -1133,7 +1132,7 @@
         page_ModifyField_mouseEnter_dict[id][field] = false
     }
 
-    function __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null, adjust_mulAff_items=false){
+    function __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null, adjust_mulAff_items=false, cancel_submit=false){
         // console.log('<=== __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord begin')
         // 1) 修改此条数据的status
         all_status_of_data_dict[params.type][id] = status
@@ -1145,7 +1144,7 @@
                 all_submit_params_dict[params.type][id] = {
                     done: true
                 }
-                // 3) 此条日志id设为null
+                // 3) 配置此条id的默认提交类型和原因描述
                 let log_checked_id = uuidv4()
                 all_submit_logs_dict[params.type][id] = log_checked_id
                 logs_together_dict[log_checked_id] = {
@@ -1219,26 +1218,36 @@
                 all_nowValue_of_data_dict[params.type][id][dict.DONE] = true
                 return
             case dict.FREE:
-                // 2) 此条数据id对应的log_id，删除log详情
-                let log_id = all_submit_logs_dict[params.type][id]
-                if(!adjust_mulAff_items){
-                    //批次的删除一个，剩余就没法删除，需要判断一下
-                    if (logs_together_dict.hasOwnProperty(log_id)){
-                        delete logs_together_dict[log_id]
-                    }
+                if(cancel_submit){
+                    // 2) 更新sampleRecord和sheetRecord
+                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA)
+
+                    // 3) 将done的nowValue和preValue改为false
+                    all_nowValue_of_data_dict[params.type][id][dict.DONE] = false
+                    all_preValue_of_data_dict[params.type][id][dict.DONE] = false
                 }else{
-                    // 针对多项审核条目删除, 将日志详情里面的ids列表剔除此id
-                    logs_together_dict[log_id][dict.IDS] = removeFromUniqueArray(logs_together_dict[log_id][dict.IDS], id)
+                    // 2) 此条数据id对应的log_id，删除log详情
+                    let log_id = all_submit_logs_dict[params.type][id]
+                    if(!adjust_mulAff_items){
+                        //批次的删除一个，剩余就没法删除，需要判断一下，
+                        // 另一种情况，撤销提交根本就没有详情log
+                        if (logs_together_dict.hasOwnProperty(log_id)){
+                            delete logs_together_dict[log_id]
+                        }
+                    }else{
+                        // 针对多项审核条目删除, 将日志详情里面的ids列表剔除此id
+                        logs_together_dict[log_id][dict.IDS] = removeFromUniqueArray(logs_together_dict[log_id][dict.IDS], id)
+                    }
+                    delete all_submit_logs_dict[params.type][id]
+                    // 3）删除此id的提交params
+                    delete all_submit_params_dict[params.type][id]
+
+                    // 4) 更新sampleRecord和sheetRecord
+                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA)
+
+                    // 5) 将done的nowValue改为false
+                    all_nowValue_of_data_dict[params.type][id][dict.DONE] = false
                 }
-                delete all_submit_logs_dict[params.type][id]
-                // 3）删除此id的提交params
-                delete all_submit_params_dict[params.type][id]
-
-                // 4) 更新sampleRecord和sheetRecord
-                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA)
-
-                // 5) 将done的nowValue改为false
-                all_nowValue_of_data_dict[params.type][id][dict.DONE] = false
                 return
             case dict.DONE:
                 // 2) preValue使用nowValue进行替换
@@ -1420,7 +1429,16 @@
     // 每个id的logs的列表，转化为字典
     let previousLogs_dicts = {}
     // 单个数据过往信息显示
-    async function handleOpenLogdetailsShow(id){
+    let cancelSubmit = false
+    function __set_previousLogsDicts(){
+        let all_logs = JSON.parse(JSON.stringify(all_previousLog_list_dict[params.type]))
+        previousLogs_dicts = Object.keys(all_logs).reduce((result, id)=>{
+            let logs = arrayToDict(all_previousLog_list_dict[params.type][id], 'id')
+            result[id] = logs
+            return result
+        }, {})
+    }
+    async function handleCheckSingleSubmitLogs(id){
 
         // 防止当前id的log数组排序混乱，排一下序
         let logs = JSON.parse(JSON.stringify(all_previousLog_list_dict[params.type][id])).sort((a,b)=>a.id-b.id)
@@ -1433,21 +1451,79 @@
                 ids: [id, ...removeFromUniqueArray(ids, id)]
             })
         })
-        console.log("handleSingleDataLogdetailsShow", id_logId_lists_forShow)
+        // console.log("handleSingleDataLogdetailsShow", id_logId_lists_forShow)
 
-        let all_logs = JSON.parse(JSON.stringify(all_previousLog_list_dict[params.type]))
-        previousLogs_dicts = Object.keys(all_logs).reduce((result, id)=>{
-            let logs = arrayToDict(all_previousLog_list_dict[params.type][id], 'id')
-            result[id] = logs
-            return result
-        }, {})
+        __set_previousLogsDicts()
         // console.log("handleSingleDataLogdetailsShow", previousLogs_dicts)
 
         logDetailsShow = true
     }
     // 关闭
     function handleCloseLogdetailsShow(){
+        cancelSubmit = false
         logDetailsShow = false
+    }
+
+    // 用于撤销提交的id列表
+    let selected_ids_forCancelDone = []
+    // 处理logDetais页面返回的撤销列表的取消
+    function __handleCancelDispatch_fromLogDetailsPage(e){
+        console.log("handleCancelSelectedIdsDone", e.detail[dict.IDS])
+        selected_ids_forCancelDone = e.detail[dict.IDS]
+
+        sureEvent = dict.CANCEL_SUBMIT_DONE
+        sureOperation = dict.CANCEL
+        changeSendSureMessage()
+        sureShow = true
+    }
+    // 用于实际处理撤销提交操作
+    async function __handleCancelSelectedIdsDone(){
+        let name = params.type
+        name = name.slice(0, 1).toUpperCase() + name.slice(1)
+        for (let id of selected_ids_forCancelDone){
+            // 前端仅分配一个logId, 由后端直接创建log和log_detail
+            let log_id = uuidv4()
+            let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
+            let success = false
+            await api[`update${name}`](id,
+                    {
+                        log_id,
+                        done: false
+                    }
+            ).then(response=>{
+                success = true
+                // 1) 更新相关参数
+                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.FREE, null, null, null, false, true)
+                // 2) 更新页面的availableSelect
+                __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+            }).catch(error=>{
+                console.log('__handleCancelSelectedIdsDone', error)
+            })
+
+            let time = getTime()
+            all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'撤销成功。':'撤销失败！'}`]
+        }
+
+
+        // 保险起见
+        selected_ids_forCancelDone = []
+    }
+
+    // 处理点击取消提交按钮事情
+    function handleCancelSubmitDone(id){
+        // 当前id的log数组排序混乱，按logId排一下倒序, 取最新的log
+        let latest_log = JSON.parse(JSON.stringify(all_previousLog_list_dict[params.type][id])).sort((a,b)=>b.id-a.id)[0]
+        console.log('handleCancelSubmitDone latest_log', latest_log)
+        // 先清空展示数据列表
+        id_logId_lists_forShow = [{
+            logId: latest_log[dict.ID],
+            ids: [id, ...removeFromUniqueArray(latest_log[dict.IDS], id)]
+        },]
+
+        __set_previousLogsDicts()
+
+        cancelSubmit = true
+        logDetailsShow = true
     }
 
     // 先前的页面type
@@ -1949,6 +2025,10 @@
         all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 数据提交${success_num}条，失败${fail_num}条`]
         // b. seletect_ids清空
         all_selected_dataIds_dict[params.type] = []
+        // c. 如果当前affrim工作状态需要更新previousLogs
+        if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
+            await __update_Ids_and_relatedIds_PreviousLogs()
+        }
 
         // todo 针对污染数据发出提醒 todo 之后需要改为自动取消提交
         Object.keys(dirty_ids_dict).forEach(log_id=>{
@@ -2392,13 +2472,12 @@
 
                     let ifEqual = locked_logId?__checkDifference_between_selectedIds_and_lockedIds()[dict.IFEQUAL]:true
                     // todo enabled需要查看selected_ids与原来locked_ids是否有差异！
-                    let adjust_mulAff_items_menuItem =new remote.MenuItem({
+                    let adjust_mulAff_items_menuItem = new remote.MenuItem({
                         label: "增减条目",
                         enabled: locked_logId && !ifEqual?true:false,
                         click: ()=>{
-                            sureEvent = dict.MULTIPLE_AFFIRM
-                            sureOperation  = dict.ADJUST_ITEMS
-                            changeSendSureMessage()
+                            preValue = logs_together_dict[locked_logId][dict.VALUE]
+                            preDesc = logs_together_dict[locked_logId][dict.DESC]
                             reasonShow = true
                         }
                     })
