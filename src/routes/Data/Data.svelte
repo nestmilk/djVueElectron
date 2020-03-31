@@ -100,7 +100,7 @@
                                 <th class="unsubmitedAndAffirmed">未提已审</th>
                                 <th class="unsubmitedAndUnaffirmed">未提未审</th>
                                 <th class="tick">
-                                    <button class="selectALL" on:click={handleToggleAllSample}>
+                                    <button class="selectALL" on:click={(e)=>handleToggleAllSample(e)}>
                                         {selected_sampleId_list.length === sample_list.length? '取消':'全选'}
                                     </button>
                                 </th>
@@ -161,6 +161,38 @@
 
             <div class="contentRight">
                 {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
+                    <div class="filterWrapper">
+                        <div class="doneWrapper">
+                            <span>提交状态:</span>
+                            <select bind:value={all_subFilter_indexes_dict[params.type][dict.DONE][0]}>
+                                {#each subFilter_selections_dict[dict.DONE] as selection, index}
+                                    <option value={index}>
+                                        {selection[dict.CONTENT]}
+                                    </option>
+                                {/each}
+                            </select>
+                        </div>
+                        <div class="logsEditWrapper">
+                            <span>修改历史:</span>
+                            <select bind:value={all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]}>
+                                {#each subFilter_selections_dict[dict.LOGSEDIT] as selection, index}
+                                    <option value={index}>
+                                        {selection[dict.CONTENT]}
+                                    </option>
+                                {/each}
+                            </select>
+                        </div>
+                        <div class="idsWrapper">
+                            <span>数据ID:</span>
+                            <input bind:value="{query_ids}"
+                                   on:keydown={handleIdsQueryKeydown}
+                                   placeholder="请填写数据Id，多个id间空格分隔"
+                            />
+                            <button class="icon-undo2"
+                                    on:click={handleClearQueryIDS}
+                            ></button>
+                        </div>
+                    </div>
                     <div class="editBigInputWrapper">
                         <span class="abstract">
                             {#if !now_input_id && !now_input_field}
@@ -284,9 +316,10 @@
                                     {:else if field===dict.EXONICFUNCREFGENE &&
                                         sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.EXONICFUNCREFGENE) > -1
                                     }
+                                    <!--                                                    on:change="{(e) => change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(e.target.value)}"-->
                                         <th class="exonicfuncRefgene" >
-                                            <select bind:this={exonicfuncRefgeneSelection}
-                                                    on:change="{(e) => change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(e.target.value)}"
+                                            <!--bind:value会触发页面刷新，即可触发$: if -->
+                                            <select bind:value={all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0]}
                                                     class="inside"
                                             >
                                                 {#each subFilter_selections_dict[`${params.type.toLowerCase()}_exonicfuncRefgene`] as selection, index}
@@ -1769,7 +1802,7 @@
     //         this.now_id = (this.now_id + 1)%this.selections_len
     //     }
     // }
-    function __set_all_specfic_Params_in_AllSearchParamsDict() {
+    function __set_all_specfic_Params_inAllSearchParamsDict() {
         // console.log("<=== __set_all_specfic_Params...")
         // sheet为页面
         for(let sheet in all_subFilter_indexes_dict){
@@ -1804,7 +1837,7 @@
     }
     // 切换filter的项
     async function handleToggleFilter(subFilter){
-        // console.log("handleToggleFilter", type)
+        console.log("<===handleToggleFilter")
         loadingShow = true
 
         let found_filter_name
@@ -1824,28 +1857,87 @@
         all_subFilter_indexes_dict[params.type][found_filter_name][found_subFilter_index] = new_index
 
         // 增加筛选页面数量可能会伸缩，页面设置为1比较保险
-        all_search_params_dict[params.type][dict.PAGE] = 1
+        __set_page_inAllSearchParamsDict(1)
         // 其中包含，页面切换回第一页
-        __set_all_specfic_Params_in_AllSearchParamsDict()
+        __set_all_specfic_Params_inAllSearchParamsDict()
 
         await __getPageData()
 
         loadingShow = false
     }
 
-    // 用于绑定exonicfuncRefgene标题筛选框, 一个页面只能绑定一次
-    let exonicfuncRefgeneSelection
-    async function change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(index){
-        // console.log("change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict", index)
-        all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0] = index
+    // 重置all_subFilter_indexes_dict中所有坐标为0
+    function __reset_indexes_inAllSubFilterIndexesDict_params_inAllSearchParamsDict(filter_list=null){
+        let subFilter_indexes = all_subFilter_indexes_dict[params.type]
+        let filters = Object.keys(subFilter_indexes)
+        if(filter_list && filter_list.length>0){
+            filters = filter_list
+        }
+        // console.log('__reset_indexes_inAllSubFilterIndexesDict_pa... subFilter_indexes, filters', subFilter_indexes, filters)
+        for (let filter of filters){
+            subFilter_indexes[filter] = Array(subFilter_indexes[filter].length).fill(0)
+        }
 
-        // 因为exonicFuncRefGene筛选项变化，页面先设置为1
-        all_search_params_dict[params.type][dict.PAGE] = 1
-        // 其中包含，页面切换回第一页
-        __set_all_specfic_Params_in_AllSearchParamsDict()
+        all_subFilter_indexes_dict = all_subFilter_indexes_dict
+
+        __set_all_specfic_Params_inAllSearchParamsDict()
+    }
+    function __set_ids_inAllSearchParamsDict(ids){
+        all_search_params_dict[params.type][dict.IDS] = ids && ids.length>0?ids.join(','):null
+    }
+    // 根据数据ids获取数据
+    async function __get_data_by_ids(ids=null){
+        // 重置所有特殊过滤的坐标, 以及params, 包括exonicfuncRefene，done，logEdits，ordering
+        __reset_indexes_inAllSubFilterIndexesDict_params_inAllSearchParamsDict()
+        // 重置sampleIds，全选所有样本，其中包含params
+        handleToggleAllSample(null, true)
+        // 页面Page切换回第1页，其中含params
+        __set_page_inAllSearchParamsDict(1)
+        // 设置过滤ids，在params中
+        __set_ids_inAllSearchParamsDict(ids)
 
         await __getPageData()
     }
+    let query_ids = ''
+    //控制ids查询数据
+    async function handleIdsQueryKeydown(event){
+        if (event.which !== 13) return;
+        event.preventDefault();
+        // console.log('handleIdsQueryKeydown', query_ids)
+        let query_list = query_ids.split(/[ ]+/)
+        let ids = []
+        query_list.forEach(query=>{
+            // console.log(`<${query}>`, query==='')
+            let reg = /^[0-9]*$/g
+            if (query!=='' && reg.test(query)){
+                let id = parseInt(query)
+                if (ids.indexOf(id)===-1) ids.push(id)
+            }
+        })
+        console.log('handleIdsQueryKeydown', ids)
+
+        __get_data_by_ids(ids)
+    }
+
+    async function handleClearQueryIDS(){
+        query_ids = ''
+
+        __get_data_by_ids()
+    }
+
+    // 用于绑定exonicfuncRefgene标题筛选框, 一个页面只能绑定一次
+    // let exonicfuncRefgeneSelection
+    // async function change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(index){
+    //     console.log("change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict", index)
+    //     all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0] = index
+    //
+    //     // 因为exonicFuncRefGene筛选项变化，页面先设置为1
+    //     all_search_params_dict[params.type][dict.PAGE] = 1
+    //     // 其中包含，页面切换回第一页
+    //     __set_all_specfic_Params_in_AllSearchParamsDict()
+    //
+    //     await __getPageData()
+    // }
 
 
     // 当前页面数据的总条数 todo 需要手动更新
@@ -1853,21 +1945,24 @@
     // 当前总页数
     let total_page_nums
 
+    function __set_page_inAllSearchParamsDict(page){
+        all_search_params_dict[params.type][dict.PAGE] = page
+    }
     async function handleChangePageSize(event){
-        // console.log("handleChangePageSize", event.detail.pageSize)
+        console.log("handleChangePageSize", event.detail.pageSize)
         all_search_params_dict[params.type][dict.PAGE_SIZE] = event.detail.pageSize
 
         // 当前sheet的totalPageNums更新，data_num固定，但是当前页page_size生了变化！
         __updateTotalPageNums()
         // 当前sheet的nowPageNum设置为1，返回第一页
-        all_search_params_dict[params.type][dict.PAGE] = 1
+        __set_page_inAllSearchParamsDict(1)
 
         await __getPageData()
     }
     async function handleChangePage(event){
-        // console.log("handleChangePage", event.detail.page)
+        console.log("handleChangePage", event.detail.page)
 
-        all_search_params_dict[params.type][dict.PAGE] = event.detail.page
+        __set_page_inAllSearchParamsDict(event.detail.page)
 
         await __getPageData()
     }
@@ -2225,7 +2320,7 @@
         // 顺便初始化已选择的样本id列表，即selected_sampleId_list
         selected_sampleId_list = JSON.parse(JSON.stringify(sample_list.map(sample=>sample[dict.ID])))
 
-        // 顺便
+        // 顺便初始化 {NGS200306-14: 1, NGS200306-22: 2, NGS200306-42: 3, NGS200208-38: 4}
         sampleSn_dict = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
             result[sampleInfoInPanal[dict.SAMPLE][dict.SAMPLESN]] = sampleInfoInPanal[dict.SAMPLE][dict.ID]
             return result
@@ -2269,16 +2364,18 @@
             subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
 
         }
+
         // 顺便更新所有的页面搜索参数初始化
-        __set_all_specfic_Params_in_AllSearchParamsDict()
+        __set_all_specfic_Params_inAllSearchParamsDict()
     }
 
 
     // 处理sample样品全选、取消全选的切换
-    async function handleToggleAllSample(){
+    async function handleToggleAllSample(e, force=false){
+        console.log('<=== handleToggleAllSample force', force)
         loadingShow = true
 
-        if (selected_sampleId_list.length !== sample_list.length) {
+        if (force || selected_sampleId_list.length !== sample_list.length) {
             selected_sampleId_list =  sample_list.map(item => item[dict.ID])
 
             //更新当前sampleIds查询参数
@@ -2291,7 +2388,7 @@
         }
 
         // 切换回第一页
-        all_search_params_dict[params.type][dict.PAGE] = 1
+        __set_page_inAllSearchParamsDict(1)
 
         await __getPageData()
 
@@ -2299,7 +2396,7 @@
     }
     // 处理sample样品单独选择
     async function handleSelectSample(sample_id) {
-        // console.log('handleSelectSample ' + sample_id)
+        console.log('handleSelectSample ' + sample_id)
         loadingShow = true
 
         if (selected_sampleId_list.indexOf(sample_id)===-1) {
@@ -2317,7 +2414,7 @@
         }
 
         // 切换回第一页
-        all_search_params_dict[params.type][dict.PAGE] = 1
+        __set_page_inAllSearchParamsDict(1)
 
         await __getPageData()
 
@@ -2352,24 +2449,29 @@
         }
     }
 
-    function __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex(){
-        if (exonicfuncRefgeneSelection){
-            // 筛选框重置
-            exonicfuncRefgeneSelection.value = 0
-
-            // 之前页面的筛选坐标重置
-            all_subFilter_indexes_dict[pre_params_type][dict.EXONICFUNCREFGENE][0] = 0
-
-            // 修改param的exonicFuncrefgene的值，偷懒把特殊的筛选项params重置了
-            __set_all_specfic_Params_in_AllSearchParamsDict()
-        }
-    }
+    // function __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex(){
+    //     if (exonicfuncRefgeneSelection){
+    //         // 筛选框重置
+    //         exonicfuncRefgeneSelection.value = 0
+    //
+    //         // 之前页面的筛选坐标重置
+    //         all_subFilter_indexes_dict[pre_params_type][dict.EXONICFUNCREFGENE][0] = 0
+    //
+    //         // 修改param的exonicFuncrefgene的值，偷懒把特殊的筛选项params重置了
+    //         __set_all_specfic_Params_in_AllSearchParamsDict()
+    //     }
+    // }
     // 动态更新当前页面信息
     $: if (pre_params_type !== params.type) {
-        // console.log('listem params.type 先前params.type 现在params.tpe', pre_params_type, params.type)
+        console.log('listem params.type 先前params.type 现在params.tpe', pre_params_type, params.type)
 
         //todo 筛选框值修改，不会触发onChange事件, 返回人工修改
-        __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex()
+        // __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex()
+
+        // exonicFuncRefgene的bind:value会触发页面更新，自动回执行此命令一次
+        // 增加筛选，页面数量可能会伸缩，页面设置为1比较保险
+        __set_page_inAllSearchParamsDict(1)
+        __set_all_specfic_Params_inAllSearchParamsDict()
 
         __getPageData()
     }
@@ -2562,7 +2664,7 @@
 
     // 测试使用
     function test() {
-        // console.log(sample_list, sampleSn_dict)
+        console.log(sample_list, sampleSn_dict)
         // console.log(all_titleConfigList_dict)
         // console.log(all_sample_record_dict)
         // console.log(all_sheet_record_dict)
@@ -2894,7 +2996,7 @@
     }
     .leftSelectFileWrapper .fileList{
         height: 107px;
-        width: 308px;
+        width: 299px;
         margin: 3px;
         overflow-y: scroll;
     }
@@ -2931,13 +3033,80 @@
         display: flex;
         flex-flow: column;
     }
+    .contentRight .filterWrapper{
+        box-sizing: border-box;
+        padding: 0 5px;
+        width: 100%;
+        height: 33px;
+        font-size: 14px;
+        border-bottom: 1px solid #939393;
+        display: flex;
+    }
+    .contentRight .filterWrapper span{
+        padding: 0 2px;
+        line-height: 33px;
+        width: 65px;
+        float: left
+    }
+    .contentRight .filterWrapper select{
+        padding: 0;
+        margin: 1px;
+        height: 30px;
+        width: 80px;
+        float: right;
+    }
+    .contentRight .filterWrapper .doneWrapper{
+         flex: 0 0 160px;
+         height: 33px;
+         margin-right: 12px;
+     }
+    .contentRight .filterWrapper .logsEditWrapper{
+        flex: 0 0 160px;
+        height: 33px;
+        margin-right: 12px;
+    }
+    .contentRight .filterWrapper .idsWrapper{
+        position: relative;
+        flex: 1;
+        height: 33px;
+    }
+    .contentRight .filterWrapper .idsWrapper input{
+        float: left;
+        padding: 0 30px 0 5px;
+        margin: 1px;
+        width: 300px;
+        height: 30px;
+    }
+    .contentRight .filterWrapper .idsWrapper button{
+        position: absolute;
+        top: 2px;
+        left: 341px;
+        padding: 0;
+        margin: 0;
+        width:28px;
+        height: 28px;
+        font-size: 16px;
+        border: none;
+        background: none;
+        color: #939393;
+        border-radius: 0;
+    }
+    .contentRight .filterWrapper .idsWrapper button:hover{
+        background: #939393;
+        color: white;
+    }
+    .contentRight .filterWrapper .idsWrapper input::-webkit-input-placeholder {
+        text-align: center;
+        font-size: 14px;
+        color: #666666;
+    }
 
     .contentRight .editBigInputWrapper{
         padding: 3px;
         width: 100%;
         flex: 0 0 31px;
         box-sizing: border-box;
-        line-height: 31px;
+        line-height: 33px;
         font-size: 14px;
         border-bottom: 1px solid #939393;
         display: flex;

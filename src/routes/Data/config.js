@@ -223,7 +223,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "target",
-        filters: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", 'ordering', "exonicfuncRefgene"],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: '靶向',
         reason_type: [
             {
@@ -1898,7 +1898,7 @@ export const common_filter_subFilters_dict = {
     done: ['done',],
     logsEdit:['logsEdit',],
     ordering: ['sample__id', 'chr', 'posStart', 'posEnd'],
-    exonicfuncRefgene: ['initial_exonicfuncRefgene'],
+    exonicfuncRefgene: ['initial_exonicfuncRefgene',],
 }
 
 
@@ -1919,7 +1919,7 @@ export const common_subFilter_selections_dict = {
     'logsEdit': [
         {
             value: null,
-            content: '全部记录'
+            content: '全部'
         }, {
             value: 'delete',
             content: '包含删除'
@@ -1973,6 +1973,7 @@ export const common_subFilter_selections_dict = {
             content: "突变方式(全选)"
         },
     ],
+
 }
 
 export const affirmSelectionConfig = [
