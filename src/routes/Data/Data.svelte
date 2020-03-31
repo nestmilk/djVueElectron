@@ -160,6 +160,32 @@
             {/if}
 
             <div class="contentRight">
+                {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
+                    <div class="editBigInputWrapper">
+                        <span class="abstract">
+                            {#if !now_input_id && !now_input_field}
+                                无编辑单元
+                            {:else if now_params_type!==params.type}
+                                数据项不在当前表
+                            {:else if page_data.every(data=>data.id!==now_input_id)}
+                                数据项不在此页
+                            {:else}
+                                突变"{now_input_id}"，标题"{all_titleItemList_dict[now_params_type][now_input_field][dict.TRANSLATE]}"：
+                            {/if}
+                        </span><!--abstract-->
+                        <input class="bigInput"
+                               value={now_input_field && now_input_id?all_nowValue_of_data_dict[now_params_type][now_input_id][now_input_field]:''}
+                               disabled="{now_input_field && now_input_id &&
+                                            !panal_unable_handle &&
+                                            now_params_type === params.type &&
+                                            page_data.some(data=>data.id===now_input_id) &&
+                                            page_id_availableEdit_dict[now_input_id]?'':'disabled'}"
+
+                               on:change={handleValueChangeInBigInput}
+                        />
+                    </div><!--editBigInputWrapper-->
+                {/if}
+
                 <div class="dataWrapper">
                     <div class="titleTableWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)} >
                         <table class="rightDataTable">
@@ -441,8 +467,8 @@
                                                        value="{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}"
                                                        disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
                                                                     page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
-
                                                        on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data.id, field)}
+                                                       on:focus={(e)=>focusNowField(e, line_data.id, field)}
                                                 >
                                                 <div class="upBesideInput icon-warning"></div>
                                                 <div class="downBesideInput icon-undo2
@@ -577,7 +603,7 @@
         DELETED_IDS: "deleted_ids", LEFT_IDS: "left_ids", ADDED_IDS: "added_ids", PREVALUE_NOWVALUE_UPDATE: 'preValue_nowValue_update',
         LOG_DETAILS: "log_details", SUBJECT_ID: 'subject_id', SUBJECT_FIELD_NAME: "subject_field_name",
         NEW_VALUE: 'new_value', OLD_VALUE: 'old_value', PREVIOUS_LOG_UPDATE: "previous_log_update",
-        EDITOR: 'editor', ADD_TIME: "add_time", CHECK: 'check',
+        EDITOR: 'editor', ADD_TIME: "add_time", CHECK: 'check', SUBMIT: 'submit',
     }
     // 获取路径中的：值
     export let params = {}
@@ -602,32 +628,35 @@
         sureMessage = "是否对" + dict_translate[sureEvent] + "进行" + dict_translate[sureOperation] + "相关操作!"
     }
     function handleSureReply(e){
-        console.log('handleSureReply', e.detail.status)
-        if (e.detail.status) {
-            switch (sureEvent) {
-                case dict.MULTIPLE_AFFIRM:
-                    switch (sureOperation) {
-                        case dict.CANCEL:
-                            __handleCancelMulAffirm()
-                            break
-                        default:
-                            break
-                    }
-                    break
-                case dict.CANCEL_SUBMIT_DONE:
-                    switch (sureOperation) {
-                        case dict.CANCEL:
-                            // console.log('handleSureReply 取消相关提交', selected_ids_forCancelDone)
+        // console.log('handleSureReply', e.detail.status)
+        let reply = e.detail.status
+
+        switch (sureEvent) {
+            case dict.MULTIPLE_AFFIRM:
+                switch (sureOperation) {
+                    case dict.CANCEL:
+                        if (reply) __handleCancelMulAffirm()
+                        break
+                    default:
+                        break
+                }
+                break
+            case dict.SUBMIT:
+                switch (sureOperation) {
+                    case dict.CANCEL:
+                        // console.log('handleSureReply 取消相关提交', selected_ids_forCancelDone)
+                        if (reply){
                             __handleCancelSelectedIdsDone()
                             logDetailsShow = false
-                            break
-                        default:
-                            break
-                    }
-                default:
-                    break
-            }
+                        }
+                        break
+                    default:
+                        break
+                }
+            default:
+                break
         }
+
 
         sureShow = false
     }
@@ -681,12 +710,11 @@
 
     function __checkIfInsideMultipleAffirm(id){
         let log_id = all_submit_logs_dict[params.type][id]
-        if(log_id){
-            if(logs_together_dict[log_id][dict.IDS].length>1){
-                return true
-            }else{
-                return false
-            }
+        if(log_id &&
+            logs_together_dict.hasOwnProperty(log_id) &&
+            logs_together_dict[log_id][dict.IDS].length>1
+        ){
+            return true
         }else{
             // 如果log为null，则必然是单选审核
             return false
@@ -730,11 +758,10 @@
             case dict.EDIT_SINAFF_REASON:
                 // 先判断是不是在批量组内
                 let ifInsideMultiple_editSinAffReason = __checkIfInsideMultipleAffirm(id)
-                // 首先不在批量组内，且有all_submit_logs_dict中存在此id，并且其log详情的value不等于'check'（！！强制转化为boolean值）, 则显示
-                // console.log(!ifInsideMultiple_editSinAffReason, all_submit_logs_dict[params.type].hasOwnProperty(id), all_submit_logs_dict[params.type][id])
+                let logId_edit_sinAff_reason = all_submit_logs_dict[params.type][id]
+                // 1) 首先不在批量组内，2)log详情中能找到对应的logId
                 return !ifInsideMultiple_editSinAffReason &&
-                        all_submit_logs_dict[params.type].hasOwnProperty(id) &&
-                        logs_together_dict[all_submit_logs_dict[params.type][id]][dict.VALUE]!==dict.CHECK
+                        logs_together_dict.hasOwnProperty(logId_edit_sinAff_reason)
             case dict.MUL_AFFIRM:
                 return __check_availSelect_if_FreeAndTruelyEdited(id)
             case dict.CANCEL_MULAFF:
@@ -773,24 +800,6 @@
                 return false
         }
     }
-    function __check_availSelect_of_oneData_notInsideAllStatusOfDataDict(done){
-        // console.log('<===__check_availSelect_of_oneData_notInsideAllStatusOfDataDict begin')
-        let affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
-        switch (affirm_status) {
-            case dict.SIN_CANCEL_OR_AFFIRM:
-                return !done
-            case dict.EDIT_SINAFF_REASON:
-                return false
-            case dict.MUL_AFFIRM:
-                return false
-            case dict.CANCEL_MULAFF:
-                return false
-            case dict.ADJUST_MULAFF_ITEMS:
-                return false
-            default:
-                return false
-        }
-    }
 
     // 重置当前页面某id是否可选
     function __update_oneId_availSelect_inPageIdAvailSelectDict(id){
@@ -798,7 +807,8 @@
     }
     // 重置当前页所有id，是否可选
     function __update_allIds_availSelect_inPageIdAvailSelectDict(){
-        for (let id in page_id_availableSelect_dict) {
+        let ids = page_data.map(data=>data.id)
+        for (let id of ids) {
             __update_oneId_availSelect_inPageIdAvailSelectDict(id)
         }
     }
@@ -808,8 +818,9 @@
     }
     // 重置当前页所有id，都不可编辑
     function __set_allIds_false_availEdit_inPageIdAvailEditDict(){
-        for (let id in page_id_availableEdit_dict){
-            page_id_availableEdit_dict[id] = false
+        let ids = page_data.map(data=>data.id)
+        for (let id of ids){
+            __set_oneId_false_availEdit_inPageIdAvailEditDict(id)
         }
     }
 
@@ -992,6 +1003,7 @@
 
                 // 更新当前页的相关previousLogs
                 await __update_Ids_and_relatedIds_PreviousLogs()
+                __update_allIds_availSelect_inPageIdAvailSelectDict()
                 break
             case dict.CANCEL_SUBMIT_DONE:
                 //当前所有都不能编辑
@@ -1003,6 +1015,7 @@
 
                 // 更新当前页的相关previousLogs
                 await __update_Ids_and_relatedIds_PreviousLogs()
+                __update_allIds_availSelect_inPageIdAvailSelectDict
                 break
             default:
                 break
@@ -1132,6 +1145,22 @@
         page_ModifyField_mouseEnter_dict[id][field] = false
     }
 
+    // 设定当前修改标题
+    let now_input_field = null
+    let now_input_id = null
+    let now_params_type = null
+    function focusNowField(e, id, field){
+        now_input_field = field
+        now_input_id = id
+        now_params_type = params.type
+    }
+    function handleValueChangeInBigInput(event){
+        if(now_input_id&&now_input_field){
+            all_nowValue_of_data_dict[now_params_type][now_input_id][now_input_field] = event.target.value
+        }
+
+    }
+
     function __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null, adjust_mulAff_items=false, cancel_submit=false){
         // console.log('<=== __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord begin')
         // 1) 修改此条数据的status
@@ -1144,14 +1173,10 @@
                 all_submit_params_dict[params.type][id] = {
                     done: true
                 }
-                // 3) 配置此条id的默认提交类型和原因描述
+
+                // 3) 配置此条id的log_id
                 let log_checked_id = uuidv4()
                 all_submit_logs_dict[params.type][id] = log_checked_id
-                logs_together_dict[log_checked_id] = {
-                    ids: [id],
-                    value: 'check',
-                    desc: ""
-                }
 
                 // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
@@ -1471,13 +1496,15 @@
         console.log("handleCancelSelectedIdsDone", e.detail[dict.IDS])
         selected_ids_forCancelDone = e.detail[dict.IDS]
 
-        sureEvent = dict.CANCEL_SUBMIT_DONE
+        sureEvent = dict.SUBMIT
         sureOperation = dict.CANCEL
         changeSendSureMessage()
         sureShow = true
     }
     // 用于实际处理撤销提交操作
     async function __handleCancelSelectedIdsDone(){
+        loadingShow = true
+
         let name = params.type
         name = name.slice(0, 1).toUpperCase() + name.slice(1)
         for (let id of selected_ids_forCancelDone){
@@ -1504,9 +1531,10 @@
             all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'撤销成功。':'撤销失败！'}`]
         }
 
-
         // 保险起见
         selected_ids_forCancelDone = []
+
+        loadingShow = false
     }
 
     // 处理点击取消提交按钮事情
@@ -1600,7 +1628,7 @@
 
         await api[`list${name}`](all_search_params_dict[params.type]).then(response=>{
             page_data = response.data.results
-            // 当前页每条id的各个可编辑field的鼠标是否进入，初始化为false
+            // A) 当前页每条id的各个可编辑field的鼠标是否进入，初始化为false未进入
             page_ModifyField_mouseEnter_dict = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
                 let status_dict = {}
                 for (let field in item){
@@ -1610,27 +1638,14 @@
                 return result
             }, {})))
             // console.log('__getPageData page_ModifyField_mouseEnter_dict', page_ModifyField_mouseEnter_dict)
-            // 当前页各id能否被编辑, 初始化都不能编辑
+
+            // B) 当前页各id能否被编辑, 初始化都不能编辑
             page_id_availableEdit_dict =  JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
                 result[item[dict.ID]] = false
                 return result
             }, {})))
-            // console.log('__getPageData page_id_availableEdit_dict', page_id_availableEdit_dict)
-            // 需要结合当前审核工作状态，更新页面可选项
-            page_id_availableSelect_dict = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
-                let id = item[dict.ID]
-                // 查看本地是否有状态，如果有就用本地状态判断
-                if (all_status_of_data_dict[params.type].hasOwnProperty(id)){
-                    result[id] = __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id)
-                }else{
-                    // 如果本地状态没有，就用数据库状态更新
-                    result[id] = __check_availSelect_of_oneData_notInsideAllStatusOfDataDict(item[dict.DONE])
-                }
-                return result
-            }, {})))
-            // console.log("__getPageData page_id_availableSelect_dict", page_id_availableSelect_dict)
 
-            // 更新当前页data_num
+            // C) 更新当前页data_num
             data_count = response.data.count
 
             success = true
@@ -1640,18 +1655,20 @@
         })
 
         if(success){
-            // console.log('__getPageData success', success)
-            // 更新totalPageNums
+            // D) 更新totalPageNums
             __updateTotalPageNums()
 
-            // 更新 all_data_status_dict 中数据状态
+            // E) 更新 all_data_status_dict 中数据状态
             __update_allDataStatusDict_allNowValueOfDataDict_allPreValueOfDataDict()
 
-            //如果当前 审核工作状态, 需要更新之前的过往日志
+            // F)如果当前 审核工作状态, 需要更新之前的过往日志
             if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
                 console.log('__getPageData 审核工作状态 开始更新日志')
                 await __update_Ids_and_relatedIds_PreviousLogs()
             }
+
+            // G) 更新页面所有id可否选择, 查看日志，取消提交的工作状态 依赖于F)
+            __update_allIds_availSelect_inPageIdAvailSelectDict()
         }
 
         loadingShow = false
@@ -1671,7 +1688,7 @@
         push(`/${type}/${params.panalId}`)
     }
     // 1) 每页的filter的定制版subFilters的名字列表，因为三张mutant表的exonicfuncRefGene
-    // 若果是表是ifSimpleOrdering，需要将ordering的内容更正为['sample__id']
+    // 如果表是ifSimpleOrdering，需要将ordering的内容更正为['sample__id']
     //  然后每张表，除开通用的page，page_size, sampleIds，panalId, search筛选项
     //  根据common_filter_subFilters_dict中，特殊筛选大项，构建每个亚级筛选项的所选项目的index
     let all_subFilter_names_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
@@ -1702,7 +1719,7 @@
 
         return result
     }, {})))
-    // 2) todo 必须先重置all_subFilters_dict, 因为ordering有些是简化的，只含sample__id
+    // 2) todo 必须先重置all_subFilters_names_dict, 因为ordering有些是简化的，只含sample__id
     let all_subFilter_indexes_dict = JSON.parse(JSON.stringify(Object.keys(all_subFilter_names_dict).reduce((result, sheet_name)=>{
         let subFilter_names = all_subFilter_names_dict[sheet_name]
         result[sheet_name] = {}
@@ -1711,7 +1728,7 @@
         }
         return result
     }, {})))
-    // 3) 每页的subFilters的定制版选项列表，再追加三张mutant的exonicfuncRefGene项目列表
+    // 3) 每页的subFilters的定制版选项列表，后续再追加三张mutant的exonicfuncRefGene项目列表
     let subFilter_selections_dict = JSON.parse(JSON.stringify(common_subFilter_selections_dict))
 
     // 获取sheet页的页面筛选参数字典，获取当前页内容时直接调取即可！！
@@ -1810,21 +1827,24 @@
         all_search_params_dict[params.type][dict.PAGE] = 1
         // 其中包含，页面切换回第一页
         __set_all_specfic_Params_in_AllSearchParamsDict()
+
         await __getPageData()
 
         loadingShow = false
     }
+
     // 用于绑定exonicfuncRefgene标题筛选框, 一个页面只能绑定一次
     let exonicfuncRefgeneSelection
-    function change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(index){
-        console.log("change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict", index)
+    async function change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(index){
+        // console.log("change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict", index)
         all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0] = index
 
         // 因为exonicFuncRefGene筛选项变化，页面先设置为1
         all_search_params_dict[params.type][dict.PAGE] = 1
         // 其中包含，页面切换回第一页
         __set_all_specfic_Params_in_AllSearchParamsDict()
-        __getPageData()
+
+        await __getPageData()
     }
 
 
@@ -1833,7 +1853,7 @@
     // 当前总页数
     let total_page_nums
 
-    function handleChangePageSize(event){
+    async function handleChangePageSize(event){
         // console.log("handleChangePageSize", event.detail.pageSize)
         all_search_params_dict[params.type][dict.PAGE_SIZE] = event.detail.pageSize
 
@@ -1841,13 +1861,15 @@
         __updateTotalPageNums()
         // 当前sheet的nowPageNum设置为1，返回第一页
         all_search_params_dict[params.type][dict.PAGE] = 1
-        __getPageData()
+
+        await __getPageData()
     }
-    function handleChangePage(event){
+    async function handleChangePage(event){
         // console.log("handleChangePage", event.detail.page)
 
         all_search_params_dict[params.type][dict.PAGE] = event.detail.page
-        __getPageData()
+
+        await __getPageData()
     }
 
     // 整个表的sampleId的列表
@@ -1929,7 +1951,7 @@
     async function submitAffirmedData(){
         loadingShow = true
 
-        //先上传log
+        //A) 先上传log
         let success_logs = []
         let fail_logs = []
         for (let log_id in logs_together_dict){
@@ -1950,12 +1972,24 @@
             let time = getTime()
             all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 日志(${log_id.split('-')[0]}...)${success?'已上传。':'上传失败！'}`]
         }
+
         console.log("submitAffirmedData success_logs fail_logs", success_logs, fail_logs)
 
-        //开始上传数据
+        let time = getTime()
+        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 日志上传${success_logs.length}条，失败${fail_logs.length}条`]
+        if(fail_logs.length>0) {
+            // 如果有日志提交失败就停止后续数据的更新提交
+            errors = '日志上传失败，取消后续提交！'
+            loadingShow = false
+            return
+        }
+
+
+        //B) 开始上传数据
         // key为log_id, value为成功提交的ids列表
         let success_num = 0
         let fail_num = 0
+        // 以logId为key，成功提交的ids为值
         let success_ids_dict = {}
         let name = params.type
         name = name.slice(0, 1).toUpperCase() + name.slice(1)
@@ -1995,6 +2029,7 @@
 
         // 1) 找出全部提交成功的logId号
         let complete_logIds = []
+        // 以logId为key，部分提交成功的ids为key，后续做出提醒！！
         let dirty_ids_dict = {}
         for (let log_id in logs_together_dict) {
             if(success_ids_dict.hasOwnProperty(log_id)){
@@ -2021,7 +2056,7 @@
 
 
         // a. 消息提示整体情况
-        let time = getTime()
+        time = getTime()
         all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 数据提交${success_num}条，失败${fail_num}条`]
         // b. seletect_ids清空
         all_selected_dataIds_dict[params.type] = []
@@ -2324,6 +2359,7 @@
 
             // 之前页面的筛选坐标重置
             all_subFilter_indexes_dict[pre_params_type][dict.EXONICFUNCREFGENE][0] = 0
+
             // 修改param的exonicFuncrefgene的值，偷懒把特殊的筛选项params重置了
             __set_all_specfic_Params_in_AllSearchParamsDict()
         }
@@ -2334,6 +2370,7 @@
 
         //todo 筛选框值修改，不会触发onChange事件, 返回人工修改
         __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex()
+
         __getPageData()
     }
 
@@ -2514,8 +2551,8 @@
     })
 
     beforeUpdate(()=>{
-        // TODO offsetHeight为含边框的div高度，scrollTop为元素被上边框遮住的部分，scrollHeight为内容高度
-        autoscroll = uploadMessageDiv && (uploadMessageDiv.offsetHeight + uploadMessageDiv.scrollTop) < uploadMessageDiv.scrollHeight
+        // TODO clientHeight：包括padding但不包括border、水平滚动条、margin的元素的高度。 offsetHeight为含边框的div高度，scrollTop为元素被上边框遮住的部分，scrollHeight为内容高度
+        autoscroll = uploadMessageDiv && (uploadMessageDiv.scrollTop + uploadMessageDiv.clientHeight) < uploadMessageDiv.scrollHeight
     })
 
     afterUpdate(()=>{
@@ -2525,39 +2562,29 @@
 
     // 测试使用
     function test() {
-        // console.log(whole_panal_infoList_dict)
         // console.log(sample_list, sampleSn_dict)
-        // console.log(now_page_data)
         // console.log(all_titleConfigList_dict)
         // console.log(all_sample_record_dict)
         // console.log(all_sheet_record_dict)
-        // let ordering =  new OrderingFilter()
-        // ordering.toggleNowId(dict.SAMPLEID2UNDERLINE)
-        // console.log(exonic.getValue())
-        // exonic.toggleNowId()
-        // console.log(exonic.getValue())
-        // console.log(all_searchParams_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict, all_sample_record_dict)
+        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
-        console.log(all_modifyTitle_list_dict)
+        // console.log(all_modifyTitle_list_dict)
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
-        // console.log(uuidv4())
         // console.log(all_selected_dataIds_dict)
+        // console.log(all_status_of_data_dict)
         // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
-        // console.log(all_preValue_of_data_dict)
-        // console.log(all_selected_dataIds_dict[params.type])
-        console.log(all_submit_params_dict)
-        console.log(all_submit_logs_dict, logs_together_dict)
+        // console.log(all_submit_params_dict)
+        // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_affirm_status_dict)
-        // console.log(page_availableSelect_dict)
         // console.log(all_selected_dataIds_dict)
-        // console.log(all_nowValue_of_data_dict[params.type], all_preValue_of_data_dict[params.type])
-        // console.log(page_id_availableEdit_dict)
+        // console.log(page_id_availableSelect_dict, page_id_availableEdit_dict)
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
-        console.log(all_previousLog_list_dict)
+        // console.log(all_previousLog_list_dict)
+        // console.log(now_input_field && now_input_id, !panal_unable_handle, now_params_type === params.type, page_id_availableEdit_dict[now_input_id], page_data.some(data=>data.id===now_input_id))
     }
 
 </script>
@@ -2903,6 +2930,34 @@
         flex: 1;
         display: flex;
         flex-flow: column;
+    }
+
+    .contentRight .editBigInputWrapper{
+        padding: 3px;
+        width: 100%;
+        flex: 0 0 31px;
+        box-sizing: border-box;
+        line-height: 31px;
+        font-size: 14px;
+        border-bottom: 1px solid #939393;
+        display: flex;
+    }
+    .contentRight .editBigInputWrapper .abstract{
+        display: block;
+        margin: auto 2px;
+        flex: 0 0 150px;
+        height: 24px;
+        line-height: 24px;
+        text-overflow: ellipsis;
+        white-space:nowrap;
+        float: left;
+    }
+    .contentRight .editBigInputWrapper .bigInput{
+        padding: 0 5px;
+        margin: auto 5px;
+        flex: 1;
+        height: 24px;
+        line-height: 24px;
     }
 
     .contentRight .dataWrapper{

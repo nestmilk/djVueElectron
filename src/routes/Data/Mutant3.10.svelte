@@ -394,7 +394,7 @@
                                                     <input class="mutantInput" type={mutantDispConfDict[title].type}
                                                            value="{mutant_submit_dict[mutant.id]?mutant_submit_dict[mutant.id][title][dict.NOWVALUE]:null}"
                                                            on:change={(e)=>handleValueChangeForMutSubmits(e, mutant.id, title)}
-                                                           on:focus={(e)=>focusNowField(e, mutant.id, title, index)}
+                                                           on:focus={(e)=>focusNowField(e, mutant.id, title)}
 
                                                            disabled="{panal_unable_handle?'disabled':
                                                            (mutant_submit_dict[mutant.id]?
@@ -2190,8 +2190,7 @@
     // 设定当前修改标题
     let now_input_field = null
     let now_input_mutant_id = null
-    let now_index
-    function focusNowField(event, mutant_id, title, index){
+    function focusNowField(event, mutant_id, title){
         now_input_field = title
         now_input_mutant_id = mutant_id
     }

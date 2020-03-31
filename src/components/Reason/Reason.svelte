@@ -11,7 +11,7 @@
             {/each}
         </select>
     </div>
-    <div class="message">{message}</div>
+    <div class="message">{hintMessage}</div>
     <div class="textareaWrapper">
         原因描述：
         <textarea value="{desc}"
@@ -36,18 +36,18 @@
     let value
     // 如果不设默认值，就是显示undefined
     let desc = ''
-    let message = ''
+    let hintMessage = ''
     function changeValue(e){
         desc = e.target.value
     }
     function removeMessage(){
-        message = ''
+        hintMessage = ''
     }
 
     function handleAddReasonSure(){
         // console.log(value, desc)
         if (value==='nothing') {
-            message = '请选择一个修改原因的类型！'
+            hintMessage = '请选择一个修改原因的类型！'
             return
         }
         dispatch('sure', {
@@ -111,7 +111,7 @@
         width: 80%;
         height: 20px;
         line-height: 20px;
-        font-size: 16px;
+        font-size: 14px;
         color: orangered;
     }
     .reasonWrapper .textareaWrapper{
