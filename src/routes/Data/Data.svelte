@@ -164,6 +164,7 @@
                     <div class="filterWrapper">
                         <div class="doneWrapper">
                             <span>提交状态:</span>
+                            <!--testValue也能触发$: if (pre_params_type !== params.type) 可能是params.type! 偷巧了-->
                             <select bind:value={all_subFilter_indexes_dict[params.type][dict.DONE][0]}>
                                 {#each subFilter_selections_dict[dict.DONE] as selection, index}
                                     <option value={index}>
@@ -198,11 +199,11 @@
                             {#if !now_input_id && !now_input_field}
                                 无编辑单元
                             {:else if now_params_type!==params.type}
-                                数据项不在当前表
+                                数据在"{submenu_translate_dict[now_params_type]}"表
                             {:else if page_data.every(data=>data.id!==now_input_id)}
-                                数据项不在此页
+                                数据"{now_input_id}"，不在此页
                             {:else}
-                                突变"{now_input_id}"，标题"{all_titleItemList_dict[now_params_type][now_input_field][dict.TRANSLATE]}"：
+                                数据"{now_input_id}"，标题"{all_titleItemList_dict[now_params_type][now_input_field][dict.TRANSLATE]}"：
                             {/if}
                         </span><!--abstract-->
                         <input class="bigInput"
@@ -318,7 +319,7 @@
                                     }
                                     <!--                                                    on:change="{(e) => change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(e.target.value)}"-->
                                         <th class="exonicfuncRefgene" >
-                                            <!--bind:value会触发页面刷新，即可触发$: if -->
+                                            <!--bind:value会触发页面刷新，即可触发$: if (pre_params_type !== params.type) -->
                                             <select bind:value={all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0]}
                                                     class="inside"
                                             >
@@ -978,6 +979,17 @@
     // 改变审核的工作环境
     async function changeAffirmWorkingStatus(type){
         let pre_affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
+        if (pre_affirm_status===type) return
+
+        // 如果之前工作状态是检查过往日志记录，需要确定logEdits的subfilter坐标是不是0，如果不是需要切换回去0
+        if (pre_affirm_status===dict.CHECK_SINSUB_LOGS &&
+            all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]!==0){
+            __reset_indexes_inAllSubFilterIndexesDict_params_inAllSearchParamsDict([dict.LOGSEDIT])
+
+            __set_page_inAllSearchParamsDict(1)
+            await __getPageData()
+        }
+
         //1) 先修改当前工作状态
         all_affirmWorkingStatus_of_sheet_dict[params.type] = type
 
@@ -1538,6 +1550,9 @@
     async function __handleCancelSelectedIdsDone(){
         loadingShow = true
 
+        let success_num = 0
+        let fail_num = 0
+        let failed_ids = []
         let name = params.type
         name = name.slice(0, 1).toUpperCase() + name.slice(1)
         for (let id of selected_ids_forCancelDone){
@@ -1552,20 +1567,38 @@
                     }
             ).then(response=>{
                 success = true
+                success_num++
                 // 1) 更新相关参数
                 __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.FREE, null, null, null, false, true)
-                // 2) 更新页面的availableSelect
-                __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+                // // 2) 更新页面的availableSelect
+                // __update_oneId_availSelect_inPageIdAvailSelectDict(id)
             }).catch(error=>{
                 console.log('__handleCancelSelectedIdsDone', error)
+                fail_num++
+                failed_ids.push(id)
             })
 
             let time = getTime()
             all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'撤销成功。':'撤销失败！'}`]
         }
 
-        // 保险起见
+        // a. 消息提示整体情况
+        let time = getTime()
+        let left_message = fail_num?`，失败${fail_num}条`:'。'
+        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 撤销成功${success_num}条${left_message}`]
+        // b. 保险起见
         selected_ids_forCancelDone = []
+        __set_page_inAllSearchParamsDict(1)
+        await __getPageData()
+
+        // 提示失败的ids
+        if (failed_ids.length>0){
+            await remote.dialog.showMessageBox({
+                type: 'info',
+                title: '存在撤销提交失败！',
+                message: `请记录后再次撤回提交：${JSON.stringify(failed_ids)}`
+            })
+        }
 
         loadingShow = false
     }
@@ -2108,10 +2141,10 @@
                 }
                 // 1) 更新相关参数
                 __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
-                // 2) 更新页面的availableSelect
-                __update_oneId_availSelect_inPageIdAvailSelectDict(id)
-                // 3) availableEdit修改为false
-                __set_oneId_false_availEdit_inPageIdAvailEditDict(id)
+                // // 2) 更新页面的availableSelect
+                // __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+                // // 3) availableEdit修改为false
+                // __set_oneId_false_availEdit_inPageIdAvailEditDict(id)
             }).catch(error=>{
                 fail_num++
                 console.log(`submitAffirmedData update${name}`, error)
@@ -2152,13 +2185,17 @@
 
         // a. 消息提示整体情况
         time = getTime()
-        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 数据提交${success_num}条，失败${fail_num}条`]
+        let left_message = fail_num?`，失败${fail_num}条`:'。'
+        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 提交成功${success_num}条${left_message}`]
         // b. seletect_ids清空
         all_selected_dataIds_dict[params.type] = []
-        // c. 如果当前affrim工作状态需要更新previousLogs
-        if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
-            await __update_Ids_and_relatedIds_PreviousLogs()
-        }
+        // // c. 如果当前affrim工作状态需要更新previousLogs
+        // if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
+        //     await __update_Ids_and_relatedIds_PreviousLogs()
+        // }
+
+        __set_page_inAllSearchParamsDict(1)
+        await __getPageData()
 
         // todo 针对污染数据发出提醒 todo 之后需要改为自动取消提交
         Object.keys(dirty_ids_dict).forEach(log_id=>{
@@ -2661,11 +2698,15 @@
         if (autoscroll) uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
     })
 
+    // let testValue = JSON.parse(JSON.stringify(Object.keys(sheetDisplayConfigDict).reduce((result, sheet)=>{
+    //     result[sheet] = null
+    //     return result
+    // }, {})))
 
     // 测试使用
     function test() {
-        console.log(sample_list, sampleSn_dict)
-        // console.log(all_titleConfigList_dict)
+        // console.log(sample_list, sampleSn_dict)
+        console.log(all_titleItemList_dict)
         // console.log(all_sample_record_dict)
         // console.log(all_sheet_record_dict)
         console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
@@ -2687,6 +2728,7 @@
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
         // console.log(all_previousLog_list_dict)
         // console.log(now_input_field && now_input_id, !panal_unable_handle, now_params_type === params.type, page_id_availableEdit_dict[now_input_id], page_data.some(data=>data.id===now_input_id))
+        // console.log(testValue)
     }
 
 </script>
