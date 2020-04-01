@@ -164,7 +164,8 @@
                     <div class="filterWrapper">
                         <div class="doneWrapper">
                             <span>提交状态:</span>
-                            <!--testValue也能触发$: if (pre_params_type !== params.type) 可能是params.type! 偷巧了-->
+                            <!--testValue也能触发$: if (pre_params_type !== params.type) 可能是params.type! 暂时先偷个巧-->
+                            <!-- bug 但是，如果首页是例如target等包含此类选择的页面，第一次登入无法控制$: if 需要切到其它页面再转入才行！！-->
                             <select bind:value={all_subFilter_indexes_dict[params.type][dict.DONE][0]}>
                                 {#each subFilter_selections_dict[dict.DONE] as selection, index}
                                     <option value={index}>
@@ -323,7 +324,11 @@
                                             <select bind:value={all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0]}
                                                     class="inside"
                                             >
-                                                {#each subFilter_selections_dict[`${params.type.toLowerCase()}_exonicfuncRefgene`] as selection, index}
+                                                <!--初次加载还没有特异性的exonicfuncRefgene-->
+                                                {#each subFilter_selections_dict[`${params.type.toLowerCase()}_exonicfuncRefgene`] ||
+                                                    subFilter_selections_dict['initial_exonicfuncRefgene']
+                                                    as selection, index
+                                                }
                                                     <option value={index}>
                                                         {selection[dict.CONTENT]}
                                                     </option>
@@ -1711,7 +1716,7 @@
                 return result
             }, {})))
 
-            // C) 更新当前页data_num
+            // C) 更新当前页data总条数，
             data_count = response.data.count
 
             success = true
@@ -1721,7 +1726,7 @@
         })
 
         if(success){
-            // D) 更新totalPageNums
+            // D) 更新totalPageNums，利用C)中data_count
             __updateTotalPageNums()
 
             // E) 更新 all_data_status_dict 中数据状态
@@ -1729,7 +1734,7 @@
 
             // F)如果当前 审核工作状态, 需要更新之前的过往日志
             if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
-                console.log('__getPageData 审核工作状态 开始更新日志')
+                console.log('__getPageData 审核工作状态需要 开始更新日志')
                 await __update_Ids_and_relatedIds_PreviousLogs()
             }
 
@@ -2141,9 +2146,9 @@
                 }
                 // 1) 更新相关参数
                 __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
-                // // 2) 更新页面的availableSelect
+                // // 2) 更新页面的availableSelect 替换 __getPageData()中G)全部整体更新
                 // __update_oneId_availSelect_inPageIdAvailSelectDict(id)
-                // // 3) availableEdit修改为false
+                // // 3) availableEdit修改为false 替换 __getPageData()中B)全部整体初始化false
                 // __set_oneId_false_availEdit_inPageIdAvailEditDict(id)
             }).catch(error=>{
                 fail_num++
@@ -2151,7 +2156,7 @@
             })
 
             let time = getTime()
-            all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'已上传。':'上传失败！'}`]
+            all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'提交成功。':'提交失败！'}`]
         }
         console.log("submitAffirmedData success_ids fail_ids", success_ids_dict)
 
@@ -2189,7 +2194,7 @@
         all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 提交成功${success_num}条${left_message}`]
         // b. seletect_ids清空
         all_selected_dataIds_dict[params.type] = []
-        // // c. 如果当前affrim工作状态需要更新previousLogs
+        // // c. 如果当前affrim工作状态需要更新previousLogs 替换 __getPageData()中F)一致
         // if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
         //     await __update_Ids_and_relatedIds_PreviousLogs()
         // }
