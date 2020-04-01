@@ -458,7 +458,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "hereditary",
-        filters: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", 'ordering', "exonicfuncRefgene"],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: '遗传',
         reason_type: [
             {
@@ -628,7 +628,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "TMB",
-        filters: ["page","page_size","sampleIds","panalId","search", "done", "logsEdit", 'ordering', "exonicfuncRefgene"],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: 'TMB',
         reason_type: [
             {
@@ -740,7 +740,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "immune",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
         submenu_translate: '免疫',
         reason_type: [
             {
@@ -814,7 +814,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "TNB",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
         submenu_translate: 'TNB',
         reason_type: [
             {
@@ -913,7 +913,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "fusion",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
         submenu_translate: '融合',
         reason_type: [
             {
@@ -1110,7 +1110,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "CNA",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering"],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
         submenu_translate: 'CNA',
         reason_type: [
             {

@@ -32,9 +32,11 @@
                             >
                                 {#if cancelSubmit}
                                     <td class="select">
-                                        <button class="{selected_ids.indexOf(id)!==-1?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
-                                                on:click={(e)=>handleSelect(e, id)}
-                                        ></button>
+                                        {#if statusDict[id]==='done'}
+                                            <button class="{selected_ids.indexOf(id)!==-1?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
+                                                    on:click={(e)=>handleSelect(e, id)}
+                                            ></button>
+                                        {/if}
                                     </td>
                                 {/if}
                                 <td class="small">{logId}</td>
@@ -102,6 +104,7 @@
     export let fieldList
     export let titleDict
     export let cancelSubmit
+    export let statusDict
     // console.log('SingleDataLogdetails', idLogIds, logs)
 
     let selected_ids = [idLogIds[0].ids[0]]

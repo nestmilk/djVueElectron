@@ -1,8 +1,7 @@
 <div>
     <div class="footer">
         <div class="footerK">
-<!--            这个number必须加，不然就是各种传值跳跃错误！！！！ TODO-->
-            <select class="select" bind:value={pageSize} on:change="{changePageSize}">
+            <select class="select" bind:this={select} bind:value={pageSize} on:change="{changePageSize}">
                 <option value="10">10/页</option>
                 <option value="15">15/页</option>
                 <option value="20">20/页</option>
@@ -11,6 +10,7 @@
                 <option value="10000">10000/页</option>
             </select>
 
+            <!--这个number必须加，不然就是各种传值跳跃错误！！！！ TODO-->
             <span class="unpage">前往<input class="set" type="number" bind:value={setPage} on:keydown={handleKeydown} />页</span>
             {#each pageList as {page, text, active} }
                 {#if page == -1}
@@ -37,15 +37,12 @@
     export let page = -1
     export let totalPage = -1
     export let currentPageSize
-    // let pageList = []
+    export let paramsType
+    let nowParamsType = paramsType
     let setPage
-    // todo 初始化设置这个没有用，还是显示第一位的值, 仍需要手工onMount设置
-    let pageSize = 20
-    $: if(currentPageSize!==pageSize){
-        console.log('page3', currentPageSize, pageSize)
-        pageSize = currentPageSize
-        document.querySelector('.select').value = pageSize
-    }
+    let select
+
+    let pageSize = 10
 
     function nav (nav_page, nav_totalPage, nav_preText, nav_nextText, nav_endShow) {
         let pageList = []
@@ -104,10 +101,23 @@
         })
     }
 
-    function changePageSize () {
-        dispatch('changePageSize', {
-            pageSize: pageSize
-        })
+
+    $: if(paramsType!==nowParamsType && currentPageSize!==pageSize){
+        // console.log('Page3 $: if(paramsType!==nowParamsType && currentPageSize!==pageSize) 页面切换、页寸改变，更新一次pageSize')
+        nowParamsType = paramsType
+        pageSize = currentPageSize
+        select.value = currentPageSize
+    }
+
+    // pageSize的改变触发
+    function changePageSize (e) {
+        if(paramsType===nowParamsType){
+            // console.log('Page3 changePageSize() 页面内部 页寸手动改变 派发切换页面出去')
+            //同一页面内，手工点击改变，派发出去 ==>导致currentPageSize改变
+            dispatch('changePageSize', {
+                pageSize: pageSize
+            })
+        }
     }
 
     function handleKeydown(event) {
@@ -131,7 +141,14 @@
     }
 
     onMount(()=>{
-        document.querySelector('.select').value = pageSize
+        // console.log('Page3 onMount A', pageSize, select.value)
+        pageSize = currentPageSize
+        // console.log('Page3 onMount B', pageSize, select.value)
+        // 没办法，必须第一次人工修改select的value
+        select.value = currentPageSize
+        // console.log('Page3 onMount C', pageSize, select.value)
+        // 这种方法，会和外部的冲突，还是用bind:this安全一些！
+        // document.querySelector('.select').value = currentPageSize
     })
 
 

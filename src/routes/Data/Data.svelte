@@ -166,7 +166,9 @@
                             <span>提交状态:</span>
                             <!--testValue也能触发$: if (pre_params_type !== params.type) 可能是params.type! 暂时先偷个巧-->
                             <!-- bug 但是，如果首页是例如target等包含此类选择的页面，第一次登入无法控制$: if 需要切到其它页面再转入才行！！-->
-                            <select bind:value={all_subFilter_indexes_dict[params.type][dict.DONE][0]}>
+                            <select value={all_subFilter_indexes_dict[params.type][dict.DONE][0]}
+                                    on:change={(e)=>handleChangeFilter(e, dict.DONE)}
+                            >
                                 {#each subFilter_selections_dict[dict.DONE] as selection, index}
                                     <option value={index}>
                                         {selection[dict.CONTENT]}
@@ -176,7 +178,9 @@
                         </div>
                         <div class="logsEditWrapper">
                             <span>修改历史:</span>
-                            <select bind:value={all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]}>
+                            <select value={all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]}
+                                    on:change={(e)=>handleChangeFilter(e, dict.LOGSEDIT)}
+                            >
                                 {#each subFilter_selections_dict[dict.LOGSEDIT] as selection, index}
                                     <option value={index}>
                                         {selection[dict.CONTENT]}
@@ -191,6 +195,7 @@
                                    placeholder="请填写数据Id，多个id间空格分隔"
                             />
                             <button class="icon-undo2"
+                                    title="清空所有过滤条件"
                                     on:click={handleClearQueryIDS}
                             ></button>
                         </div>
@@ -321,7 +326,8 @@
                                     <!--                                                    on:change="{(e) => change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(e.target.value)}"-->
                                         <th class="exonicfuncRefgene" >
                                             <!--bind:value会触发页面刷新，即可触发$: if (pre_params_type !== params.type) -->
-                                            <select bind:value={all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0]}
+                                            <select value={all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0]}
+                                                    on:change={(e)=>handleChangeFilter(e, `${params.type.toLowerCase()}_exonicfuncRefgene`)}
                                                     class="inside"
                                             >
                                                 <!--初次加载还没有特异性的exonicfuncRefgene-->
@@ -534,6 +540,7 @@
                         <Page page={all_search_params_dict[params.type][dict.PAGE]}
                               totalPage={total_page_nums}
                               currentPageSize={all_search_params_dict[params.type][dict.PAGE_SIZE]}
+                              paramsType={params.type}
                               on:changePageSize={handleChangePageSize}
                               on:changePage={handleChangePage}></Page>
                     </div><!--dataPagerWrapper-->
@@ -566,6 +573,7 @@
         logs="{previousLogs_dicts}"
         fieldList="{all_modifyTitle_list_dict[params.type]}"
         titleDict="{all_titleItemList_dict[params.type]}"
+        statusDict="{all_status_of_data_dict[params.type]}"
         cancelSubmit="{cancelSubmit}"
         on:close={handleCloseLogdetailsShow}
         on:cancel={__handleCancelDispatch_fromLogDetailsPage}
@@ -688,6 +696,8 @@
                             __handleCancelSelectedIdsDone()
                             logDetailsShow = false
                         }
+
+                        cancelSubmit = false
                         break
                     default:
                         break
@@ -948,7 +958,7 @@
             })
         })
 
-        console.log('__update_previousLogs_byLoadedLogsandIds absolute_related_ids', absolute_related_ids)
+        // console.log('__update_previousLogs_byLoadedLogsandIds absolute_related_ids', absolute_related_ids)
 
         absolute_related_ids.forEach(id=>{
             __update_oneId_byLogs_inAllPreviousLogListDict(id, logs)
@@ -968,7 +978,7 @@
                                 subjectIds: ids
                             })
         }).then(response=>{
-            console.log('__update_Ids_and_relatedIds_PreviousLogs', response.data)
+            // console.log('__update_Ids_and_relatedIds_PreviousLogs', response.data)
             __update_previousLogs_byLoadedLogsandIds(ids, response.data)
         }).catch(error=> {
             console.log('__update_Ids_and_relatedIds_PreviousLogs', error)
@@ -1661,7 +1671,7 @@
                 // 如果有记录，再判断数据是否外部可能会被人修改了，
                 // 最常见为测试，其次为多人操作
                 // 整个title表都查一遍，反正查了
-                console.log('__update_allDataStatusDict_allNowVal... do not update')
+                // console.log('__update_allDataStatusDict_allNowVal... do not update')
                 let unequal_values = __check_unequalValues_ofModifiyFields(id,
                         [...all_wholeTitle_list[params.type], dict.DELETE, dict.DONE], data)
 
@@ -1685,7 +1695,7 @@
 
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
     async function __getPageData () {
-        // console.log('__getPageData begin')
+        console.log('<=== __getPageData begin')
         loadingShow = true
 
         // 第一次切换到mutant上加载，还没有更新获得panalId和sampleIds参数
@@ -1802,6 +1812,7 @@
     // 3) 每页的subFilters的定制版选项列表，后续再追加三张mutant的exonicfuncRefGene项目列表
     let subFilter_selections_dict = JSON.parse(JSON.stringify(common_subFilter_selections_dict))
 
+    let defaultPagesize = 20
     // 获取sheet页的页面筛选参数字典，获取当前页内容时直接调取即可！！
     let all_search_params_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         let params = item[dict.FILTERS].reduce((param_dict, param)=>{
@@ -1810,7 +1821,7 @@
                     param_dict[param] = 1
                     break
                 case dict.PAGE_SIZE:
-                    param_dict[param] = 20
+                    param_dict[param] = defaultPagesize
                     break
                 case dict.SEARCH:
                     param_dict[param] = item[dict.SHEET]
@@ -1873,11 +1884,7 @@
         }
         // console.log("__set_all_specfic_Params... ===>")
     }
-    // 切换filter的项
-    async function handleToggleFilter(subFilter){
-        console.log("<===handleToggleFilter")
-        loadingShow = true
-
+    function __find_filterName_subFilterIndex(subFilter){
         let found_filter_name
         let found_subFilter_index
         for (let filter_name in all_subFilter_names_dict[params.type]){
@@ -1888,17 +1895,47 @@
                 break
             }
         }
-        // console.log('handleToggleFilter', found_filter_name, found_subFilter_index)
+        return [found_filter_name, found_subFilter_index]
+    }
+    // 切换filter的项
+    async function handleToggleFilter(subFilter){
+        console.log("<===handleToggleFilter")
+        loadingShow = true
+
+        let result = __find_filterName_subFilterIndex(subFilter)
+        let found_filter_name = result[0]
+        let found_subFilter_index = result[1]
 
         let index = all_subFilter_indexes_dict[params.type][found_filter_name][found_subFilter_index]
         let new_index = (index+1)%subFilter_selections_dict[subFilter].length
         all_subFilter_indexes_dict[params.type][found_filter_name][found_subFilter_index] = new_index
 
-        // 增加筛选页面数量可能会伸缩，页面设置为1比较保险
-        __set_page_inAllSearchParamsDict(1)
+
         // 其中包含，页面切换回第一页
         __set_all_specfic_Params_inAllSearchParamsDict()
 
+        // 增加筛选页面数量可能会伸缩，页面设置为1比较保险
+        __set_page_inAllSearchParamsDict(1)
+        await __getPageData()
+
+        loadingShow = false
+    }
+    // 改变filter
+    async function handleChangeFilter(event, subFilter){
+        loadingShow = true
+        let index = event.target.value
+        let result = __find_filterName_subFilterIndex(subFilter)
+
+        let found_filter_name = result[0]
+        let found_subFilter_index = result[1]
+
+        // console.log('handleChangeFilter', all_subFilter_names_dict, index, all_subFilter_indexes_dict, found_filter_name, found_subFilter_index)
+
+        all_subFilter_indexes_dict[params.type][found_filter_name][found_subFilter_index] = index
+
+        __set_all_specfic_Params_inAllSearchParamsDict()
+
+        __set_page_inAllSearchParamsDict(1)
         await __getPageData()
 
         loadingShow = false
@@ -1987,15 +2024,17 @@
         all_search_params_dict[params.type][dict.PAGE] = page
     }
     async function handleChangePageSize(event){
-        console.log("handleChangePageSize", event.detail.pageSize)
-        all_search_params_dict[params.type][dict.PAGE_SIZE] = event.detail.pageSize
+        console.log("handleChangePageSize", event.detail.pageSize, all_search_params_dict[params.type][dict.PAGE_SIZE])
+        if( event.detail.pageSize !== all_search_params_dict[params.type][dict.PAGE_SIZE]){
+            all_search_params_dict[params.type][dict.PAGE_SIZE] = event.detail.pageSize
 
-        // 当前sheet的totalPageNums更新，data_num固定，但是当前页page_size生了变化！
-        __updateTotalPageNums()
-        // 当前sheet的nowPageNum设置为1，返回第一页
-        __set_page_inAllSearchParamsDict(1)
+            // 当前sheet的totalPageNums更新，data_num固定，但是当前页page_size生了变化！
+            __updateTotalPageNums()
+            // 当前sheet的nowPageNum设置为1，返回第一页
+            __set_page_inAllSearchParamsDict(1)
 
-        await __getPageData()
+            await __getPageData()
+        }
     }
     async function handleChangePage(event){
         console.log("handleChangePage", event.detail.page)
@@ -2505,15 +2544,15 @@
     // }
     // 动态更新当前页面信息
     $: if (pre_params_type !== params.type) {
-        console.log('listem params.type 先前params.type 现在params.tpe', pre_params_type, params.type)
+        // console.log('$: if (pre_params_type !== params.type) 先前params.type 现在params.tpe', pre_params_type, params.type)
 
         //todo 筛选框值修改，不会触发onChange事件, 返回人工修改
         // __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex()
 
-        // exonicFuncRefgene的bind:value会触发页面更新，自动回执行此命令一次
-        // 增加筛选，页面数量可能会伸缩，页面设置为1比较保险
-        __set_page_inAllSearchParamsDict(1)
-        __set_all_specfic_Params_inAllSearchParamsDict()
+        // // exonicFuncRefgene的bind:value会触发页面更新，自动回执行此命令一次
+        // // 增加筛选，页面数量可能会伸缩，页面设置为1比较保险
+        // __set_page_inAllSearchParamsDict(1)
+        // __set_all_specfic_Params_inAllSearchParamsDict()
 
         __getPageData()
     }
@@ -2663,6 +2702,11 @@
                         }
                     })
                     menu.append(adjust_mulAff_items_menuItem)
+                    break
+                case dict.CHECK_SINSUB_LOGS:
+                    
+                    break
+                case dict.CANCEL_SUBMIT_DONE:
                     break
                 default:
                     break
