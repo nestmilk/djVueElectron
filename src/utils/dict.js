@@ -8,6 +8,7 @@ export const dict_translate = {
     single_affirm: '单项审核',
     adjust_items: '增减条目',
     submit: '提交',
+    modify: '修改',
 }
 
 

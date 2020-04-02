@@ -2,7 +2,7 @@
   "name": "djSvelteElectron",
   "version": "1.0.0",
   "main": "main.js",
-  "description": "鼎晶突变审核系统",
+  "description": "鼎晶审核系统",
   "author": {
     "name": "gong zhenhua",
     "email": "gongzhenhua1983@163.com"
@@ -59,7 +59,7 @@
   "homepage": "./",
   "build": {
     "appId": "DingJing",
-    "productName": "鼎晶审核",
+    "productName": "鼎晶审核系统",
     "copyright": "Copyright © 2020 ${author}",
     "extends": null,
     "files": [

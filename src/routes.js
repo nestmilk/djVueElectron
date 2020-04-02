@@ -4,7 +4,7 @@ import Login from './routes/Login/Login.svelte'
 import Register from './routes/Register/Register.svelte'
 import Panal from './routes/Panal/Panal.svelte'
 import Sample from './routes/Sample/Sample.svelte'
-import Data from './routes/Data/Data.svelte'
+import Data1 from './routes/Data/Data1.svelte'
 
 import {userInfo} from './store/store'
 const Store = window.require('electron-store')
@@ -30,7 +30,7 @@ let routes={
     '/register': Register,
     '/sample': Sample,
     '/panal': Panal,
-    '/:type/:panalId': Data,
+    '/:type/:panalId': Data1,
 
 }
 

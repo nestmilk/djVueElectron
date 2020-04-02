@@ -1,5 +1,6 @@
 <div class="middle"
-
+     on:mouseup={handleMiddleMouseUp}
+     on:mousemove={handleMiddleMouseMove}
 >
     <LeftMenus active="Panal信息"></LeftMenus>
     <div class="midRight">
@@ -19,7 +20,7 @@
             {#if params.type !== dict.SAMPLEINFOINPANAL}
                 <div class="navLeft">
                     <div class="divider"
-
+                         on:mousedown={handleDividerMouseDown}
                     ></div>
                     <div class="leftAffirmSelectWrapper">
                         <button class="commonButton
@@ -702,10 +703,25 @@
                     default:
                         break
                 }
+                break
+            case dict.MODIFY:
+                switch (sureOperation) {
+                    case dict.CANCEL:
+                        if(reply){
+                            recover_values_InNowPageDataDict(all_selected_dataIds_dict[params.type], [...all_modifyTitle_list_dict[params.type], dict.DELETE])
+                            // 全面懒更新可否选择
+                            __update_allIds_availSelect_inPageIdAvailSelectDict()
+                            // 清空all_selected_dataIds_dict
+                            __reset_selectedIds_inAllSelectedDataIdsDict()
+                        }
+                        break
+                    default:
+                        break
+                }
+                break
             default:
                 break
         }
-
 
         sureShow = false
     }
@@ -991,6 +1007,10 @@
         loadingShow = false
     }
 
+    // 清空当前页面的多选框selected_dataIds
+    function __reset_selectedIds_inAllSelectedDataIdsDict(){
+        all_selected_dataIds_dict[params.type] = []
+    }
     // 改变审核的工作环境
     async function changeAffirmWorkingStatus(type){
         let pre_affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
@@ -1023,7 +1043,7 @@
                 break
             case dict.MUL_AFFIRM:
                 // 清空id多选列表
-                all_selected_dataIds_dict[params.type] = []
+                __reset_selectedIds_inAllSelectedDataIdsDict()
                 // 重置当前页的增减项目的锁定
                 __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 break
@@ -1039,7 +1059,7 @@
                 // 重置当前页的增减项目的锁定
                 __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 // 清空id多选列表
-                all_selected_dataIds_dict[params.type] = []
+                __reset_selectedIds_inAllSelectedDataIdsDict()
                 break
             case dict.EDIT_MULAFF_REASON:
                 //当前所有都不能编辑
@@ -1047,11 +1067,11 @@
                 // 重置当前页的增减项目的锁定
                 __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 // 清空id多选列表
-                all_selected_dataIds_dict[params.type] = []
+                __reset_selectedIds_inAllSelectedDataIdsDict()
                 break
             case dict.ADJUST_MULAFF_ITEMS:
                 // 清空id多选列表
-                all_selected_dataIds_dict[params.type] = []
+                __reset_selectedIds_inAllSelectedDataIdsDict()
                 break
             case dict.CHECK_SINSUB_LOGS:
                 //当前所有都不能编辑
@@ -1059,7 +1079,7 @@
                 // 重置当前页的增减项目的锁定
                 __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 // 清空id多选列表
-                all_selected_dataIds_dict[params.type] = []
+                __reset_selectedIds_inAllSelectedDataIdsDict()
 
                 // 更新当前页的相关previousLogs
                 await __update_Ids_and_relatedIds_PreviousLogs()
@@ -1071,7 +1091,7 @@
                 // 重置当前页的增减项目的锁定
                 __set_lockedLogId_null_of_nowSheet_inAllLockedLogIdForAdjustedMulAffItems()
                 // 清空id多选列表
-                all_selected_dataIds_dict[params.type] = []
+                __reset_selectedIds_inAllSelectedDataIdsDict()
 
                 // 更新当前页的相关previousLogs
                 await __update_Ids_and_relatedIds_PreviousLogs()
@@ -1452,6 +1472,13 @@
             reasonShow = true
         }
     }
+    // 批量审核中，处理多选的恢复
+    function __handleMultipleRecover(){
+        sureEvent = dict.MODIFY
+        sureOperation = dict.CANCEL
+        changeSendSureMessage()
+        sureShow = true
+    }
     // 针对选择多选组，用于选取同批提交的ids
     function handle_lineTDClick_for_idsInSameCheckedGroup(id){
         let log_id = all_submit_logs_dict[params.type][id]
@@ -1467,7 +1494,7 @@
         })
 
         //1) 清空id选中列表
-        all_selected_dataIds_dict[params.type] = []
+        __reset_selectedIds_inAllSelectedDataIdsDict()
         //2) 调整当前页的数据条目能否操作按钮显示
         for (let id in page_id_availableSelect_dict) {
             __update_oneId_availSelect_inPageIdAvailSelectDict(id)
@@ -2232,7 +2259,7 @@
         let left_message = fail_num?`，失败${fail_num}条`:'。'
         all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 提交成功${success_num}条${left_message}`]
         // b. seletect_ids清空
-        all_selected_dataIds_dict[params.type] = []
+        __reset_selectedIds_inAllSelectedDataIdsDict()
         // // c. 如果当前affrim工作状态需要更新previousLogs 替换 __getPageData()中F)一致
         // if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
         //     await __update_Ids_and_relatedIds_PreviousLogs()
@@ -2314,7 +2341,7 @@
                 }
 
                 // 3) 最后，清空当前页被选中的数据id
-                all_selected_dataIds_dict[params.type] = []
+                __reset_selectedIds_inAllSelectedDataIdsDict()
                 break
             case dict.EDIT_MULAFF_REASON:
                 // 仅仅需要更新本条数据的log详情
@@ -2369,6 +2396,14 @@
         all_now_data_id[params.type] = id
         all_now_sample_id[params.type] = sample_id
     }
+    function __openEdit_byOneId_inAllPageIdAvailEditDict(id){
+        for (let data of page_data){
+            // todo 小心data_id类型为string，id为number
+            // console.log("handle_lindTR_rightClicked", typeof data_id, typeof id)
+            let data_id = data[dict.ID]
+            page_id_availableEdit_dict[data_id] = id === data_id
+        }
+    }
     function handle_lineTR_rightClicked(e, id, sample_id){
         let affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         // 1.必须id状态为free；2.必须affrim工作状态允许编辑 3.按住ctrl键
@@ -2376,12 +2411,7 @@
                 affirmSelection_dict[affirm_status][dict.AVAILABLE_EDIT] &&
                 e.ctrlKey){
             // 将现在ctrl点击id的设为true,其余遍历设置为false
-            for (let data of page_data){
-                // todo 小心data_id类型为string，id为number
-                // console.log("handle_lindTR_rightClicked", typeof data_id, typeof id)
-                let data_id = data[dict.ID]
-                page_id_availableEdit_dict[data_id] = id === data_id
-            }
+            __openEdit_byOneId_inAllPageIdAvailEditDict(id)
         }
         __change_dataIds_and_sampleIds(id, sample_id)
     }
@@ -2592,6 +2622,7 @@
             let lineData_element = getParentNodeByParentClassName(e.target, 'lineData')
             // 使用右键获取当前data的id和sample的id，20.3.19弃用
             let right_id = parseInt(lineData_element.dataset.id)
+            let right_id_status = all_status_of_data_dict[params.type][right_id]
             // let sampleId = parseInt(lineData_element.dataset.sampleid)
             let id = all_now_data_id[params.type]
             let sample_id = all_now_sample_id[params.type]
@@ -2600,21 +2631,49 @@
             // 多选和非多选状态，生成的右键菜单应该不同
             let menu = new remote.Menu
             // enabled 必须接受true，false，保证__check...返回true或false
+            // 根据 审核工作状态（affirmWorkingStatus）添加的按钮
             switch (all_affirmWorkingStatus_of_sheet_dict[params.type]) {
                 case dict.SIN_CANCEL_OR_AFFIRM:
-                    let sin_affrim_MenuItem = new remote.MenuItem({
-                        label: all_status_of_data_dict[params.type][id]===dict.FREE?
-                                '单项审核':
-                                ([dict.CHECKED, dict.DELETED, dict.EDITED].indexOf(status) !== -1?
-                                                '取消审核':
-                                                ''
-                                ),
-                        enabled: id===right_id && __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id),
-                        click: ()=>{
-                            handleSinAffirm_or_Cancel(id, sample_id)
+                    let unequal_values_sinCancelorAffirm = id?__check_unequalValues_ofModifiyFields(id):[]
+                    let modified__sinCancelorAffirm = Object.keys(unequal_values_sinCancelorAffirm).length>0
+
+                    let single_edit_MenuItem = new remote.MenuItem({
+                        label: '单项编辑',
+                        enabled: id===right_id && status===dict.FREE,
+                        click: () => {
+                            __openEdit_byOneId_inAllPageIdAvailEditDict(id)
                         }
                     })
-                    menu.append(sin_affrim_MenuItem)
+                    menu.append(single_edit_MenuItem)
+
+                    let single_recover_MenuItem = new remote.MenuItem({
+                        label: '单项恢复',
+                        enabled: id===right_id &&
+                                __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id) &&
+                                page_id_availableEdit_dict[id] &&
+                                modified__sinCancelorAffirm,
+                        click: ()=>{
+                            recover_values_InNowPageDataDict([id], [...all_modifyTitle_list_dict[params.type], dict.DELETE])
+                        }
+                    })
+                    menu.append(single_recover_MenuItem)
+
+                    if(id && status!==dict.DONE){
+                        let sin_affrim_MenuItem = new remote.MenuItem({
+                            label: status ===dict.FREE?
+                                    '单项审核':
+                                    ([dict.CHECKED, dict.DELETED, dict.EDITED].indexOf(status) !== -1?
+                                                    '取消审核':
+                                                    ''
+                                    ),
+                            enabled: id===right_id && __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id),
+                            click: ()=>{
+                                handleSinAffirm_or_Cancel(id, sample_id)
+                            }
+                        })
+                        menu.append(sin_affrim_MenuItem)
+                    }
+
                     break
                 case dict.EDIT_SINAFF_REASON:
                     let edit_sinAff_MenuItem = new remote.MenuItem({
@@ -2628,6 +2687,25 @@
                     break
                 case dict.MUL_AFFIRM:
                     let num_mulAffrim = all_selected_dataIds_dict[params.type].length
+
+                    let single_edit_inEditMulAffReason_MenuItem = new remote.MenuItem({
+                        label: '单项编辑',
+                        enabled: id===right_id && status===dict.FREE,
+                        click: () => {
+                            __openEdit_byOneId_inAllPageIdAvailEditDict(id)
+                        }
+                    })
+                    menu.append(single_edit_inEditMulAffReason_MenuItem)
+
+                    let multiple_recover_MenuItem = new remote.MenuItem({
+                        label: '批量恢复',
+                        enabled: num_mulAffrim>0,
+                        click: ()=>{
+                            __handleMultipleRecover()
+                        }
+                    })
+                    menu.append(multiple_recover_MenuItem)
+
                     let mul_affirm_affirmMenuItem = new remote.MenuItem({
                         label: `确认审核(共${num_mulAffrim}条)`,
                         enabled: num_mulAffrim>0,
@@ -2653,6 +2731,7 @@
                     break
                 case dict.EDIT_MULAFF_REASON:
                     let num_EditMulAffReason = all_selected_dataIds_dict[params.type].length
+
                     let edit_mulAff_reason_MenuItem = new remote.MenuItem({
                         label: `编辑原因(共${num_EditMulAffReason}条共享)`,
                         enabled: num_EditMulAffReason>0,
@@ -2704,9 +2783,24 @@
                     menu.append(adjust_mulAff_items_menuItem)
                     break
                 case dict.CHECK_SINSUB_LOGS:
-                    
+                    let check_sinSub_logs_MenuItem = new remote.MenuItem({
+                        label: '查看历史(单项)',
+                        enabled: id===right_id && __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id),
+                        click: ()=>{
+                            handleCheckSingleSubmitLogs(id)
+                        }
+                    })
+                    menu.append(check_sinSub_logs_MenuItem)
                     break
                 case dict.CANCEL_SUBMIT_DONE:
+                    let cancel_submit_done_MenuItem = new remote.MenuItem({
+                        label: '撤销提交',
+                        enabled: id===right_id && __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id),
+                        click: ()=>{
+                            handleCancelSubmitDone(id)
+                        }
+                    })
+                    menu.append(cancel_submit_done_MenuItem)
                     break
                 default:
                     break
@@ -2721,6 +2815,33 @@
         }
     }
 
+    // 左侧面板缩进控制
+    let retract_able = false
+    function handleDividerMouseDown(e){
+        // console.log('handleDividerMouseDown')
+        e.stopPropagation()
+        retract_able = true
+    }
+    function handleMiddleMouseUp(e){
+        // console.log('handleMiddleMouseUp')
+        e.stopPropagation()
+        retract_able = false
+    }
+    function handleMiddleMouseMove(e){
+        e.stopPropagation()
+        if(retract_able){
+            // console.log('handleMiddleMouseMove', e.clientX)
+            let navLeftElement = document.querySelector('.navLeft')
+
+            if(e.clientX - 130 < 18){
+                navLeftElement.style.flex = `0 0 18px`
+            }else if(e.clientX - 130 > 300){
+                navLeftElement.style.flex = `0 0 300px`
+            }else{
+                navLeftElement.style.flex = `0 0 ${e.clientX - 130}px`
+            }
+        }
+    }
 
     onMount(async () => {
         pre_params_type = params.type
@@ -2767,7 +2888,7 @@
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_status_of_data_dict)
-        // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
@@ -2850,7 +2971,7 @@
     }
     .navLeft{
         position: relative;
-        flex: 0 0 308px;
+        flex: 0 0 300px;
         display: flex;
         flex-flow: column;
         border-right: 1px solid black;
@@ -2864,17 +2985,22 @@
         right: 0px;
         width: 6px;
         height: 100%;
+        background: none;
+        z-index: 10;
+    }
+    .navLeft .divider:hover{
         background: #cccccc;
+        cursor: w-resize;
     }
     .navLeft .leftAffirmSelectWrapper{
         position: relative;
         flex: 0 0 32px;
-        width: 302px;
+        width: 300px;
         border-bottom: 1px solid black;
     }
     .navLeft .leftAffirmSelectWrapper .commonButton{
         float: left;
-        width: 149px;
+        width: 148px;
         height: 30px;
         line-height: 30px;
         margin: 1px;
@@ -2932,7 +3058,7 @@
     }
     .navLeft .leftMessage{
         flex: 0 0 30px;
-        width: 308px;
+        width: 300px;
         line-height: 20px;
         box-sizing: border-box;
         padding: 5px;
@@ -2943,7 +3069,8 @@
     }
     .navLeft .leftSampleTableWrapper{
         flex: 0 0 200px;
-        width: 308px;
+        box-sizing: border-box;
+        width: 300px;
         padding: 3px;
         border-bottom: 1px solid black;
     }
@@ -3011,7 +3138,7 @@
 
     .navLeft .leftMessageWrapper{
         flex: 0 0 228px;
-        width: 304px;
+        width: 300px;
         border-bottom: 1px solid black;
     }
     .navLeft .leftMessageWrapper .messageWrapper{
@@ -3036,7 +3163,7 @@
         float: left;
     }
     .navLeft .leftMessageWrapper .messageWrapper .uploadBnWrapper{
-        width: 58px;
+        width: 54px;
         float: left;
     }
     .navLeft .leftMessageWrapper .messageWrapper .uploadBnWrapper button{
@@ -3044,7 +3171,7 @@
         padding: 0px;
         height: 30px;
         line-height: 30px;
-        width: 54px;
+        width: 52px;
         font-size: 12px;
         font-weight: bold;
     }
