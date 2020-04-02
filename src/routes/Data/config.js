@@ -33,6 +33,7 @@ export const sheetDisplayConfigList = [
             }, {
                 title: "targetSubmitCount",
                 translate: "target提交总数",
+                need_check: true,
                 modify: false,
                 type: "number",
                 defaultDisplay: true,
@@ -47,6 +48,7 @@ export const sheetDisplayConfigList = [
             }, {
                 title: "hereditarySubmitCount",
                 translate: "hereditary提交总数",
+                need_check: true,
                 modify: false,
                 type: "number",
                 defaultDisplay: true,
@@ -61,6 +63,7 @@ export const sheetDisplayConfigList = [
             }, {
                 title: "TMBSubmitCount",
                 translate: "TMB提交总数",
+                need_check: true,
                 modify: false,
                 type: "number",
                 defaultDisplay: true,
@@ -75,6 +78,7 @@ export const sheetDisplayConfigList = [
             }, {
                 title: "immuneSubmitCount",
                 translate: "immune提交总数",
+                need_check: true,
                 modify: false,
                 type: "number",
                 defaultDisplay: true,
@@ -89,6 +93,7 @@ export const sheetDisplayConfigList = [
             }, {
                 title: "TNBSubmitCount",
                 translate: "TNB提交总数",
+                need_check: true,
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -102,6 +107,7 @@ export const sheetDisplayConfigList = [
             }, {
                 title: "fusionSubmitCount",
                 translate: "fusion提交总数",
+                need_check: true,
                 modify: false,
                 type: "number",
                 defaultDisplay: true,
@@ -116,6 +122,7 @@ export const sheetDisplayConfigList = [
             }, {
                 title: "CNASubmitCount",
                 translate: "CNA提交总数",
+                need_check: true,
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
@@ -124,99 +131,99 @@ export const sheetDisplayConfigList = [
                 translate: "chemical总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "chemicalSubmitCount",
                 translate: "chemical提交总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "MSICount",
                 translate: "MSI总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "MSISubmitCount",
                 translate: "MSI提交总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "HRRCount",
                 translate: "HRR总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "HRRSubmitCount",
                 translate: "HRR提交总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "clinicaltrialsCount",
                 translate: "clinicaltrials总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "clinicaltrialsSubmitCount",
                 translate: "clinicaltrials提交总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "HLACount",
                 translate: "HLA总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "HLASubmitCount",
                 translate: "HLA提交总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "QCCount",
                 translate: "QC总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "QCSubmitCount",
                 translate: "QC提交总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "sampleInfoCount",
                 translate: "sampleInfo总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             }, {
                 title: "sampleInfoSubmitCount",
                 translate: "sampleInfo提交总数",
                 modify: false,
                 type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
+                defaultDisplay: false,
+                selectDisplay: true
             },
         ]
     },
@@ -226,6 +233,7 @@ export const sheetDisplayConfigList = [
         filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: '靶向',
         igv_control: true,
+        need_copy: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -462,6 +470,7 @@ export const sheetDisplayConfigList = [
         filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: '遗传',
         igv_control: true,
+        need_copy: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -633,6 +642,7 @@ export const sheetDisplayConfigList = [
         filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: 'TMB',
         igv_control: true,
+        need_copy: true,
         reason_type: [
             {
                 value: 'nothing',

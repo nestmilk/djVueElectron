@@ -143,12 +143,15 @@
                                 {panal.auditor?panal.auditor.username:''}
                             </td>
 <!--                                <td class="delete_panal" on:click|stopPropagation={()=>handleDelete(panal.id, panal.delete)}>-->
-                            <td class="delete_panal" on:click|stopPropagation={()=>handleEventForSure(dict.PANAL, dict.DELETE, [panal.id], [!panal.delete])}>
-
-                            <span class="icon-cross {panal.delete?'':'undeleted'}"></span>
+                            <td class="delete_panal"
+                                on:click|stopPropagation={()=>handleEventForSure(dict.PANAL, dict.DELETE, [panal.id], [!panal.delete])}
+                            >
+                                <span class="icon-cross {panal.delete?'':'undeleted'}"></span>
                             </td>
 <!--                                <td class="done_cancel" on:click|stopPropagation={()=>handleDoneCancel(panal.id, !panal.done)}>-->
-                            <td class="done_cancel" on:click|stopPropagation={()=>handleEventForSure(dict.PANAL, dict.DONE, [panal.id], [!panal.done])}>
+                            <td class="done_cancel"
+                                on:click|stopPropagation={()=>handleEventForSure(dict.PANAL, dict.DONE, [panal.id], [!panal.done])}
+                            >
                                 <span class="{panal.done?'icon-undo2':''}"></span>
                             </td>
                             <td class="enter">
@@ -215,7 +218,7 @@
     <Loading></Loading>
 {/if}
 {#if sureShow}
-    <Sure message={sendMessage} on:sureMessage={handleSureMessage}></Sure>
+    <Sure message={sendMessage} on:sureReply={handleSureReply}></Sure>
 {/if}
 
 <script>
@@ -470,9 +473,9 @@
         // console.log(selected_file_list)
         // console.log(up_sheet_value_dict)
         // 使用Promise.all处理
-        // console.log(panal_list)
-        console.log(qc_list)
-        console.log(sample_list, sample_dict)
+        console.log(panal_list)
+        // console.log(qc_list)
+        // console.log(sample_list, sample_dict)
     }
 
     async function handlePanalFilter(field, selectedStatus) {
@@ -502,9 +505,7 @@
     }
 
     // TODO 此处接受Sure组件的信息，然后对应不同实践进行分类处理
-    async function handleSureMessage(e) {
-        sureShow = false
-
+    async function handleSureReply(e) {
         if (e.detail.status) {
             switch (sureModel) {
                 case dict.PANAL:
@@ -519,6 +520,8 @@
                     break
             }
         }
+
+        sureShow = false
     }
 
     async function handleSearch() {

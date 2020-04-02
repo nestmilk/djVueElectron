@@ -111,7 +111,9 @@
                             <table class="sampleTable ">
                                 {#each sample_list as sample}
                                     <tr on:click={()=>handleSelectSample(sample[dict.ID])}>
-                                        <td class="sampleSn">{sample.sampleSn}</td>
+                                        <td class="sampleSn"
+                                            title="{sample[dict.ID]}"
+                                        >{sample[dict.SAMPLESN]}</td>
                                         <td class="total">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.ALLDATA]:''}</td>
                                         <td class="submitedAndAffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.S_ADATA]:''}</td>
                                         <td class="unsubmitedAndAffirmed">{all_sample_record_dict[params.type][sample.id]?all_sample_record_dict[params.type][sample.id][dict.US_ADATA]:''}</td>
@@ -238,6 +240,11 @@
                     <div class="titleTableWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)} >
                         <table class="rightDataTable">
                             <tr class="lineTitle">
+                                <!--针对概览页，选择 已经全部提交的样本条目-->
+                                {#if params.type===dict.SAMPLEINFOINPANAL}
+                                    <th class="affirmed short">选择</th>
+                                {/if}
+
                                 {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
                                     <!-- 针对单项确认审核或取消审核 -->
                                     {#if all_affirmWorkingStatus_of_sheet_dict[params.type] === dict.SIN_CANCEL_OR_AFFIRM}
@@ -375,6 +382,17 @@
                                     data-id="{line_data.id}"
                                     data-sampleid="{line_data[dict.SAMPLEID]}"
                                 >
+                                    <!--针对概览页，选择 已经全部提交的样本条目-->
+                                    {#if params.type===dict.SAMPLEINFOINPANAL}
+                                        <td class="affirmed short">
+                                            {#if page_id_availableSelect_dict[line_data.id]}
+                                                <button class="icon-checkbox-unchecked"
+
+                                                >
+                                                </button>
+                                            {/if}
+                                        </td>
+                                    {/if}
 
                                     {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
                                         <!-- 针对单项确认审核或取消审核 -->
@@ -660,7 +678,8 @@
         LOG_DETAILS: "log_details", SUBJECT_ID: 'subject_id', SUBJECT_FIELD_NAME: "subject_field_name",
         NEW_VALUE: 'new_value', OLD_VALUE: 'old_value', PREVIOUS_LOG_UPDATE: "previous_log_update",
         EDITOR: 'editor', ADD_TIME: "add_time", CHECK: 'check', SUBMIT: 'submit',
-        BAM: 'bam', BAI: 'bai', PATH: 'path', IGV_CONTROL: 'igv_control',
+        BAM: 'bam', BAI: 'bai', PATH: 'path', IGV_CONTROL: 'igv_control', NEED_COPY: 'need_copy', NEED_CHECK: 'need_check',
+
     }
     // 获取路径中的：值
     export let params = {}
@@ -677,6 +696,15 @@
     let multipleAffirmSelectionShow = false
     // 控制单数据过往logdetails显示
     let logDetailsShow = false
+
+
+    let field_needCheck_inSampleInfoinPanal = JSON.parse(JSON.stringify(sheetDisplayConfigDict[dict.SAMPLEINFOINPANAL][dict.TITLE_LIST].reduce((result, title)=>{
+        if (title[dict.NEED_CHECK]){
+            result.push(title[dict.TITLE])
+        }
+        return result
+    }, [])))
+
 
     let sureEvent
     let sureOperation
@@ -777,6 +805,7 @@
         singleAffirmSelectionShow = false
         multipleAffirmSelectionShow = false
     }
+    // 所有页面初始化都是 单项审核工作状态，包括概览页面
     let all_affirmWorkingStatus_of_sheet_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         result[item[dict.SHEET]] = dict.SIN_CANCEL_OR_AFFIRM
         return result
@@ -813,7 +842,21 @@
     }
     function __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(str_id){
         let id = parseInt(str_id)
+
+        if(params.type===dict.SAMPLEINFOINPANAL){
+            // console.log('__check_availSelect_of_oneData_alreadyInsid 概览页面')
+            // 确保需要校验的 SubmitCount(提交数)与 对应的Count(总数) 相等
+            return field_needCheck_inSampleInfoinPanal.every(field=>{
+                let submitCount = all_nowValue_of_data_dict[params.type][id][field]
+                let count_field = field.replace('Submit', '')
+                let count = all_nowValue_of_data_dict[params.type][id][count_field]
+                console.log('__check_availSelect_of_oneData_alreadyInsid', count_field, count, submitCount)
+                return  count === submitCount
+            })
+        }
+
         // console.log('<===__check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict begin')
+        // 根据审核工作状态 判断当前页面某条数据id，是否可选择
         let affirm_status = all_affirmWorkingStatus_of_sheet_dict[params.type]
         switch (affirm_status) {
             case dict.SIN_CANCEL_OR_AFFIRM:
@@ -1675,7 +1718,7 @@
     }
 
     // 先前的页面type
-    let pre_params_type
+    // let pre_params_type
     // 判断参数表中是否有panalId的信息，如果没有为第一次加载，手工添加
     function __addPanalIDIfFirstLoad(){
         if (!all_search_params_dict[params.type][dict.PANALID]){
@@ -1694,11 +1737,10 @@
         return result
     }, {})))
     function __update_allDataStatusDict_allNowValueOfDataDict_allPreValueOfDataDict(){
-
         for (let data of page_data) {
             let id = data[dict.ID]
 
-            //1) 本地无此条记录 2) 或者此页需要每次都强制更新每条数据
+            //1) 本地无此条记录 2) 或者此页需要每次都强制更新每条数据（即概览页 每次都更新数据）
             if (!all_status_of_data_dict[params.type].hasOwnProperty(id) || sheetDisplayConfigDict[params.type][dict.PREVALUE_NOWVALUE_UPDATE]) {
                 // 插入新数据的nowValue
                 all_nowValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
@@ -1734,9 +1776,8 @@
 
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
     async function __getPageData () {
-        console.log('<=== __getPageData begin')
+        console.log('<=== __getPageData begin , params.type, type', params.type)
         loadingShow = true
-
         // 第一次切换到mutant上加载，还没有更新获得panalId和sampleIds参数
         __addPanalIDIfFirstLoad()
 
@@ -1787,7 +1828,9 @@
                 await __update_Ids_and_relatedIds_PreviousLogs()
             }
 
-            // G) 更新页面所有id可否选择, 查看日志，取消提交的工作状态 依赖于F)
+            // G) 更新页面所有id可否选择,
+            // 查看日志，取消提交的工作状态 依赖于F)
+            // 概览依赖于E)的nowValue判断count和submitCout相同
             __update_allIds_availSelect_inPageIdAvailSelectDict()
         }
 
@@ -1800,12 +1843,31 @@
         result[item[dict.SHEET]] = item[dict.SUBMENU_TRANSLATE]
         return result
     }, {})))
+    function __update_selectedIds_afterPush(){
+        // 当前选择的样本id列表，需要用新页面的替换 公用已选 selected_sampleIds_list 列表
+        let sampleIds = JSON.parse(JSON.stringify(all_search_params_dict[params.type][dict.SAMPLEIDS]))
+        if (sampleIds){
+            sampleIds = sampleIds.split(',').map(str_id=>parseInt(str_id))
+        }else{
+            sampleIds = sample_list.map(sample=>sample[dict.ID])
+        }
+        selected_sampleId_list = sampleIds
+    }
     // submenu选择
-    function handleSelectSubmenu(type){
+    async function handleSelectSubmenu(type){
         if (type===params.type) return
         // 只切换路由，数据没有自动刷新啊！！
-        pre_params_type = params.type
-        push(`/${type}/${params.panalId}`)
+        // pre_params_type = params.type
+
+        // push之后，params.type没有立即更新，但是页面使用test获取paramstype已经更新
+        // todo 只能手动强制改！
+        push(`/${type}/${params[dict.PANALID]}`)
+        params.type = type
+        // console.log('handleSelectSubmenu afterPush', params.type)
+
+        __update_selectedIds_afterPush()
+
+        await __getPageData()
     }
     // 1) 每页的filter的定制版subFilters的名字列表，因为三张mutant表的exonicfuncRefGene
     // 如果表是ifSimpleOrdering，需要将ordering的内容更正为['sample__id']
@@ -1854,19 +1916,19 @@
     let defaultPagesize = 20
     // 获取sheet页的页面筛选参数字典，获取当前页内容时直接调取即可！！
     let all_search_params_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        let params = item[dict.FILTERS].reduce((param_dict, param)=>{
-            switch (param) {
+        let params = item[dict.FILTERS].reduce((param_dict, subFilter)=>{
+            switch (subFilter) {
                 case dict.PAGE:
-                    param_dict[param] = 1
+                    param_dict[subFilter] = 1
                     break
                 case dict.PAGE_SIZE:
-                    param_dict[param] = defaultPagesize
+                    param_dict[subFilter] = defaultPagesize
                     break
                 case dict.SEARCH:
-                    param_dict[param] = item[dict.SHEET]
+                    param_dict[subFilter] = item[dict.SHEET]
                     break
                 default:
-                    param_dict[param] = null
+                    param_dict[subFilter] = null
             }
 
             return param_dict
@@ -2587,20 +2649,12 @@
     //         __set_all_specfic_Params_in_AllSearchParamsDict()
     //     }
     // }
-    // 动态更新当前页面信息
-    $: if (pre_params_type !== params.type) {
-        // console.log('$: if (pre_params_type !== params.type) 先前params.type 现在params.tpe', pre_params_type, params.type)
 
-        //todo 筛选框值修改，不会触发onChange事件, 返回人工修改
-        // __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex()
 
-        // // exonicFuncRefgene的bind:value会触发页面更新，自动回执行此命令一次
-        // // 增加筛选，页面数量可能会伸缩，页面设置为1比较保险
-        // __set_page_inAllSearchParamsDict(1)
-        // __set_all_specfic_Params_inAllSearchParamsDict()
-
-        __getPageData()
-    }
+    // 动态更新当前页面信息, 这种做法 todo getpagedata 刷新页面一次，又会通过这个再刷新一次页面
+    // $: if (pre_params_type !== params.type) {
+    //     __getPageData()
+    // }
 
     // 查看selected_ids和locked_logId包含的ids的差异
     function __checkDifference_between_selectedIds_and_lockedIds(){
@@ -3057,7 +3111,7 @@
     onMount(async () => {
         loadingShow = true
 
-        pre_params_type = params.type
+        // pre_params_type = params.type
 
         // 获取样本列表
         await getSampleList()
@@ -3072,6 +3126,8 @@
         })
 
         document.addEventListener('contextmenu', __handleContextMenu)
+
+        await __getPageData()
 
         loadingShow = false
     })
@@ -3115,12 +3171,14 @@
         // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
-        // console.log(page_id_availableSelect_dict, page_id_availableEdit_dict)
+        console.log(page_id_availableSelect_dict, page_id_availableEdit_dict)
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
         // console.log(all_previousLog_list_dict)
         // console.log(now_input_field && now_input_id, !panal_unable_handle, now_params_type === params.type, page_id_availableEdit_dict[now_input_id], page_data.some(data=>data.id===now_input_id))
         // console.log(testValue)
-        console.log(track_configs_dict, bamAndBai_path_dict, sampleSn_inTrackConfigDict_list)
+        // console.log(track_configs_dict, bamAndBai_path_dict, sampleSn_inTrackConfigDict_list)
+        // console.log(field_needCheck_inSampleInfoinPanal)
+        console.log(params.type)
     }
 
 </script>
