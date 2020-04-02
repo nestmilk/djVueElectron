@@ -9,6 +9,8 @@ export const dict_translate = {
     adjust_items: '增减条目',
     submit: '提交',
     modify: '修改',
+    free_unmodified: '未审核未修改数据',
+    check: '确认审核',
 }
 
 

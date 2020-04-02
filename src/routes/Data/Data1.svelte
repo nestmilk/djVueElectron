@@ -9,6 +9,7 @@
                 {#each submenu_list as submenu}
                     <button class="submenuBtn {params.type===submenu?'selectedSubMenu':''}"
                             on:click={()=>handleSelectSubmenu(submenu)}
+                            data-sheet='{submenu}'
                     >
                         {submenu_translate_dict[submenu]}
                     </button>
@@ -561,7 +562,7 @@
                                                         {all_nowValue_of_data_dict[params.type][line_data.id]?
                                                             (all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]?'unequal':''):''}
                                                       "
-                                                    title="实时数据：{line_data[field]}{field==='sampleSn'?' '+line_data[dict.ID]:''}"
+                                                    title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
                                                     on:mouseenter={()=>handleMutantTDMouseenter(field, line_data.id)}
                                                     on:mouseleave={()=>handleMutantTDMouseleave(field, line_data.id)}
                                                 >
@@ -583,7 +584,7 @@
                                                 </td>
                                             {:else}
                                                 <td class="{field} contentTD"
-                                                    title="实时数据：{line_data[field]}{field==='sampleSn'?' '+line_data[dict.ID]:''}"
+                                                    title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
                                                 >
                                                     <div class="inside">{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}</div>
                                                 </td>
@@ -711,7 +712,7 @@
         NEW_VALUE: 'new_value', OLD_VALUE: 'old_value', PREVIOUS_LOG_UPDATE: "previous_log_update",
         EDITOR: 'editor', ADD_TIME: "add_time", CHECK: 'check', SUBMIT: 'submit',
         BAM: 'bam', BAI: 'bai', PATH: 'path', IGV_CONTROL: 'igv_control', NEED_COPY: 'need_copy', NEED_CHECK: 'need_check',
-
+        FREE_UNMODIFIED: 'free_unmodified',
     }
     // 获取路径中的：值
     export let params = {}
@@ -738,13 +739,33 @@
     }, [])))
 
 
+    async function __check_allData_freeandUnmodified(){
+        loadingShow = true
+        let {panalId, sampleIds, search} = all_search_params_dict[params.type]
+        console.log('__check_allData_freeandUnmodified', panalId, sampleIds, search)
+
+        let name = params.type
+        name = name.slice(0, 1).toUpperCase() + name.slice(1)
+        await api[`list${name}`]({
+            panalId,
+            sampleIds,
+            search,
+            page_size: data_count
+        }).then(response=>{
+            console.log('__check_allData_freeandUnmodified', response.data)
+        }).catch(error=>{
+            console.log('__check_allData_freeandUnmodified', error)
+        })
+
+        loadingShow = false
+    }
     let sureEvent
     let sureOperation
     let sureMessage = ''
     function changeSendSureMessage() {
         sureMessage = "是否对" + dict_translate[sureEvent] + "进行" + dict_translate[sureOperation] + "相关操作!"
     }
-    function handleSureReply(e){
+    async function handleSureReply(e){
         // console.log('handleSureReply', e.detail.status)
         let reply = e.detail.status
 
@@ -763,7 +784,7 @@
                     case dict.CANCEL:
                         // console.log('handleSureReply 取消相关提交', selected_ids_forCancelDone)
                         if (reply){
-                            __handleCancelSelectedIdsDone()
+                            await __handleCancelSelectedIdsDone()
                             logDetailsShow = false
                         }
 
@@ -782,6 +803,18 @@
                             __update_allIds_availSelect_inPageIdAvailSelectDict()
                             // 清空all_selected_dataIds_dict
                             __reset_selectedIds_inAllSelectedDataIdsDict()
+                        }
+                        break
+                    default:
+                        break
+                }
+                break
+            case dict.FREE_UNMODIFIED:
+                switch (sureOperation){
+                    case dict.CHECK:
+                        // console.log('handleSureReply 未审核未修改 确认审核')
+                        if(reply){
+                            __check_allData_freeandUnmodified()
                         }
                         break
                     default:
@@ -1866,7 +1899,7 @@
 
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
     async function __getPageData () {
-        console.log('<=== __getPageData begin , params.type, type', params.type)
+        console.log('<=== __getPageData begin , params.type', params.type)
         loadingShow = true
         // 第一次切换到mutant上加载，还没有更新获得panalId和sampleIds参数
         __addPanalIDIfFirstLoad()
@@ -2777,6 +2810,30 @@
     }
 
     function __handleContextMenu(e){
+        // sheet页选择
+        if (document.querySelector('.subMenuWrapper').contains(e.target)){
+            let element =getParentNodeByParentClassName(e.target, 'submenuBtn')
+            let sheet = element.dataset.sheet
+
+            if (params.type===sheet){
+                let menu = new remote.Menu()
+
+                let recoverMenuItem = new remote.MenuItem({
+                    label: `"${submenu_translate_dict[sheet]}"页全部审核(仅限无修改项)`,
+                    click: ()=>{
+                        // console.log('全部审核')
+                        sureEvent = dict.FREE_UNMODIFIED
+                        sureOperation = dict.CHECK
+                        changeSendSureMessage()
+                        sureShow = true
+                    }
+                })
+                menu.append(recoverMenuItem)
+
+                menu.popup({window: remote.getCurrentWindow()})
+            }
+
+        }
 
         // 右键upTable 标题栏
         if (document.querySelector('.upTable').contains(e.target)){
