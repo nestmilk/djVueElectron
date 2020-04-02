@@ -225,6 +225,7 @@ export const sheetDisplayConfigList = [
         sheet: "target",
         filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: '靶向',
+        igv_control: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -460,6 +461,7 @@ export const sheetDisplayConfigList = [
         sheet: "hereditary",
         filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: '遗传',
+        igv_control: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -630,6 +632,7 @@ export const sheetDisplayConfigList = [
         sheet: "TMB",
         filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: 'TMB',
+        igv_control: true,
         reason_type: [
             {
                 value: 'nothing',

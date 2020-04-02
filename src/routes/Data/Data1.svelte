@@ -146,12 +146,20 @@
                             </div><!--uploadMessageWrapper-->
                         </div>
                     </div>
+
                     <div class="leftSelectFileWrapper">
                         <div class="selectFile">
-
+                            <input class="fileInput" id="fileWidget" type="file"
+                                   multiple="true" accept=".bam,.bai"
+                                   on:change={()=>loadFiles()}
+                            />
+                            共{sampleSn_inTrackConfigDict_list.length}对Bam/Bai文件
+                            <button class="clear" on:click={()=>clearTracks()}>取消</button>
                         </div>
                         <div class="fileList">
-
+                            {#each sampleSn_inTrackConfigDict_list as sampleSn}
+                                <div class="sampleSn">{sampleSn}</div>
+                            {/each}
                         </div>
                     </div>
 
@@ -652,6 +660,7 @@
         LOG_DETAILS: "log_details", SUBJECT_ID: 'subject_id', SUBJECT_FIELD_NAME: "subject_field_name",
         NEW_VALUE: 'new_value', OLD_VALUE: 'old_value', PREVIOUS_LOG_UPDATE: "previous_log_update",
         EDITOR: 'editor', ADD_TIME: "add_time", CHECK: 'check', SUBMIT: 'submit',
+        BAM: 'bam', BAI: 'bai', PATH: 'path', IGV_CONTROL: 'igv_control',
     }
     // 获取路径中的：值
     export let params = {}
@@ -1105,6 +1114,9 @@
 
     // 提示错误信息
     let errors = ''
+    function __reset_errors(){
+        errors = ''
+    }
 
     // 控制右侧的标题和下面mutant内容的联动
     let topScroll
@@ -2077,6 +2089,7 @@
     let sampleSn_dict = {}
     // 选中的样本id列表
     let selected_sampleId_list = []
+    let pre_selected_sampleId_list = []
     // panal能否被操作的状态
     let panal_unable_handle = false
 
@@ -2395,6 +2408,8 @@
         all_pre_sample_id[params.type] = all_now_sample_id[params.type]
         all_now_data_id[params.type] = id
         all_now_sample_id[params.type] = sample_id
+
+        __handleUpdateIgvShow()
     }
     function __openEdit_byOneId_inAllPageIdAvailEditDict(id){
         for (let data of page_data){
@@ -2743,6 +2758,16 @@
                     menu.append(edit_mulAff_reason_MenuItem)
                     break
                 case dict.ADJUST_MULAFF_ITEMS:
+
+                    let single_edit_MenuItem_inAdjustMulAffItems = new remote.MenuItem({
+                        label: '单项编辑',
+                        enabled: id===right_id && status===dict.FREE,
+                        click: () => {
+                            __openEdit_byOneId_inAllPageIdAvailEditDict(id)
+                        }
+                    })
+                    menu.append(single_edit_MenuItem_inAdjustMulAffItems)
+
                     //每次打开都会更新一次locked_logId
                     let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
                     let lock_adjustItems_MenuItem = new remote.MenuItem({
@@ -2843,7 +2868,195 @@
         }
     }
 
+    // track的configs库, igv.js使用，key为sample_id
+    let track_configs_dict = {}
+    // 控制java igv使用，key为sample_id
+    let bamAndBai_path_dict = {}
+    // 用于遍历显示的样本名称
+    let sampleSn_inTrackConfigDict_list = []
+    // 为track_configs_dict添加track信息
+    function __addTrackConfigs(files){
+        let bamFiles = fileUtil.getFilesDictBySuffix(files, '.bam')
+        let baiFiles = fileUtil.getFilesDictBySuffix(files, '.bai')
+        // console.log('__addTrackConfigs', files, bamFiles, baiFiles)
+
+        let paired_Files = {}
+        // 循环bamfiles文件
+        for (let bam_name in bamFiles) {
+            if (baiFiles.hasOwnProperty(bam_name)) {
+                let matched_sampleSn = null
+                for (let sample of sample_list) {
+                    let sampleSn = sample[dict.SAMPLESN]
+                    // bam_name样子为NGS200111-53DJ，如果sampleSn为NGS200111-5使用indexOf就会错误配对！！
+                    // 没找到包含的就跳过
+                    let index = bam_name.indexOf(sampleSn)
+                    if (index === -1) continue
+
+                    // 匹配了剩余部分如果还有数字，就不是完全匹配
+                    let substr = bam_name.replace(sampleSn, '')
+                    // console.log('addtrackconfig', substr)
+                    if (substr.match(/\d+/g)) continue
+
+                    matched_sampleSn = sampleSn
+                    //找到与 文件截断名（bam_name） 匹配的sampleSn后退出遍历
+                    break
+                }
+
+                if(matched_sampleSn){
+                    paired_Files[matched_sampleSn] = {"bam": bamFiles[bam_name], "bai": baiFiles[bam_name]}
+                }
+            }
+        }
+        // console.log("__addTrackConfigs", paired_Files)
+
+        for (let sampleSn in paired_Files) {
+            let sampleId = sampleSn_dict[sampleSn]
+            if (sampleId === undefined) continue
+
+            track_configs_dict[sampleId] = {
+                name: sampleSn,
+                type: "alignment",
+                format: 'bam',
+                samplingDepth: 100,
+                alignmentRowHeight: 10,
+                // 不显示remove按钮
+                removable: false,
+                //track高度
+                height: 170,
+                // 突变频率大于1%颜色显示
+                alleleFreqThreshold: 0.01,
+                url: paired_Files[sampleSn][dict.BAM],
+                indexURL: paired_Files[sampleSn][dict.BAI]
+            }
+
+            // 新的样本路径 会把 旧的样本路径 替换掉
+            bamAndBai_path_dict[sampleId] = [
+                paired_Files[sampleSn][dict.BAM][dict.PATH].replace(/\\/g,'/'),
+                paired_Files[sampleSn][dict.BAI][dict.PATH].replace(/\\/g,'/')
+            ]
+
+            // 刷新遍历显示用的sampleSn_inTrack_list
+            if (sampleSn_inTrackConfigDict_list.indexOf(sampleSn) === -1) {
+                sampleSn_inTrackConfigDict_list.push(sampleSn)
+            }
+        }
+        sampleSn_inTrackConfigDict_list = sampleSn_inTrackConfigDict_list
+
+    }
+    // 加载ban，bai文件
+    function loadFiles() {
+        let fileWidget = document.getElementById('fileWidget')
+        let files = fileWidget.files
+        //添加igv轨道信息
+        __addTrackConfigs(files)
+        fileWidget.value = ''
+
+        loadTracks()
+    }
+
+    // 控制igv加载轨道
+    // 加载igv的tracks
+    function loadTracks() {
+        // console.log('loadtracks begin')
+
+        // 先移除所有的tracks
+        // igvBrowser.removeAllTracks()
+
+        let reordered_sampleIds_list = []
+        let now_sample_id = all_now_sample_id[params.type]
+        // console.log('loadTracks', all_now_sample_id[params.type] + " " + selected_sampleId_list)
+
+        reordered_sampleIds_list = now_sample_id && selected_sampleId_list.indexOf(now_sample_id)!== -1?
+                [now_sample_id, ...removeFromUniqueArray(selected_sampleId_list, now_sample_id)]:
+                selected_sampleId_list
+
+        // console.log('loadTracks', reordered_sampleIds_list)
+
+        // 按now_sample_id为第一位的tracks列表，重新加载
+        // if(igvBrowser){
+        //     for (let sampleId of reordered_sampleIds_list) {
+        //         if (track_configs_dict[sampleId]) {
+        //             igvBrowser.loadTrack(track_configs_dict[sampleId])
+        //         }
+        //     }
+        // }
+        if(settingsStore.get('ifIgvConnect')){
+            ipcRenderer.send("load-tracks",
+                    reordered_sampleIds_list.reduce((result, sampleId)=>{
+                        if(bamAndBai_path_dict.hasOwnProperty(sampleId)){
+                            result.push(bamAndBai_path_dict[sampleId])
+                        }
+                        return result
+                    },[])
+            )
+        }
+
+        pre_selected_sampleId_list = JSON.parse(JSON.stringify(selected_sampleId_list))
+    }
+    // 取消所有track信息
+    function clearTracks () {
+        track_configs_dict = {}
+        sampleSn_inTrackConfigDict_list = []
+        // if (igvBrowser) {
+        //     igvBrowser.removeAllTracks()
+        // }
+
+        //bamAndBai文件路径置空
+        bamAndBai_path_dict = {}
+        if(settingsStore.get('ifIgvConnect')){
+            ipcRenderer.send('remove-tracks')
+        }
+
+    }
+    // 编写染色体位置
+    function __calculateScope (chr, start, end) {
+        let new_start = start?start-30:end-30
+        let new_end = end?end + 30:start + 30
+
+        let scope = chr + ":" + new_start +"-" + new_end
+        // console.log("scope: " + scope)
+        return scope
+    }
+    // 更好染色体位置
+    function __changeLocus(chr, posEnd, posStart){
+        let query = __calculateScope(chr, posStart, posEnd)
+
+        if(settingsStore.get('ifIgvConnect')){
+            ipcRenderer.send('search-locus', query)
+        }else{
+            errors = '使用igv，请设置"勾选连接igv"、打开igv。'
+        }
+    }
+
+    //更新igv
+    function __handleUpdateIgvShow(){
+        let now_data_id = all_now_data_id[params.type]
+        let pre_data_id = all_pre_data_id[params.type]
+        let now_sample_id = all_now_sample_id[params.type]
+        let pre_sample_id =  all_pre_sample_id[params.type]
+        // 判断该页面是否需要igv控制
+        if(sheetDisplayConfigDict[params.type][dict.IGV_CONTROL]){
+            let posStart = all_nowValue_of_data_dict[params.type][now_data_id][dict.POSSTART]
+            let posEnd = all_nowValue_of_data_dict[params.type][now_data_id][dict.POSEND]
+            if (!posStart && !posEnd) return
+
+            // 选择的sampleId列表有内容增减，或者 需要新sampleId置顶（当前sampleId变化了）
+            let ifEqual = ifContentEqualArrays(selected_sampleId_list, pre_selected_sampleId_list)
+            if(!ifEqual || (settingsStore.get('ifNowMutantTop') && pre_sample_id !== now_sample_id)){
+                loadTracks()
+            }
+
+            // 非同一mutant， 进入后再判断位置是否有变化
+            let chr = all_nowValue_of_data_dict[params.type][now_data_id][dict.CHR]
+            if (pre_data_id !== now_data_id) {
+                __changeLocus(chr, posEnd, posStart)
+            }
+        }
+    }
+
     onMount(async () => {
+        loadingShow = true
+
         pre_params_type = params.type
 
         // 获取样本列表
@@ -2851,8 +3064,16 @@
         // 更新所有页面查询的panalId, sampleIds参数
         __updatePanalId_and_sampleIdsParams()
 
+        ipcRenderer.on('connect-igv-error-caution',(event, message)=>{
+            errors = message
+        })
+        ipcRenderer.on('reset-errors', ()=>{
+            __reset_errors()
+        })
+
         document.addEventListener('contextmenu', __handleContextMenu)
 
+        loadingShow = false
     })
 
     onDestroy(()=>{
@@ -2899,6 +3120,7 @@
         // console.log(all_previousLog_list_dict)
         // console.log(now_input_field && now_input_id, !panal_unable_handle, now_params_type === params.type, page_id_availableEdit_dict[now_input_id], page_data.some(data=>data.id===now_input_id))
         // console.log(testValue)
+        console.log(track_configs_dict, bamAndBai_path_dict, sampleSn_inTrackConfigDict_list)
     }
 
 </script>
@@ -3181,14 +3403,15 @@
     }
 
     .leftSelectFileWrapper{
-        flex: 0 0 150px;
-        width: 308px;
+        flex: 0 0 200px;
+        width: 300px;
         border-bottom: 1px solid black;
     }
     .leftSelectFileWrapper .selectFile{
         padding: 3px;
-        height: 30px;
+        height: 35px;
         width: 300px;
+        box-sizing: border-box;
         line-height: 30px;
         font-size: 12px;
         border-bottom: 1px solid #cccccc;
@@ -3213,9 +3436,9 @@
         background: #09c762;
     }
     .leftSelectFileWrapper .fileList{
-        height: 107px;
-        width: 299px;
-        margin: 3px;
+        margin: 2px 0;
+        height: 165px;
+        width: 300px;
         overflow-y: scroll;
     }
     .leftSelectFileWrapper .fileList .sampleSn{
