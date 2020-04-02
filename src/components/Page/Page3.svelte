@@ -170,7 +170,7 @@
 
     .unpage, .page{
         /*border: 1px solid #ddd;*/
-        padding: 8px 12px;
+        padding: 8px 8px;
         margin-left: 10px;
         text-align: center;
         cursor:pointer;
