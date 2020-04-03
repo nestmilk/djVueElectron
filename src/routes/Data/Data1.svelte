@@ -603,7 +603,11 @@
                                                     ></div>
                                                 </td>
                                             {:else}
-                                                <td class="{field} contentTD"
+                                                <td class="{field} contentTD
+                                                            {params.type===dict.SAMPLEINFOINPANAL && field.includes('SubmitCount') &&
+                                                                all_nowValue_of_data_dict[params.type][line_data.id] &&
+                                                                all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_nowValue_of_data_dict[params.type][line_data.id][field.replace('Submit', '')]?'unequal':''}
+                                                            "
                                                     title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
                                                 >
                                                     <div class="inside">{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}</div>
@@ -767,10 +771,41 @@
     }, [])))
 
 
-    async function __check_all_freeandUnmodified_data(){
+    async function __handleCopyData(){
         loadingShow = true
-        let {panalId, sampleIds, search} = all_search_params_dict[params.type]
-        // console.log('__check_allData_freeandUnmodified', panalId, sampleIds, search)
+        console.log("__handleCopyData", userInfo.getToken())
+
+        let success = false
+        await api.copyData(
+                params.type,
+                all_now_data_id[params.type],
+                uuidv4(),
+                userInfo.getToken()
+        ).then(response=>{
+            console.log("__handleCopyData", response.data)
+            success = true
+
+            // 利用返回id更换当前数据id
+            all_now_data_id[params.type] = response.data.id
+        }).catch(error=>{
+            console.log('__handleCopyData', error)
+        })
+
+        loadingShow = false
+    }
+
+
+    async function __check_selectedSampleIds_freeandUnmodified_data(){
+        loadingShow = true
+        let panalId = params[dict.PANALID]
+        let sampleIds = selected_sampleId_list.join(',')
+        let search = all_search_params_dict[params.type][dict.SEARCH]
+        // 计算sheet页内，已选样本的数据总数
+        let count = selected_sampleId_list.reduce((count, sample_id)=>{
+            count = count + all_sample_record_dict[params.type][sample_id][dict.ALLDATA]
+            return count
+        }, 0)
+        console.log('__check_allData_freeandUnmodified', panalId, sampleIds, search, count)
 
         let results = []
         //A) 如果记录的数据总条数 和 状态库中存储的数据条数 不一致，下载所有数据
@@ -782,10 +817,11 @@
                 panalId,
                 sampleIds,
                 search,
-                page_size: data_count
+                page_size: count
             }).then(response=>{
                 // console.log('__check_allData_freeandUnmodified', response.data)
-                if(response.data.count!==data_count){
+
+                if(response.data.count !== count){
                     remote.dialog.showMessageBox({
                         type: 'info',
                         title: '数据数量不一致',
@@ -800,12 +836,14 @@
             })
 
             if(success){
+                // B) 更新所有数据的status，nowValue, preValue
                 __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(results)
             }
         }
 
-        // B) 判断本地存储到的数据，是否free，是否unmodified，如果符合提交
-        for (let id in all_status_of_data_dict[params.type]){
+        // C) 判断本地存储到的数据，是否free，是否unmodified，如果符合提交
+        let ids = results.map(data=>data[dict.ID])
+        for (let id of ids){
             let sample_id = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
             let status = all_status_of_data_dict[params.type][id]
             let unequal_values = __check_unequalValues_ofModifiyFields(id)
@@ -815,11 +853,11 @@
             }
         }
 
-        // C) 当前页各id能否被编辑, 全设置为false
+        // D) 当前页各id能否被编辑, 全设置为false
         __set_allIds_availEdit_false_inPageIdAvailEditDict()
-        // D) 当前页每条id的各个可编辑field的鼠标是否进入, 全设置为false
+        // E) 当前页每条id的各个可编辑field的鼠标是否进入, 全设置为false
         __set_allIdMofidyFields_mouseEnter_false_inPageIdModifyFieldMouseEnterDicts()
-        // E) 重置当前页所有id，是否可选
+        // F) 重置当前页所有id，是否可选
         __update_allIds_availSelect_inPageIdAvailSelectDict()
 
         loadingShow = false
@@ -879,7 +917,7 @@
                     case dict.CHECK:
                         // console.log('handleSureReply 未审核未修改 确认审核')
                         if(reply){
-                            __check_all_freeandUnmodified_data()
+                            __check_selectedSampleIds_freeandUnmodified_data()
                         }
                         break
                     default:
@@ -889,9 +927,9 @@
             case dict.DATA:
                 switch (sureOperation) {
                     case dict.COPY:
-                        console.log('handleSureReply 数据复制')
+                        // console.log('handleSureReply 数据复制')
                         if(reply){
-
+                            __handleCopyData()
                         }
                         break
                     default:
@@ -992,7 +1030,8 @@
                 let submitCount = all_nowValue_of_data_dict[params.type][id][field]
                 let count_field = field.replace('Submit', '')
                 let count = all_nowValue_of_data_dict[params.type][id][count_field]
-                console.log('__check_availSelect_of_oneData_alreadyInsid', count_field, count, submitCount)
+                // console.log('__check_availSelect_of_oneData_alreadyInsid', count_field, count, submitCount)
+
                 return  count === submitCount
             })
         }
@@ -2981,7 +3020,7 @@
                 let menu = new remote.Menu()
 
                 let recoverMenuItem = new remote.MenuItem({
-                    label: `"${submenu_translate_dict[sheet]}"页全部审核(仅限无修改项)`,
+                    label: `"${submenu_translate_dict[sheet]}"页-选中样本-全部审核(仅限无修改项)`,
                     click: ()=>{
                         // console.log('全部审核')
                         sureEvent = dict.FREE_UNMODIFIED
@@ -3512,13 +3551,13 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
-        // console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
-        console.log(page_id_modifyField_mouseEnter_dicts, page_id_availableSelect_dict, page_id_availableEdit_dict)
+        // console.log(page_id_modifyField_mouseEnter_dicts, page_id_availableSelect_dict, page_id_availableEdit_dict)
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
         // console.log(all_previousLog_list_dict)
         // console.log(now_input_field && now_input_id, !panal_unable_handle, now_params_type === params.type, page_id_availableEdit_dict[now_input_id], page_data.some(data=>data.id===now_input_id))
@@ -4091,6 +4130,9 @@
     }
     .contentRight .rightDataTable .trueDelete .contentTD{
         text-decoration: line-through;
+    }
+    .contentRight .rightDataTable .contentTD.unequal{
+        background: #fc6a56;
     }
     .contentRight .rightDataTable .lineData.current{
         border: 2px solid black;

@@ -43,6 +43,8 @@ export const updateMutant = (id, params) => {return axios.patch(`${host()}/mutan
 export const updateTarget = (id, params) => {return axios.patch(`${host()}/mutants/${id}/`, params)}
 export const updateHereditary = (id, params) => {return axios.patch(`${host()}/mutants/${id}/`, params)}
 export const updateTMB = (id, params) => {return axios.patch(`${host()}/mutants/${id}/`, params)}
+// 复制一条mutant
+export const copyMutant = (mutant_id, user_id) => {return axios.get(`${host()}/copy/${mutant_id}/${user_id}/`)}
 
 // 获取sampleInfoInPanal的列表
 export const listSampleInfoInPanal = params => {return axios.get(`${host()}/sampleinfoinpanals/`, {params: params})}
@@ -84,7 +86,9 @@ export const listHLA = params => {return axios.get(`${host()}/hlas/`, {params: p
 export const listSampleInfo = params => {return axios.get(`${host()}/samples/`, {params: params})}
 
 
+//复制一条数据
+export const copyData = (sheet, data_id, log_id, token) => {return axios.get(`${host()}/copy/${sheet}/${data_id}/${log_id}/${token}/`)}
+
+
 // 生成结果excel
 export const createExcel = (id, type) => {return axios.get(`${host()}/excel/${type}/${id}/`)}
-// 复制一条mutant
-export const copyMutant = (mutant_id, user_id) => {return axios.get(`${host()}/copy/${mutant_id}/${user_id}/`)}
