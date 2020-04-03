@@ -203,14 +203,27 @@
                         <div class="idsWrapper">
                             <span>数据ID:</span>
                             <input bind:value="{query_ids}"
-                                   on:keydown={handleIdsQueryKeydown}
+                                   bind:this={idsInput}
                                    placeholder="请填写数据Id，多个id间空格分隔"
+                                   on:click={handleOpenIDsGroupSelect}
+                                   on:input={handleCloseIDsGroupSelect}
+                                   on:keydown={handleIdsQueryKeydown}
                             />
+
+                            {#if idsGroupSelectShow}
+                                <div class="groupSelect" on:mouseleave={handleCloseIDsGroupSelect}>
+                                    {#each idsGroupSelections as select}
+                                        <div class="item" on:click={()=>handleIdsGroupSelect(select[dict.VALUE])}>{select[dict.TRANSLATE]}</div>
+                                    {/each}
+                                </div>
+                            {/if}
+
                             <button class="icon-undo2"
                                     title="清空所有过滤条件"
                                     on:click={handleClearQueryIDS}
                             ></button>
                         </div>
+
                     </div>
                     <div class="editBigInputWrapper">
                         <span class="abstract">
@@ -225,7 +238,8 @@
                             {/if}
                         </span><!--abstract-->
                         <input class="bigInput"
-                               value={now_input_field && now_input_id?all_nowValue_of_data_dict[now_params_type][now_input_id][now_input_field]:''}
+                               value={now_input_field && now_input_id && all_nowValue_of_data_dict[now_params_type][now_input_id]?
+                                            all_nowValue_of_data_dict[now_params_type][now_input_id][now_input_field]:''}
                                disabled="{now_input_field && now_input_id &&
                                             !panal_unable_handle &&
                                             now_params_type === params.type &&
@@ -245,7 +259,7 @@
                         <div class="firstDefaultTitle selectFieldItem"  on:click={toggleDefaultFiledsOpen}>
                             <span>恢复默认标题栏</span>
                             <span class="checkBox icon-undo2
-                                    {!all_onlyDefaultFieldsOpened[params.type]?'active':''}"
+                                    {!all_titleDefaultShow_dict[params.type]?'active':''}"
                             ></span>
                         </div>
                         {#if  all_selectTitle_list_dict[params.type].length > 0}
@@ -255,7 +269,10 @@
                                     <div class="selectFieldItem"
                                          on:click={()=>toggle_selectField_nowDisplay(field)}
                                     >
-                                        <span>{field}{params.type===dict.SAMPLEINFOINPANAL?'':`(${all_titleListItem_dict[params.type][field][dict.TRANSLATE]})`}</span>
+                                        <span>{params.type===dict.SAMPLEINFOINPANAL?
+                                                    `${all_titleListItem_dict[params.type][field][dict.TRANSLATE]}`:
+                                                    `{field}(${all_titleListItem_dict[params.type][field][dict.TRANSLATE]})`}
+                                        </span>
                                         <span class="checkBox {all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"></span>
                                     </div>
                                 {/each}
@@ -574,8 +591,11 @@
                                                            on:focus={(e)=>focusNowField(e, line_data.id, field)}
                                                     >
                                                     <div class="upBesideInput icon-warning"></div>
+                                                    <!--__getPageData 此时获取到新的page_data 开始更新界面
+                                                        但是page_id_modifyField_mouseEnter_dicts还是旧的那页的，会找不到数据id-->
                                                     <div class="downBesideInput icon-undo2
-                                                                {page_ModifyField_mouseEnter_dict[line_data.id][field] &&
+                                                                {page_id_modifyField_mouseEnter_dicts[line_data.id] &&
+                                                                    page_id_modifyField_mouseEnter_dicts[line_data.id][field] &&
                                                                     page_id_availableEdit_dict[line_data.id]?'show':''
                                                                 }
                                                             "
@@ -669,8 +689,13 @@
         arrayToDict
     } from '../../utils/arrays'
     import {getTime, getParentNodeByParentClassName} from "../../utils/common";
-    import {sheetDisplayConfigList, common_filter_subFilters_dict, common_subFilter_selections_dict,
-        affirmSelectionConfig} from './config'
+    import {
+        sheetDisplayConfigList,
+        common_filter_subFilters_dict,
+        common_subFilter_selections_dict,
+        affirmSelectionConfig,
+        idsGroupSelections
+    } from './config'
     import {dict_translate} from '../../utils/dict'
     const sheetDisplayConfigDict = arrayToDict(sheetDisplayConfigList, 'sheet')
 
@@ -712,7 +737,9 @@
         NEW_VALUE: 'new_value', OLD_VALUE: 'old_value', PREVIOUS_LOG_UPDATE: "previous_log_update",
         EDITOR: 'editor', ADD_TIME: "add_time", CHECK: 'check', SUBMIT: 'submit',
         BAM: 'bam', BAI: 'bai', PATH: 'path', IGV_CONTROL: 'igv_control', NEED_COPY: 'need_copy', NEED_CHECK: 'need_check',
-        FREE_UNMODIFIED: 'free_unmodified',
+        FREE_UNMODIFIED: 'free_unmodified', NEED_ALL_CHECK: 'need_all_check',
+        UA_US_IDS: "unaffirmed_unsubmited_ids", A_US_IDS: "affirmed_unsubmited_ids", E_US_IDS: "edited_unsubmited_ids",
+
     }
     // 获取路径中的：值
     export let params = {}
@@ -739,23 +766,60 @@
     }, [])))
 
 
-    async function __check_allData_freeandUnmodified(){
+    async function __check_all_freeandUnmodified_data(){
         loadingShow = true
         let {panalId, sampleIds, search} = all_search_params_dict[params.type]
-        console.log('__check_allData_freeandUnmodified', panalId, sampleIds, search)
+        // console.log('__check_allData_freeandUnmodified', panalId, sampleIds, search)
 
-        let name = params.type
-        name = name.slice(0, 1).toUpperCase() + name.slice(1)
-        await api[`list${name}`]({
-            panalId,
-            sampleIds,
-            search,
-            page_size: data_count
-        }).then(response=>{
-            console.log('__check_allData_freeandUnmodified', response.data)
-        }).catch(error=>{
-            console.log('__check_allData_freeandUnmodified', error)
-        })
+        let results = []
+        //A) 如果记录的数据总条数 和 状态库中存储的数据条数 不一致，下载所有数据
+        if(data_count!==Object.keys(all_status_of_data_dict[params.type]).length){
+            let name = params.type
+            name = name.slice(0, 1).toUpperCase() + name.slice(1)
+            let success = false
+            await api[`list${name}`]({
+                panalId,
+                sampleIds,
+                search,
+                page_size: data_count
+            }).then(response=>{
+                // console.log('__check_allData_freeandUnmodified', response.data)
+                if(response.data.count!==data_count){
+                    remote.dialog.showMessageBox({
+                        type: 'info',
+                        title: '数据数量不一致',
+                        message: `数据库现有数据${response.data.count}条，本地数据量显示${data_count}条。`
+                    })
+                }else{
+                    success = true
+                    results = response.data.results
+                }
+            }).catch(error=>{
+                console.log('__check_allData_freeandUnmodified', error)
+            })
+
+            if(success){
+                __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(results)
+            }
+        }
+
+        // B) 判断本地存储到的数据，是否free，是否unmodified，如果符合提交
+        for (let id in all_status_of_data_dict[params.type]){
+            let sample_id = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
+            let status = all_status_of_data_dict[params.type][id]
+            let unequal_values = __check_unequalValues_ofModifiyFields(id)
+            if(status===dict.FREE && Object.keys(unequal_values).length===0){
+                // 将状态从free设置为checked
+                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.CHECKED)
+            }
+        }
+
+        // C) 当前页各id能否被编辑, 全设置为false
+        __set_allIds_availEdit_false_inPageIdAvailEditDict()
+        // D) 当前页每条id的各个可编辑field的鼠标是否进入, 全设置为false
+        __set_allIdMofidyFields_mouseEnter_false_inPageIdModifyFieldMouseEnterDicts()
+        // E) 重置当前页所有id，是否可选
+        __update_allIds_availSelect_inPageIdAvailSelectDict()
 
         loadingShow = false
     }
@@ -814,7 +878,7 @@
                     case dict.CHECK:
                         // console.log('handleSureReply 未审核未修改 确认审核')
                         if(reply){
-                            __check_allData_freeandUnmodified()
+                            __check_all_freeandUnmodified_data()
                         }
                         break
                     default:
@@ -1282,7 +1346,8 @@
         }, [])
         return result
     }, {})))
-    let all_onlyDefaultFieldsOpened = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+    // 页面是否按 默认显示方式 打开状态集合
+    let all_titleDefaultShow_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         result[item[dict.SHEET]] = true
         return result
     },{})))
@@ -1294,7 +1359,7 @@
     }
     // 处理标题栏菜单中 全部默认标题的打开, 全部选择标题的关闭
     function toggleDefaultFiledsOpen(){
-        if (all_onlyDefaultFieldsOpened[params.type]) return
+        if (all_titleDefaultShow_dict[params.type]) return
         all_defaultTitle_list_dict[params.type].forEach(field=>{
             all_titleListItem_dict[params.type][field][dict.NOWDISPLAY] = true
         })
@@ -1302,7 +1367,7 @@
             all_titleListItem_dict[params.type][field][dict.NOWDISPLAY] = false
         })
 
-        all_onlyDefaultFieldsOpened[params.type] = true
+        all_titleDefaultShow_dict[params.type] = true
     }
     // 单个改变可选标题栏是否打开
     function toggle_selectField_nowDisplay(field){
@@ -1317,14 +1382,14 @@
         let allSelectClosed = all_selectTitle_list_dict[params.type].every(field=>{
             return !all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]
         })
-        all_onlyDefaultFieldsOpened[params.type] = allDefaultOpened && allSelectClosed? true: false
+        all_titleDefaultShow_dict[params.type] = allDefaultOpened && allSelectClosed? true: false
 
     }
 
     // 当前页面信息列表，用于循环展示
     let page_data = []
     // 随着页面初始化后更新, 鼠标进入各个id的field后值变为true，初始化为false
-    let page_ModifyField_mouseEnter_dict = {}
+    let page_id_modifyField_mouseEnter_dicts = {}
     // 当前页，各个id当前能否编辑，初始化全为false
     let page_id_availableEdit_dict = {}
     // 当前页面的id，能否操作列按钮显示
@@ -1397,10 +1462,10 @@
     }
     // 处理鼠标划入突变的td的状态, 为了触发单元格 恢复按钮
     function handleMutantTDMouseenter (field, id){
-        page_ModifyField_mouseEnter_dict[id][field] = true
+        page_id_modifyField_mouseEnter_dicts[id][field] = true
     }
     function handleMutantTDMouseleave (field, id){
-        page_ModifyField_mouseEnter_dict[id][field] = false
+        page_id_modifyField_mouseEnter_dicts[id][field] = false
     }
 
     // 设定当前修改标题
@@ -1859,8 +1924,9 @@
         result[item[dict.SHEET]] = {}
         return result
     }, {})))
-    function __update_allDataStatusDict_allNowValueOfDataDict_allPreValueOfDataDict(){
-        for (let data of page_data) {
+    function __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(data_list=null){
+        let default_data_list = data_list && data_list.length>0?data_list:page_data
+        for (let data of default_data_list) {
             let id = data[dict.ID]
 
             //1) 本地无此条记录 2) 或者此页需要每次都强制更新每条数据（即概览页 每次都更新数据）
@@ -1896,6 +1962,25 @@
 
     }
 
+    //初始化当前页面所有id的可修改field为 "鼠标未进入" ，false
+    function __set_allIdMofidyFields_mouseEnter_false_inPageIdModifyFieldMouseEnterDicts(){
+        page_id_modifyField_mouseEnter_dicts = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
+            let status_dict = {}
+            for (let field in item){
+                status_dict[field] = false
+            }
+            result[item[dict.ID]] = status_dict
+            return result
+        }, {})))
+        // console.log(" __set_allIdMofidyFields_mouseEnter_false...", page_id_modifyField_mouseEnter_dicts[params.type])
+    }
+    // 初始化当前页所有数据，当前不可编辑 false
+    function __set_allIds_availEdit_false_inPageIdAvailEditDict(){
+        page_id_availableEdit_dict =  JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
+            result[item[dict.ID]] = false
+            return result
+        }, {})))
+    }
 
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
     async function __getPageData () {
@@ -1912,46 +1997,34 @@
 
         await api[`list${name}`](all_search_params_dict[params.type]).then(response=>{
             page_data = response.data.results
-            // A) 当前页每条id的各个可编辑field的鼠标是否进入，初始化为false未进入
-            page_ModifyField_mouseEnter_dict = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
-                let status_dict = {}
-                for (let field in item){
-                    status_dict[field] = false
-                }
-                result[item[dict.ID]] = status_dict
-                return result
-            }, {})))
-            // console.log('__getPageData page_ModifyField_mouseEnter_dict', page_ModifyField_mouseEnter_dict)
-
-            // B) 当前页各id能否被编辑, 初始化都不能编辑
-            page_id_availableEdit_dict =  JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
-                result[item[dict.ID]] = false
-                return result
-            }, {})))
-
-            // C) 更新当前页data总条数，
+            //更新当前页data总条数，__updateTotalPageNums()需要调用，获得总页数
             data_count = response.data.count
 
             success = true
-
         }).catch(error=>{
             console.log("__getPageData", error)
         })
 
         if(success){
-            // D) 更新totalPageNums，利用C)中data_count
+            // A) 当前页每条id的各个可编辑field的鼠标是否进入，初始化为false未进入
+            __set_allIdMofidyFields_mouseEnter_false_inPageIdModifyFieldMouseEnterDicts()
+
+            // B) 当前页各id能否被编辑, 初始化都不能编辑
+            __set_allIds_availEdit_false_inPageIdAvailEditDict()
+
+            // C) 更新totalPageNums，利用更新的data_count
             __updateTotalPageNums()
 
-            // E) 更新 all_data_status_dict 中数据状态
-            __update_allDataStatusDict_allNowValueOfDataDict_allPreValueOfDataDict()
+            // D) 更新 all_data_status_dict 中数据状态
+            __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict()
 
-            // F)如果当前 审核工作状态, 需要更新之前的过往日志
+            // E)如果当前 审核工作状态, 需要更新之前的过往日志
             if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
                 console.log('__getPageData 审核工作状态需要 开始更新日志')
                 await __update_Ids_and_relatedIds_PreviousLogs()
             }
 
-            // G) 更新页面所有id可否选择,
+            // F) 更新页面所有id可否选择,
             // 查看日志，取消提交的工作状态 依赖于F)
             // 概览依赖于E)的nowValue判断count和submitCout相同
             __update_allIds_availSelect_inPageIdAvailSelectDict()
@@ -2198,6 +2271,48 @@
         await __getPageData()
     }
     let query_ids = ''
+    let idsInput
+    let idsGroupSelectShow = false
+    function handleOpenIDsGroupSelect(){
+        console.log("handleOpenIDsGroupSelect")
+        idsGroupSelectShow = true
+    }
+    function handleCloseIDsGroupSelect(){
+        console.log("handleCloseIDsGroupSelect")
+        idsGroupSelectShow = false
+    }
+    function handleIdsGroupSelect(type){
+        console.log("handleIdsGroupSelect", type)
+        idsGroupSelectShow = false
+
+        let ids = []
+        switch (type) {
+            case dict.A_US_IDS:
+                ids = Object.keys(all_status_of_data_dict[params.type]).reduce((result, id)=>{
+                    if([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(all_status_of_data_dict[params.type][id])!==-1){
+                        result.push(id)
+                    }
+                    return result
+                }, [])
+                query_ids = query_ids + ' ' + ids.join(' ')
+                break
+            case dict.E_US_IDS:
+                break
+            case dict.UA_US_IDS:
+                ids = Object.keys(all_status_of_data_dict[params.type]).reduce((result, id)=>{
+                    if(all_status_of_data_dict[params.type][id]===dict.FREE){
+                        result.push(id)
+                    }
+                    return result
+                }, [])
+                query_ids =  query_ids + ' ' + ids.join(' ')
+                break
+            default:
+                break
+        }
+
+        idsInput.focus()
+    }
     //控制ids查询数据
     async function handleIdsQueryKeydown(event){
         if (event.which !== 13) return;
@@ -2278,7 +2393,8 @@
     // panal能否被操作的状态
     let panal_unable_handle = false
 
-    let sheets_needSamplRecordDict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+    //需要样本记录的页面 列表
+    let sheet_needSampleRecordDict_list = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         // 筛选当中有 ‘logsEdit=’的需要，才说明有编辑的可能性
         if (sheetDisplayConfigDict[item[dict.SHEET]][dict.FILTERS].indexOf(dict.LOGSEDIT) > -1) result.push(item[dict.SHEET])
         return result
@@ -2300,6 +2416,13 @@
         }
         return result
     }, {})))
+
+    // 可以执行全部审核操作的页面列表
+    let sheet_needAllCheck_list = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        // 筛选当中有 ‘logsEdit=’的需要，才说明有编辑的可能性
+        if (sheetDisplayConfigDict[item[dict.SHEET]][dict.NEED_ALL_CHECK]) result.push(item[dict.SHEET])
+        return result
+    },[])))
 
     // 有编辑记录筛选项的sheet页，每条数据提交的params数据汇总
     let all_submit_params_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
@@ -2701,7 +2824,9 @@
         // 切换回第一页
         __set_page_inAllSearchParamsDict(1)
 
-        await __getPageData()
+        if(!force){
+            await __getPageData()
+        }
 
         loadingShow = false
     }
@@ -2814,8 +2939,10 @@
         if (document.querySelector('.subMenuWrapper').contains(e.target)){
             let element =getParentNodeByParentClassName(e.target, 'submenuBtn')
             let sheet = element.dataset.sheet
+            console.log("__handleContextMenu sheet", sheet)
 
-            if (params.type===sheet){
+            //首先点在了sheet上，右键的sheet与当前params.type一致，并且sheet是需要全部审核的
+            if (sheet && params.type===sheet && sheet_needAllCheck_list.indexOf(sheet)!==-1){
                 let menu = new remote.Menu()
 
                 let recoverMenuItem = new remote.MenuItem({
@@ -3327,7 +3454,7 @@
     // 测试使用
     function test() {
         // console.log(sample_list, sampleSn_dict)
-        console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
+        // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict)
         // console.log(all_sheet_record_dict)
         // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
@@ -3338,20 +3465,20 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
-        // console.log(all_status_of_data_dict)
-        // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        // console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
-        // console.log(page_id_availableSelect_dict, page_id_availableEdit_dict)
+        console.log(page_id_modifyField_mouseEnter_dicts, page_id_availableSelect_dict, page_id_availableEdit_dict)
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
         // console.log(all_previousLog_list_dict)
         // console.log(now_input_field && now_input_id, !panal_unable_handle, now_params_type === params.type, page_id_availableEdit_dict[now_input_id], page_data.some(data=>data.id===now_input_id))
         // console.log(testValue)
         // console.log(track_configs_dict, bamAndBai_path_dict, sampleSn_inTrackConfigDict_list)
         // console.log(field_needCheck_inSampleInfoinPanal)
+        // console.log(sheet_needAllCheck_list)
     }
 
 </script>
@@ -3749,6 +3876,11 @@
         width: 300px;
         height: 30px;
     }
+    .contentRight .filterWrapper .idsWrapper input::-webkit-input-placeholder {
+        text-align: center;
+        font-size: 14px;
+        color: #666666;
+    }
     .contentRight .filterWrapper .idsWrapper button{
         position: absolute;
         top: 2px;
@@ -3767,11 +3899,29 @@
         background: #939393;
         color: white;
     }
-    .contentRight .filterWrapper .idsWrapper input::-webkit-input-placeholder {
-        text-align: center;
-        font-size: 14px;
-        color: #666666;
+    .contentRight .filterWrapper .idsWrapper .groupSelect{
+        position: absolute;
+        box-sizing: border-box;
+        top: 30px;
+        left: 70px;
+        padding: 5px;
+        width: 300px;
+        min-height: 75px;
+        border: 1px solid #cccccc;
+        background: white;
+        z-index: 10;
     }
+    .contentRight .filterWrapper .idsWrapper .groupSelect .item{
+        margin-down: 3px;
+        line-height: 25px;
+        width: 100%;
+        font-size: 14px;
+    }
+    .contentRight .filterWrapper .idsWrapper .groupSelect .item:hover{
+        color: white;
+        background: #69ca60;
+    }
+
 
     .contentRight .editBigInputWrapper{
         padding: 3px;

@@ -232,6 +232,7 @@ export const sheetDisplayConfigList = [
         sheet: "target",
         filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: '靶向',
+        need_all_check: true,
         igv_control: true,
         need_copy: true,
         reason_type: [
@@ -469,6 +470,7 @@ export const sheetDisplayConfigList = [
         sheet: "hereditary",
         filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: '遗传',
+        need_all_check: true,
         igv_control: true,
         need_copy: true,
         reason_type: [
@@ -641,6 +643,7 @@ export const sheetDisplayConfigList = [
         sheet: "TMB",
         filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
         submenu_translate: 'TMB',
+        need_all_check: true,
         igv_control: true,
         need_copy: true,
         reason_type: [
@@ -755,6 +758,7 @@ export const sheetDisplayConfigList = [
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
         submenu_translate: '免疫',
+        need_all_check: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -829,6 +833,7 @@ export const sheetDisplayConfigList = [
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
         submenu_translate: 'TNB',
+        need_all_check: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -928,6 +933,7 @@ export const sheetDisplayConfigList = [
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
         submenu_translate: '融合',
+        need_all_check: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -1125,6 +1131,7 @@ export const sheetDisplayConfigList = [
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
         submenu_translate: 'CNA',
+        need_all_check: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -2032,3 +2039,15 @@ export const affirmSelectionConfig = [
     },
 ]
 
+export const idsGroupSelections = [
+    {
+        value: "affirmed_unsubmited_ids",
+        translate: '添加已审核、未提交的IDs',
+    }, {
+        value: "edited_unsubmited_ids",
+        translate: '添加有编辑、未提交的IDs',
+    }, {
+        value: "unaffirmed_unsubmited_ids",
+        translate: '添加已阅页中，未审核、未提交的IDs'
+    },
+]
