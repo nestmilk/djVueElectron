@@ -709,7 +709,7 @@
     let dict = {
         SAMPLEINFOINPANAL: "sampleInfoInPanal",
         SHEET: 'sheet', SUBMENU_TRANSLATE: "submenu_translate", FILTERS: "filters",
-        PARAM: 'param', SEARCH: 'search',
+        PARAM: 'param', SEARCH: 'search', DATA: 'data', COPY: 'copy',
         ID: 'id', SAMPLE: 'sample', SAMPLESN: 'sampleSn',  TITLE_LIST: 'title_list',
         PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEID: 'sampleId', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
         TITLE: 'title', TRANSLATE: 'translate',
@@ -738,7 +738,8 @@
         EDITOR: 'editor', ADD_TIME: "add_time", CHECK: 'check', SUBMIT: 'submit',
         BAM: 'bam', BAI: 'bai', PATH: 'path', IGV_CONTROL: 'igv_control', NEED_COPY: 'need_copy', NEED_CHECK: 'need_check',
         FREE_UNMODIFIED: 'free_unmodified', NEED_ALL_CHECK: 'need_all_check',
-        UA_US_IDS: "unaffirmed_unsubmited_ids", A_US_IDS: "affirmed_unsubmited_ids", E_US_IDS: "edited_unsubmited_ids",
+        MUL_AFF_IDS: "multiple_affirmed_ids", UA_US_IDS: "unaffirmed_unsubmited_ids", A_US_IDS: "affirmed_unsubmited_ids",
+        E_US_IDS: "edited_unsubmited_ids",
 
     }
     // 获取路径中的：值
@@ -879,6 +880,18 @@
                         // console.log('handleSureReply 未审核未修改 确认审核')
                         if(reply){
                             __check_all_freeandUnmodified_data()
+                        }
+                        break
+                    default:
+                        break
+                }
+                break
+            case dict.DATA:
+                switch (sureOperation) {
+                    case dict.COPY:
+                        console.log('handleSureReply 数据复制')
+                        if(reply){
+
                         }
                         break
                     default:
@@ -2274,19 +2287,32 @@
     let idsInput
     let idsGroupSelectShow = false
     function handleOpenIDsGroupSelect(){
-        console.log("handleOpenIDsGroupSelect")
+        // console.log("handleOpenIDsGroupSelect")
         idsGroupSelectShow = true
     }
     function handleCloseIDsGroupSelect(){
-        console.log("handleCloseIDsGroupSelect")
+        // console.log("handleCloseIDsGroupSelect")
         idsGroupSelectShow = false
     }
     function handleIdsGroupSelect(type){
-        console.log("handleIdsGroupSelect", type)
+        // console.log("handleIdsGroupSelect", type)
         idsGroupSelectShow = false
 
         let ids = []
         switch (type) {
+            case dict.MUL_AFF_IDS:
+                Object.keys(logs_together_dict).forEach(log_id=>{
+                    let log_detail = logs_together_dict[log_id]
+                    if(log_detail[dict.IDS].length>1) {
+                        log_detail[dict.IDS].forEach(id => {
+                            if (ids.indexOf(id)===-1) {
+                                ids.push(id)
+                            }
+                        })
+                    }
+                })
+                query_ids = ids.join(' ')
+                break
             case dict.A_US_IDS:
                 ids = Object.keys(all_status_of_data_dict[params.type]).reduce((result, id)=>{
                     if([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(all_status_of_data_dict[params.type][id])!==-1){
@@ -2294,9 +2320,18 @@
                     }
                     return result
                 }, [])
-                query_ids = query_ids + ' ' + ids.join(' ')
+                query_ids = ids.join(' ')
                 break
             case dict.E_US_IDS:
+                ids = Object.keys(all_status_of_data_dict[params.type]).reduce((result, id)=>{
+                    let unequal_values = __check_unequalValues_ofModifiyFields(id)
+                    if(all_status_of_data_dict[params.type][id]!==dict.DONE &&
+                        Object.keys(unequal_values).length>0){
+                        result.push(id)
+                    }
+                    return result
+                }, [])
+                query_ids = ids.join(' ')
                 break
             case dict.UA_US_IDS:
                 ids = Object.keys(all_status_of_data_dict[params.type]).reduce((result, id)=>{
@@ -2305,7 +2340,7 @@
                     }
                     return result
                 }, [])
-                query_ids =  query_ids + ' ' + ids.join(' ')
+                query_ids =  ids.join(' ')
                 break
             default:
                 break
@@ -3010,9 +3045,21 @@
                         let unequal_values_sinCancelorAffirm = id?__check_unequalValues_ofModifiyFields(id):[]
                         let modified__sinCancelorAffirm = Object.keys(unequal_values_sinCancelorAffirm).length>0
 
+                        let single_copy_MenuItem = new remote.MenuItem({
+                            label: '单项复制',
+                            enabled: id===right_id && status===dict.FREE ,
+                            click: ()=>{
+                                sureEvent = dict.DATA
+                                sureOperation = dict.COPY
+                                changeSendSureMessage()
+                                sureShow = true
+                            }
+                        })
+                        menu.append(single_copy_MenuItem)
+
                         let single_edit_MenuItem = new remote.MenuItem({
                             label: '单项编辑',
-                            enabled: id===right_id && status===dict.FREE,
+                            enabled: id===right_id && status===dict.FREE && !page_id_availableEdit_dict[id],
                             click: () => {
                                 __openEdit_byOneId_inAllPageIdAvailEditDict(id)
                             }
@@ -3063,7 +3110,7 @@
 
                         let single_edit_inEditMulAffReason_MenuItem = new remote.MenuItem({
                             label: '单项编辑',
-                            enabled: id===right_id && status===dict.FREE,
+                            enabled: id===right_id && status===dict.FREE && !page_id_availableEdit_dict[id],
                             click: () => {
                                 __openEdit_byOneId_inAllPageIdAvailEditDict(id)
                             }
@@ -3119,7 +3166,7 @@
 
                         let single_edit_MenuItem_inAdjustMulAffItems = new remote.MenuItem({
                             label: '单项编辑',
-                            enabled: id===right_id && status===dict.FREE,
+                            enabled: id===right_id && status===dict.FREE && !page_id_availableEdit_dict[id],
                             click: () => {
                                 __openEdit_byOneId_inAllPageIdAvailEditDict(id)
                             }

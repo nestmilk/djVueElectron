@@ -645,7 +645,6 @@ export const sheetDisplayConfigList = [
         submenu_translate: 'TMB',
         need_all_check: true,
         igv_control: true,
-        need_copy: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -759,6 +758,7 @@ export const sheetDisplayConfigList = [
         filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
         submenu_translate: '免疫',
         need_all_check: true,
+        need_copy: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -2041,13 +2041,16 @@ export const affirmSelectionConfig = [
 
 export const idsGroupSelections = [
     {
+        value: "multiple_affirmed_ids",
+        translate: '使用批量审核的IDs',
+    }, {
         value: "affirmed_unsubmited_ids",
-        translate: '添加已审核、未提交的IDs',
+        translate: '使用已审核、未提交的IDs',
     }, {
         value: "edited_unsubmited_ids",
-        translate: '添加有编辑、未提交的IDs',
+        translate: '使用有编辑、未提交的IDs',
     }, {
         value: "unaffirmed_unsubmited_ids",
-        translate: '添加已阅页中，未审核、未提交的IDs'
+        translate: '使用未审核、未提交的IDs(限已浏览页)'
     },
 ]
