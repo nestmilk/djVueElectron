@@ -743,7 +743,7 @@
         BAM: 'bam', BAI: 'bai', PATH: 'path', IGV_CONTROL: 'igv_control', NEED_COPY: 'need_copy', NEED_CHECK: 'need_check',
         FREE_UNMODIFIED: 'free_unmodified', NEED_ALL_CHECK: 'need_all_check',
         MUL_AFF_IDS: "multiple_affirmed_ids", UA_US_IDS: "unaffirmed_unsubmited_ids", A_US_IDS: "affirmed_unsubmited_ids",
-        E_US_IDS: "edited_unsubmited_ids",
+        E_US_IDS: "edited_unsubmited_ids", NOW_SELECTED_IDS: "now_selected_ids",
 
     }
     // 获取路径中的：值
@@ -2339,6 +2339,10 @@
 
         let ids = []
         switch (type) {
+            case dict.NOW_SELECTED_IDS:
+                ids = all_selected_dataIds_dict[params.type]
+                query_ids = ids.join(' ')
+                break
             case dict.MUL_AFF_IDS:
                 Object.keys(logs_together_dict).forEach(log_id=>{
                     let log_detail = logs_together_dict[log_id]

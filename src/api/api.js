@@ -82,7 +82,9 @@ export const listHRR = params => {return axios.get(`${host()}/hrrs/`, {params: p
 export const listClinicaltrials = params => {return axios.get(`${host()}/clinicaltrials/`, {params: params})}
 // 获取HLA列表
 export const listHLA = params => {return axios.get(`${host()}/hlas/`, {params: params})}
-//获取sampleInfo列表
+// 获取MLPA列表
+export const listMLPA = params => {return axios.get(`${host()}/mlpas/`, {params: params})}
+// 获取sampleInfo列表
 export const listSampleInfo = params => {return axios.get(`${host()}/samples/`, {params: params})}
 
 

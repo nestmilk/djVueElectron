@@ -256,7 +256,7 @@
         DEPTH: 'Depth', EFFECTDEPTH: 'effectDepth', COVERAGE: 'coverage', EFFECTCOVERAGE500: 'effectCoverage500',
         VALUE: 'value',
         IMMUNE: "immune", TNB: "TNB", HLA: "HLA", FUSION: "fusion", CHEMICAL: "chemical", CNA: "CNA", MSI: "MSI",
-        CLINICAL_TRIALS: "clinicaltrials", HRR: "HRR"
+        CLINICAL_TRIALS: "clinicaltrials", HRR: "HRR", MLPA: "MLPA",
     }
 
     let dictTranslate = {delete: '删除', done: '完成', panal: 'Panal'}
@@ -281,7 +281,8 @@
         CNA: {value: dict.CNA, skip: 1},
         MSI: {value: dict.MSI, skip: 0},
         clinicaltrials: {value: dict.CLINICAL_TRIALS, skip: 0},
-        HRR: {value: dict.HRR, skip: 0}
+        HRR: {value: dict.HRR, skip: 0},
+        MLPA:{value: dict.MLPA, skip: 1}
     }
     // 用于上传标题模板选择, key需要和dict中一致，即和up_sheet_name_dict中的value一致
     let up_sheet_title_template_dict = {
@@ -298,7 +299,8 @@
         CNA: [],
         MSI: [],
         clinicaltrials: [],
-        HRR: []
+        HRR: [],
+        MLPA: []
     }
     let up_sheet_title_template_dict_ori = JSON.parse(JSON.stringify(up_sheet_title_template_dict))
 

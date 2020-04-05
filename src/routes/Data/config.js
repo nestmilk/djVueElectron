@@ -197,6 +197,20 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: false,
                 selectDisplay: true
             }, {
+                title: "MLPACount",
+                translate: "MLPA总数",
+                modify: false,
+                type: "number",
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "MLPASubmitCount",
+                translate: "MLPA提交总数",
+                modify: false,
+                type: "number",
+                defaultDisplay: false,
+                selectDisplay: true
+            },{
                 title: "QCCount",
                 translate: "QC总数",
                 modify: false,
@@ -1592,6 +1606,37 @@ export const sheetDisplayConfigList = [
     },
 
     {
+        sheet: "MLPA",
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "ordering"],
+        submenu_translate: 'MLPA',
+        title_list: [
+            {
+                title: "sampleSn",
+                translate: "样本编码",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "_geneName",
+                translate: "基因名称",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "MLPA",
+                translate: "MLPA结果",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }
+        ]
+    },
+
+    {
         sheet: "QC",
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "ordering"],
@@ -2041,8 +2086,11 @@ export const affirmSelectionConfig = [
 
 export const idsGroupSelections = [
     {
+        value: "now_selected_ids",
+        translate: '使用目前勾选的IDs',
+    }, {
         value: "multiple_affirmed_ids",
-        translate: '使用批量审核的IDs',
+        translate: '使用所有批量审核、未提交的IDs',
     }, {
         value: "affirmed_unsubmited_ids",
         translate: '使用已审核、未提交的IDs',
