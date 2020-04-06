@@ -160,3 +160,13 @@ export const arrayToDict = (array, field, keepContact=false) => {
         return obj
     }, {})
 }
+
+// 查找数组中，元素为字典，字典某个field等于value的，该元素的index 0开始
+export const findIndexByFieldValue = (array, field, value)=>{
+    let i = 0
+    for (let item of array){
+        if(item[field]===value) break
+        i++
+    }
+    return array.length===i?-1:i
+}

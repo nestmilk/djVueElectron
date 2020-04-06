@@ -708,7 +708,8 @@
     import {
         removeFromUniqueArray,
         ifContentEqualArrays,
-        arrayToDict
+        arrayToDict,
+        findIndexByFieldValue
     } from '../../utils/arrays'
     import {getTime, getParentNodeByParentClassName} from "../../utils/common";
     import {
@@ -792,7 +793,6 @@
 
     async function __handleCopyData(){
         loadingShow = true
-        console.log("__handleCopyData", userInfo.getToken())
 
         let copy_data_id
         let sample_id = all_now_sample_id[params.type]
@@ -803,7 +803,7 @@
                 uuidv4(),
                 userInfo.getToken()
         ).then(response=>{
-            console.log("__handleCopyData", response.data)
+            // console.log("__handleCopyData", response.data)
             success = true
 
             // 利用返回id更换now_id
@@ -813,32 +813,48 @@
             console.log('__handleCopyData copyData', error)
         })
 
+        // 获取当前搜索参数下，复制后的所有数据，从而找出copy数据所在页码
+        let all_data
+        // 如果存在ids筛选，则加入copy数据的id
+        let ids_param = all_search_params_dict[params.type][dict.IDS]
+        let ids = ids_param?`${ids_param},${copy_data_id}`:null
         if(success){
             // 修改sample和sheet record中的总数
             __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, null, dict.US_UADATA)
-
-            // 如果存在ids筛选，则加入copy数据的id
-            let ids_param = all_search_params_dict[params.type][dict.IDS]
-            let ids = ids_param?`${ids_param},${copy_data_id}`:null
 
             // 计算页内数据总数，作为page_size
             let count = Object.keys(all_sheet_record_dict[params.type]).reduce((count, count_name)=>{
                 return count + all_sheet_record_dict[params.type][count_name]
             }, 0)
 
+            let name = params.type
+            name = name.slice(0, 1).toUpperCase() + name.slice(1)
             await api[`list${name}`]({
                 ...all_search_params_dict[params.type],
                 page: 1,
                 page_size: count,
                 ids
             }).then(response=>{
-                console.log("__handleCopyData list...", response.data)
+                // console.log("__handleCopyData list...", response.data)
+                all_data = response.data.results
             }).catch(error=>{
                 console.log("__handleCopyData list...", error)
             })
-
-
         }
+
+        let copy_data_page
+        if(all_data){
+            let index = findIndexByFieldValue(all_data, dict.ID, copy_data_id)
+            let page_size = all_search_params_dict[params.type][dict.PAGE_SIZE]
+            copy_data_page = Math.ceil((index+1)/page_size)
+            console.log("__handleCopyData", all_data, index, page_size, copy_data_page)
+        }
+
+        // 更新all_search_params_dict中page, ids
+        all_search_params_dict[params.type][dict.PAGE] = copy_data_page
+        all_search_params_dict[params.type][dict.IDS] = ids
+
+        await __getPageData()
 
         loadingShow = false
     }
@@ -921,6 +937,9 @@
         // console.log('handleSureReply', e.detail.status)
         let reply = e.detail.status
 
+        // 先关闭sure窗口，不然太丑了！
+        sureShow = false
+
         switch (sureEvent) {
             case dict.MULTIPLE_AFFIRM:
                 switch (sureOperation) {
@@ -936,8 +955,8 @@
                     case dict.CANCEL:
                         // console.log('handleSureReply 取消相关提交', selected_ids_forCancelDone)
                         if (reply){
-                            await __handleCancelSelectedIdsDone()
                             logDetailsShow = false
+                            await __handleCancelSelectedIdsDone()
                         }
 
                         cancelSubmit = false
@@ -989,7 +1008,6 @@
                 break
         }
 
-        sureShow = false
     }
 
     let singleAffirmSelectionConfig = JSON.parse(JSON.stringify(affirmSelectionConfig.reduce((result,item)=>{
