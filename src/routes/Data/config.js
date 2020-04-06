@@ -938,6 +938,13 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
+            }, {
+                title: "tmb",
+                translate: "对应TMB的ID",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
             },
         ],
     },

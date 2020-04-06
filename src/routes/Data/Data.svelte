@@ -5,17 +5,22 @@
     <LeftMenus active="Panal信息"></LeftMenus>
     <div class="midRight">
         <div class="subMenu">
-            <div class="subMenuWrapper">
-                {#each submenu_list as submenu}
-                    <button class="submenuBtn {params.type===submenu?'selectedSubMenu':''}"
-                            on:click={()=>handleSelectSubmenu(submenu)}
-                            data-sheet='{submenu}'
-                    >
-                        {submenu_translate_dict[submenu]}
-                    </button>
+            <div class="subMenuDirection icon-circle-left {submenu_page===0?'inactive':''}"
+                 on:click={()=>handleChangeSubmenuPage(-1)}></div>
+            <div class="subMenuWrapper" bind:this={subMenuWrapper}>
+                {#each submenu_group_list[submenu_page] as submenu}
+                    <div class="{submenu_page!==submenu_total_page-1?'bnWrapper':''}">
+                        <button class="submenuBtn {params.type===submenu?'selectedSubMenu':''}"
+                                on:click={()=>handleSelectSubmenu(submenu)}
+                                data-sheet='{submenu}'
+                        >
+                            {submenu_translate_dict[submenu]}
+                        </button>
+                    </div>
                 {/each}
-                <button class='test' on:click={test}>test</button>
             </div>
+            <div class="subMenuDirection icon-circle-right {submenu_page===submenu_total_page-1?'inactive':''}"
+                 on:click={()=>handleChangeSubmenuPage(1)}></div>
         </div>
         <div class="middleContent">
             {#if params.type !== dict.SAMPLEINFOINPANAL}
@@ -145,6 +150,7 @@
                                             disabled="{panal_unable_handle || all_sheet_record_dict[params.type][dict.US_ADATA] === 0?'disabled':''}"
                                             on:click={submitAffirmedData}
                                     >&nbsp;提交</button>
+                                    <button on:click={test}>test</button>
                                 </div>
                             </div><!--uploadMessageWrapper-->
                         </div>
@@ -271,7 +277,7 @@
                                     >
                                         <span>{params.type===dict.SAMPLEINFOINPANAL?
                                                     `${all_titleListItem_dict[params.type][field][dict.TRANSLATE]}`:
-                                                    `{field}(${all_titleListItem_dict[params.type][field][dict.TRANSLATE]})`}
+                                                    `${field}(${all_titleListItem_dict[params.type][field][dict.TRANSLATE]})`}
                                         </span>
                                         <span class="checkBox {all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]?'icon-checkbox-checked':'icon-checkbox-unchecked'}"></span>
                                     </div>
@@ -287,7 +293,11 @@
                             <tr class="lineTitle">
                                 <!--针对概览页，选择 已经全部提交的样本条目-->
                                 {#if params.type===dict.SAMPLEINFOINPANAL}
-                                    <th class="affirmed short">选择</th>
+                                    <th class="affirmed short hoverGreen"
+                                        on:click={handleToggleAllSample_inSampeInfoInPanal}
+                                    >
+                                        {all_selected_dataIds_dict[params.type].length===sample_list.length?'取消':'全选'}
+                                    </th>
                                 {/if}
 
                                 {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
@@ -433,8 +443,8 @@
                                     {#if params.type===dict.SAMPLEINFOINPANAL}
                                         <td class="affirmed short">
                                             {#if page_id_availableSelect_dict[line_data.id]}
-                                                <button class="icon-checkbox-unchecked"
-
+                                                <button class="{all_selected_dataIds_dict[params.type].indexOf(line_data[dict.SAMPLEID])===-1?'icon-checkbox-unchecked':'icon-checkbox-checked'}"
+                                                    on:click={()=>handleSelectSampleId(line_data[dict.SAMPLEID])}
                                                 >
                                                 </button>
                                             {/if}
@@ -610,8 +620,7 @@
                                                             "
                                                     title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
                                                 >
-                                                    <div class="inside
-                                                                {params.type===dict.TNB && field===dict.tmb &&
+                                                    <div class="inside {params.type===dict.TNB && field===dict.tmb &&
                                                                     all_nowValue_of_data_dict[params.type][line_data.id] &&
                                                                     all_nowValue_of_data_dict[dict.TMB][all_nowValue_of_data_dict[params.type][line_data.id][field]] &&
                                                                     all_nowValue_of_data_dict[dict.TMB][all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.DELETE]?'tmbDelete':''}
@@ -717,6 +726,7 @@
     // const {exec, execSync} = window.require('child_process')
     // const iconv = window.require('iconv-lite');
     const Store = window.require('electron-store')
+    const isDev = window.require('electron-is-dev')
     const settingsStore = new Store({name: 'Settings'})
 
     let dict = {
@@ -3086,10 +3096,11 @@
             // A) 页面概览的特有按钮
             if(params.type===dict.SAMPLEINFOINPANAL){
                 let excel_menuItem = new remote.MenuItem({
-                    label: '生成Excel',
-                    enabled: true,
+                    label: all_selected_dataIds_dict[params.type].length===sample_list.length?'生成Excel总表':`${all_selected_dataIds_dict[params.type].length}项生成Excel表`,
+                    enabled: all_selected_dataIds_dict[params.type].length>0,
                     click: () => {
                         console.log('生成Excel')
+
                     }
                 })
                 menu.append(excel_menuItem)
@@ -3515,8 +3526,60 @@
         }
     }
 
+    function handleSelectSampleId(sample_id){
+        // console.log('handleSelectSampleId', sample_id)
+        let selected_sample_ids = all_selected_dataIds_dict[params.type]
+        if (selected_sample_ids.indexOf(sample_id)!==-1){
+            all_selected_dataIds_dict[params.type] = removeFromUniqueArray(selected_sample_ids, sample_id)
+        }else{
+            all_selected_dataIds_dict[params.type] = [...selected_sample_ids, sample_id]
+        }
+    }
+
+    function handleToggleAllSample_inSampeInfoInPanal(){
+        if(all_selected_dataIds_dict[params.type].length===sample_list.length){
+            all_selected_dataIds_dict[params.type] = []
+        }else{
+            all_selected_dataIds_dict[params.type] = sample_list.map(sample=>sample[dict.ID])
+        }
+    }
+
+    let subMenuWrapper
+    let submenu_group_list = [[]]
+    let submenu_total_page = 1
+    let submenu_page = 0
+    function __updateSubmenuGroups(){
+        let subMenuWrapper_width = subMenuWrapper.offsetWidth
+        //防止出现num等于0， total_page变为infinite
+        if (subMenuWrapper_width<100) return
+        let subMenuBn_width =  90
+        let num = Math.floor(subMenuWrapper_width/(subMenuBn_width+6))
+        submenu_total_page = Math.ceil(submenu_list.length/num)
+        // console.log('__handleWindowResize', subMenuWrapper_width, subMenuBn_width, num, submenu_total_page)
+
+        let submenu_groups = []
+        let paramsType_page
+        for (let i=0;i<submenu_total_page;i++){
+            let group = submenu_list.slice(num*i, num*(i+1))
+            if (group.indexOf(params.type)!==-1) {
+                paramsType_page = i
+            }
+            submenu_groups.push(group)
+        }
+        submenu_group_list = submenu_groups
+        submenu_page = paramsType_page
+    }
+    function handleChangeSubmenuPage(offset){
+        let next_page = submenu_page + offset
+        if(next_page>-1 && next_page<submenu_total_page){
+            submenu_page = next_page
+        }
+    }
+
     onMount(async () => {
         loadingShow = true
+        __updateSubmenuGroups()
+        window.addEventListener('resize', __updateSubmenuGroups)
 
         // pre_params_type = params.type
 
@@ -3541,6 +3604,7 @@
 
     onDestroy(()=>{
         document.removeEventListener('contextmenu', __handleContextMenu)
+        window.removeEventListener('resize', __updateSubmenuGroups)
     })
 
     beforeUpdate(()=>{
@@ -3571,7 +3635,7 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
-        console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        // console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
@@ -3585,6 +3649,7 @@
         // console.log(track_configs_dict, bamAndBai_path_dict, sampleSn_inTrackConfigDict_list)
         // console.log(field_needCheck_inSampleInfoinPanal)
         // console.log(sheet_needAllCheck_list)
+        console.log(submenu_group_list, submenu_total_page, submenu_page)
     }
 
 </script>
@@ -3609,30 +3674,45 @@
         flex-flow: column;
     }
     .subMenu{
-        flex: 0 0 55px;
+        flex: 0 0 38px;
+        width: 100%;
         border-bottom: 1px solid black;
-        overflow-x: scroll;
-        overflow-y: hidden;
+        display: flex;
+        flex-flow: row;
     }
+    .subMenu .subMenuDirection{
+        flex: 0 0 38px;
+        line-height: 38px;
+        font-size: 24px;
+        font-weight: bolder;
+        text-align: center;
+    }
+    .subMenu .subMenuDirection:hover{
+        background: #69ca60;
+        color: white;
+    }
+    .subMenu .subMenuDirection.inactive{
+        color: #cccccc;
+    }
+    .subMenu .subMenuDirection.inactive:hover{
+        background: white!important;
+        color: #cccccc
+    }
+
     .subMenu .subMenuWrapper{
-        min-width: 1500px;
+        flex: 1;
+        display: flex;
+        flex-flow: row;
+        overflow: hidden;
     }
-    .subMenu .test{
-        padding: 0;
-        margin: 0;
-        width: 60px;
-        height: 30px;
-        line-height: 30px;
-    }
-    .subMenu .selectedSubMenu{
-        color: black;
-        font-weight: bold;
-        box-shadow: 3px 3px 3px black;
+    .subMenu .subMenuWrapper .bnWrapper{
+        flex: 1;
+        text-align: center;
     }
     .subMenu .submenuBtn{
         margin: 5px 3px;
         padding: 0;
-        width: 85px;
+        width: 90px;
         height: 26px;
         line-height: 26px;
         font-size: 15px;
@@ -3643,6 +3723,11 @@
         border-top: 1px solid #555555;
         border-right: 3px solid black;
         border-bottom: 3px solid black;
+    }
+    .subMenu .selectedSubMenu{
+        color: black;
+        font-weight: bold;
+        box-shadow: 3px 3px 3px black;
     }
     .subMenu button:hover{
         color: black;
@@ -4271,6 +4356,10 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+    .contentRight .rightDataTable .lineData td .inside.tmbDelete{
+        color: red;
+        text-decoration: line-through;
     }
     /*控制短的单元格的长度*/
     .contentRight .rightDataTable .short{
