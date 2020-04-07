@@ -2053,7 +2053,7 @@ export const affirmSelectionConfig = [
         type: "single",
         value: "single_cancel_or_affirm",
         availableEdit: true,
-        content: '确认/取消审核'
+        content: '单项审核'
     }, {
         type: "single",
         value: "edit_single_affirm_reason",
@@ -2062,7 +2062,7 @@ export const affirmSelectionConfig = [
         type: "single",
         value: "check_single_submit_logs",
         previous_log_update: true,
-        content: '查看提交日志(单项)'
+        content: '查看提交日志'
     }, {
         type: "single",
         value: "cancel_submit_done",

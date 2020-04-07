@@ -811,6 +811,7 @@
             __change_dataIds_and_sampleIds(copy_data_id, sample_id)
         }).catch(error=>{
             console.log('__handleCopyData copyData', error)
+            errors = error
         })
 
         // 获取当前搜索参数下，复制后的所有数据，从而找出copy数据所在页码
@@ -839,6 +840,7 @@
                 all_data = response.data.results
             }).catch(error=>{
                 console.log("__handleCopyData list...", error)
+                errors = error
             })
         }
 
@@ -860,7 +862,7 @@
     }
 
 
-    async function __check_selectedSampleIds_freeandUnmodified_data(){
+    async function __affirmCheck_selectedSampleIds_beFreeandUnmodified_data(){
         loadingShow = true
         let panalId = params[dict.PANALID]
         let sampleIds = selected_sampleId_list.join(',')
@@ -870,7 +872,7 @@
             count = count + all_sample_record_dict[params.type][sample_id][dict.ALLDATA]
             return count
         }, 0)
-        console.log('__check_allData_freeandUnmodified', panalId, sampleIds, search, count)
+        // console.log('__check_allData_freeandUnmodified', panalId, sampleIds, search, count)
 
         let results = []
         //A) 如果记录的数据总条数 和 状态库中存储的数据条数 不一致，下载所有数据
@@ -898,16 +900,28 @@
                 }
             }).catch(error=>{
                 console.log('__check_allData_freeandUnmodified', error)
+                errors = error
             })
 
             if(success){
                 // B) 更新所有数据的status，nowValue, preValue
                 __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(results)
+            }else{
+                remote.dialog.showErrorBox('更新所需ids错误', '网络不稳定，请稍后尝试')
+                return
             }
         }
 
-        // C) 判断本地存储到的数据，是否free，是否unmodified，如果符合提交
-        let ids = results.map(data=>data[dict.ID])
+        // C) 判断本地存储到的数据，selected_sampleId_list中样本id对应的所有ids
+        // 是否free，是否unmodified，如果符合提交
+        let ids = Object.keys(all_preValue_of_data_dict[params.type]).reduce((result, id)=>{
+            if (selected_sampleId_list.indexOf(all_preValue_of_data_dict[params.type][id][dict.SAMPLEID])!==-1 &&
+                    result.indexOf(id)===-1){
+                result.push(id)
+            }
+            return result
+        }, [])
+        console.log('__check_allData_freeandUnmodified ids', ids)
         for (let id of ids){
             let sample_id = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
             let status = all_status_of_data_dict[params.type][id]
@@ -944,7 +958,9 @@
             case dict.MULTIPLE_AFFIRM:
                 switch (sureOperation) {
                     case dict.CANCEL:
-                        if (reply) __handleCancelMulAffirm()
+                        if (reply) {
+                            __handleCancelMulAffirm()
+                        }
                         break
                     default:
                         break
@@ -985,7 +1001,7 @@
                     case dict.CHECK:
                         // console.log('handleSureReply 未审核未修改 确认审核')
                         if(reply){
-                            await __check_selectedSampleIds_freeandUnmodified_data()
+                            await __affirmCheck_selectedSampleIds_beFreeandUnmodified_data()
                         }
                         break
                     default:
@@ -1298,6 +1314,7 @@
             __update_previousLogs_byLoadedLogsandIds(ids, response.data)
         }).catch(error=> {
             console.log('__update_Ids_and_relatedIds_PreviousLogs', error)
+            errors = error
         })
 
 
@@ -1983,6 +2000,7 @@
                 // __update_oneId_availSelect_inPageIdAvailSelectDict(id)
             }).catch(error=>{
                 console.log('__handleCancelSelectedIdsDone', error)
+                errors = error
                 fail_num++
                 failed_ids.push(id)
             })
@@ -2054,7 +2072,8 @@
             let id = data[dict.ID]
 
             //1) 本地无此条记录 2) 或者此页需要每次都强制更新每条数据（即概览页 每次都更新数据）
-            if (!all_status_of_data_dict[params.type].hasOwnProperty(id) || sheetDisplayConfigDict[params.type][dict.PREVALUE_NOWVALUE_UPDATE]) {
+            if (!all_status_of_data_dict[params.type].hasOwnProperty(id) ||
+                    sheetDisplayConfigDict[params.type][dict.PREVALUE_NOWVALUE_UPDATE]) {
                 // 插入新数据的nowValue
                 all_nowValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
                 // 插入新数据的preValue
@@ -2152,6 +2171,7 @@
             success = true
         }).catch(error=>{
             console.log("__getPageData", error)
+            errors = error
         })
 
         if(success){
@@ -2645,6 +2665,7 @@
                 success_logs.push(log_id)
             }).catch(error=>{
                 console.log("submitAffirmedData createLog", error)
+                errors = error
                 fail_logs.push(log_id)
             })
 
@@ -2697,6 +2718,7 @@
                 // // 3) availableEdit修改为false 替换 __getPageData()中B)全部整体初始化false
                 // __set_oneId_false_availEdit_inPageIdAvailEditDict(id)
             }).catch(error=>{
+                errors = error
                 fail_num++
                 console.log(`submitAffirmedData update${name}`, error)
             })
@@ -3031,6 +3053,7 @@
 
         }).catch(error=>{
             console.log("getSampleList", error)
+            errors = error
         })
 
         loadingShow = false
@@ -3094,15 +3117,20 @@
     }
 
     async function __handleExcelOut(){
-        await api.createExcel(
-            params[dict.PANALID],
-            all_selected_dataIds_dict[params.type].join(','),
-            userInfo.getToken()
-        ).then(response=>{
+        loadingShow = true
 
+        await api.createExcel({
+            panal_id: parseInt(params[dict.PANALID]),
+            sample_ids: all_selected_dataIds_dict[params.type].join(',')
+        }).then(response=>{
+            // console.log('__handleExcelOut', response.data)
+            window.location.href = response.data.excel
         }).catch(error=>{
-            console.log('__handleExcelOut',error)
+            console.log('__handleExcelOut', error)
+            errors = error
         })
+
+        loadingShow = false
     }
 
     async function __handleContextMenu(e){
@@ -3708,7 +3736,7 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
-        // console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
@@ -3722,7 +3750,7 @@
         // console.log(track_configs_dict, bamAndBai_path_dict, sampleSn_inTrackConfigDict_list)
         // console.log(field_needCheck_inSampleInfoinPanal)
         // console.log(sheet_needAllCheck_list)
-        console.log(submenu_group_list, submenu_total_page, submenu_page)
+        // console.log(submenu_group_list, submenu_total_page, submenu_page)
     }
 
 </script>

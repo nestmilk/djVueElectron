@@ -92,5 +92,5 @@ export const listSampleInfo = params => {return axios.get(`${host()}/samples/`, 
 export const copyData = (sheet, data_id, log_id, token) => {return axios.get(`${host()}/copy/${sheet}/${data_id}/${log_id}/${token}/`)}
 
 
-// 生成结果excel
-export const createExcel = (panal_id, sample_ids, token) => {return axios.get(`${host()}/excel/${panal_id}/${sample_ids}/${token}/`)}
+// 创建excel
+export const createExcel = params => {return axios.post(`${host()}/excels/`, params)}
