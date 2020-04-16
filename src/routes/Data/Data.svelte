@@ -1741,6 +1741,7 @@
 
             let nowValue = sub_nowData?sub_nowData[field]:all_nowValue_of_data_dict[params.type][id][field]
             let preValue = sub_preData?sub_preData[field]:all_preValue_of_data_dict[params.type][id][field]
+
             if (nowValue!==preValue){
                 result[field] = nowValue
             }

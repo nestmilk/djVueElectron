@@ -1151,6 +1151,7 @@
                 return __checkIfInsideMultipleAffirm(id)
             case dict.ADJUST_MULAFF_ITEMS:
                 let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+                // console.log('__check_availSelect_of_oneData_already...', locked_logId, logs_together_dict, logs_together_dict[locked_logId])
                 if (locked_logId){
                     let locked_ids = logs_together_dict[locked_logId][dict.IDS]
                     // console.log("__check_availSelect_of_oneData_already...", locked_ids, id, locked_ids.indexOf(id)!==-1, __check_availSelect_if_FreeAndTruelyEdited(id))
@@ -1776,9 +1777,18 @@
 
             let nowValue = sub_nowData?sub_nowData[field]:all_nowValue_of_data_dict[params.type][id][field]
             let preValue = sub_preData?sub_preData[field]:all_preValue_of_data_dict[params.type][id][field]
+
+            // posStart和posEnd数据库是Integer，而本地是number
+            // if(field===dict.POSSTART || field===dict.POSEND){
+            //     console.log('__check_unequalValues_ofModifiyFields', sub_nowData, field, nowValue, preValue)
+            //     nowValue = String(nowValue)
+            //     preValue = String(preValue)
+            // }
+
             if (nowValue!==preValue){
                 result[field] = nowValue
             }
+
             return result
         }, {})
         // console.log("__checkModifyFieldEqual")
@@ -2093,7 +2103,7 @@
                         type: 'info',
                         title: `数据库被人修改(未处理)，数据ID为${id}`,
                         message: '最新数据：'+JSON.stringify(unequal_values)+
-                                '，目前数据：'+ JSON.stringify(Object.keys(unequal_values).reduce((result, field)=>{
+                                '，本地数据(pre)：'+ JSON.stringify(Object.keys(unequal_values).reduce((result, field)=>{
                                     result[field] = all_preValue_of_data_dict[params.type][id][field]
                                     return result
                                 }, {}))
@@ -2752,6 +2762,11 @@
         }
         // 2）完全成功提交的删除log详情
         complete_logIds.forEach(log_id=>{
+            let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+            if(locked_logId === log_id){
+                console.log('submitAffirmedData', locked_logId)
+                delete all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+            }
             delete logs_together_dict[log_id]
         })
 
