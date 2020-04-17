@@ -20,7 +20,8 @@
                 {/each}
             </div>
             <div class="subMenuDirection icon-circle-right {submenu_page===submenu_total_page-1?'inactive':''}"
-                 on:click={()=>handleChangeSubmenuPage(1)}></div>
+                 on:click={()=>handleChangeSubmenuPage(1)}>
+            </div>
         </div>
         <div class="middleContent">
             {#if params.type !== dict.SAMPLEINFOINPANAL}
@@ -184,7 +185,8 @@
                             <span>提交状态:</span>
                             <!--testValue也能触发$: if (pre_params_type !== params.type) 可能是params.type! 暂时先偷个巧-->
                             <!-- bug 但是，如果首页是例如target等包含此类选择的页面，第一次登入无法控制$: if 需要切到其它页面再转入才行！！-->
-                            <select value={all_subFilter_indexes_dict[params.type][dict.DONE][0]}
+                            <select bind:this={doneFilter}
+                                    value={all_subFilter_indexes_dict[params.type][dict.DONE][0]}
                                     on:change={(e)=>handleChangeFilter(e, dict.DONE)}
                             >
                                 {#each subFilter_selections_dict[dict.DONE] as selection, index}
@@ -194,9 +196,23 @@
                                 {/each}
                             </select>
                         </div>
+                        <div class="deleteWrapper">
+                            <span>删除状态:</span>
+                            <select bind:this={deleteFilter}
+                                    value={all_subFilter_indexes_dict[params.type][dict.DELETE][0]}
+                                    on:change={(e)=>handleChangeFilter(e, dict.DELETE)}
+                            >
+                                {#each subFilter_selections_dict[dict.DELETE] as selection, index}
+                                    <option value={index}>
+                                        {selection[dict.CONTENT]}
+                                    </option>
+                                {/each}
+                            </select>
+                        </div>
                         <div class="logsEditWrapper">
                             <span>修改历史:</span>
-                            <select value={all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]}
+                            <select bind:this={logsEditFilter}
+                                    value={all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]}
                                     on:change={(e)=>handleChangeFilter(e, dict.LOGSEDIT)}
                             >
                                 {#each subFilter_selections_dict[dict.LOGSEDIT] as selection, index}
@@ -2207,11 +2223,15 @@
         }
         selected_sampleId_list = sampleIds
     }
+    let doneFilter
+    let deleteFilter
+    let logsEditFilter
+    let pre_params_type
     // submenu选择
     async function handleSelectSubmenu(type){
         if (type===params.type) return
         // 只切换路由，数据没有自动刷新啊！！
-        // pre_params_type = params.type
+        pre_params_type = params.type
 
         // push之后，params.type没有立即更新，但是页面使用test获取paramstype已经更新
         // todo 只能手动强制改！
@@ -2219,7 +2239,12 @@
         params.type = type
         // console.log('handleSelectSubmenu afterPush', params.type)
 
+        //1) 更换公用的selected_ids信息
         __update_selectedIds_afterPush()
+
+        console.log('yes',doneFilter, topScroll)
+
+        //todo 页面筛选select的更换done，delee，logsEdit, ids填写框内容 此处实际不对，页面还没更新，获取不到doneFilter等dom
 
         await __getPageData()
     }
@@ -3724,12 +3749,36 @@
     })
 
     beforeUpdate(()=>{
+        // before after都一样，都能截取到target hereditary
+        // console.log('beforeUpdate', pre_params_type, params.type, doneFilter)
+
         // TODO clientHeight：包括padding但不包括border、水平滚动条、margin的元素的高度。 offsetHeight为含边框的div高度，scrollTop为元素被上边框遮住的部分，scrollHeight为内容高度
         autoscroll = uploadMessageDiv && (uploadMessageDiv.scrollTop + uploadMessageDiv.clientHeight) < uploadMessageDiv.scrollHeight
     })
 
+    //
+    function __update_filter_dom_value(){
+        if(doneFilter){
+            // console.log('__update_filter_dom_value', all_subFilter_indexes_dict[params.type][dict.DONE][0])
+            doneFilter.value = all_subFilter_indexes_dict[params.type][dict.DONE][0]
+        }
+        if(deleteFilter){
+            deleteFilter.value = all_subFilter_indexes_dict[params.type][dict.DELETE][0]
+        }
+        if(logsEditFilter){
+            logsEditFilter.value = all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]
+        }
+    }
     afterUpdate(()=>{
-        if (autoscroll) uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
+        // console.log('afterUpdate', pre_params_type, params.type, doneFilter)
+
+        if (autoscroll) {
+            uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
+        }
+
+        //手动更新公用过滤的dom的value值,done,delete,logsEdit
+        __update_filter_dom_value()
+
     })
 
     // let testValue = JSON.parse(JSON.stringify(Object.keys(sheetDisplayConfigDict).reduce((result, sheet)=>{
@@ -3743,7 +3792,7 @@
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict)
         // console.log(all_sheet_record_dict)
-        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
@@ -3751,7 +3800,7 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
-        console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        // console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
@@ -4166,6 +4215,11 @@
          height: 33px;
          margin-right: 12px;
      }
+    .contentRight .filterWrapper .deleteWrapper{
+        flex: 0 0 160px;
+        height: 33px;
+        margin-right: 12px;
+    }
     .contentRight .filterWrapper .logsEditWrapper{
         flex: 0 0 160px;
         height: 33px;
@@ -4180,7 +4234,7 @@
         float: left;
         padding: 0 30px 0 5px;
         margin: 1px;
-        width: 300px;
+        width: 80%;
         height: 30px;
     }
     .contentRight .filterWrapper .idsWrapper input::-webkit-input-placeholder {

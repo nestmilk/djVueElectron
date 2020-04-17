@@ -244,7 +244,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "target",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids',],
         submenu_translate: '靶向',
         need_all_check: true,
         igv_control: true,
@@ -482,7 +482,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "hereditary",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids',],
         submenu_translate: '遗传',
         need_all_check: true,
         igv_control: true,
@@ -655,7 +655,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "TMB",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", "logsEdit", 'ordering', "exonicfuncRefgene", 'ids'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids',],
         submenu_translate: 'TMB',
         need_all_check: true,
         igv_control: true,
@@ -769,7 +769,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "immune",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids',],
         submenu_translate: '免疫',
         need_all_check: true,
         need_copy: true,
@@ -845,7 +845,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "TNB",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids',],
         submenu_translate: 'TNB',
         need_all_check: true,
         reason_type: [
@@ -952,7 +952,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "fusion",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids'],
         submenu_translate: '融合',
         need_all_check: true,
         reason_type: [
@@ -1150,7 +1150,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "CNA",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", "logsEdit", "ordering", 'ids'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids'],
         submenu_translate: 'CNA',
         need_all_check: true,
         reason_type: [
@@ -1967,6 +1967,7 @@ export const sheetDisplayConfigList = [
 
 // 记录内容和亚筛选项的顺序，"exonicfuncRefgene"是三张表都不一样的，先使用初始化的筛选项'initial_exonicfuncRefgene'，需要加载后替换
 export const common_filter_subFilters_dict = {
+    delete: ['delete',],
     done: ['done',],
     logsEdit:['logsEdit',],
     ordering: ['sample__id', 'chr', 'posStart', 'posEnd'],
@@ -1976,6 +1977,18 @@ export const common_filter_subFilters_dict = {
 
 // 每个亚筛选项的 选择内容的列表，"exonicfuncRefgene"是3张mutant表都不一样的，需要加载获得
 export const common_subFilter_selections_dict = {
+    'delete': [
+        {
+            value: null,
+            content: '全部'
+        }, {
+            value: false,
+            content: '未删除'
+        }, {
+            value: true,
+            content: '已删除'
+        },
+    ],
     'done': [
         {
             value: null,
