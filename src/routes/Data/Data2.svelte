@@ -307,6 +307,12 @@
                     <div class="titleTableWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)} >
                         <table class="upTable rightDataTable">
                             <tr class="lineTitle">
+                                <!--显示行号-->
+                                {#if settingsStore.get("ifShowLineNum")}
+                                    <th class="affirmed short">
+                                        行号
+                                    </th>
+                                {/if}
                                 <!--针对概览页，选择 已经全部提交的样本条目-->
                                 {#if params.type===dict.SAMPLEINFOINPANAL}
                                     <th class="affirmed short hoverGreen"
@@ -455,6 +461,12 @@
                                     data-id="{line_data.id}"
                                     data-sampleid="{line_data[dict.SAMPLEID]}"
                                 >
+                                    <!--显示行号-->
+                                    {#if settingsStore.get("ifShowLineNum")}
+                                        <td class="affirmed short">
+                                            {index+1}
+                                        </td>
+                                    {/if}
                                     <!--针对概览页，选择 已经全部提交的样本条目-->
                                     {#if params.type===dict.SAMPLEINFOINPANAL}
                                         <td class="affirmed short">
@@ -2242,9 +2254,8 @@
         //1) 更换公用的selected_ids信息
         __update_selectedIds_afterPush()
 
-        console.log('yes',doneFilter, topScroll)
-
         //todo 页面筛选select的更换done，delee，logsEdit, ids填写框内容 此处实际不对，页面还没更新，获取不到doneFilter等dom
+        // console.log('yes',doneFilter, topScroll)
 
         await __getPageData()
     }
@@ -3777,7 +3788,10 @@
         }
 
         //手动更新公用过滤的dom的value值,done,delete,logsEdit
-        __update_filter_dom_value()
+        if(params.type!==pre_params_type){
+            __update_filter_dom_value()
+            pre_params_type = params.type
+        }
 
     })
 
@@ -3800,7 +3814,7 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
-        // console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)

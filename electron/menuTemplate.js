@@ -80,6 +80,13 @@ let template = [
         role: 'help',
         submenu: [
             {
+                label: '显示行号',
+                type: 'checkbox',
+                checked: settingsStore.get('ifShowLineNum'),
+                click: () => {
+                    settingsStore.set('ifShowLineNum', !settingsStore.get('ifShowLineNum'))
+                }
+            }, {
                 label: '打开Ensembl',
                 click: () => {
                     shell.openExternal('http://asia.ensembl.org/index.html')
