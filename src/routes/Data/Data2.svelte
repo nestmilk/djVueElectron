@@ -308,7 +308,7 @@
                         <table class="upTable rightDataTable">
                             <tr class="lineTitle">
                                 <!--显示行号-->
-                                {#if settingsStore.get("ifShowLineNum")}
+                                {#if openLineNum}
                                     <th class="affirmed short">
                                         行号
                                     </th>
@@ -462,7 +462,7 @@
                                     data-sampleid="{line_data[dict.SAMPLEID]}"
                                 >
                                     <!--显示行号-->
-                                    {#if settingsStore.get("ifShowLineNum")}
+                                    {#if openLineNum}
                                         <td class="affirmed short">
                                             {index+1}
                                         </td>
@@ -3728,6 +3728,8 @@
         }
     }
 
+    let openLineNum = settingsStore.get("ifShowLineNum")
+
     onMount(async () => {
         loadingShow = true
         __updateSubmenuGroups()
@@ -3746,6 +3748,10 @@
         ipcRenderer.on('reset-errors', ()=>{
             __reset_errors()
         })
+        ipcRenderer.on('toggle-line-num', ()=>{
+            openLineNum = !openLineNum
+        })
+
 
         document.addEventListener('contextmenu', __handleContextMenu)
 

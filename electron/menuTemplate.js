@@ -85,6 +85,9 @@ let template = [
                 checked: settingsStore.get('ifShowLineNum'),
                 click: () => {
                     settingsStore.set('ifShowLineNum', !settingsStore.get('ifShowLineNum'))
+
+                    ipcMain.emit('set-ifShowLineNum-toggle')
+
                 }
             }, {
                 label: '打开Ensembl',

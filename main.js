@@ -162,5 +162,9 @@ app.on('ready', ()=>{
     ipcMain.on('login-caution', ()=>{
         mainWindow.webContents.send('login-activate')
     })
+
+    ipcMain.on('set-ifShowLineNum-toggle',()=>{
+        mainWindow.webContents.send('toggle-line-num')
+    })
     
 })
