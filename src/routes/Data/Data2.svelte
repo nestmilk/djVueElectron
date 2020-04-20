@@ -304,7 +304,8 @@
                     </div>
 
 
-                    <div class="titleTableWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)} >
+                    <div class="titleTableWrapper" bind:this={topScroll}
+                         on:scroll={handleTopScroll} >
                         <table class="upTable rightDataTable">
                             <tr class="lineTitle">
                                 <!--显示行号-->
@@ -445,7 +446,7 @@
                     </div><!--titleTableWrapper-->
                     <div class="dataTableWrapper"
                          bind:this={bottomScroll}
-                         on:scroll={()=>handleScroll(dict.BOTTOMSCROLL)}
+                         on:scroll={handleBottomScroll}
                     >
                         <table class="downTable rightDataTable">
                             {#each page_data as line_data, index}
@@ -1458,13 +1459,18 @@
     // 控制右侧的标题和下面mutant内容的联动
     let topScroll
     let bottomScroll
-    function handleScroll(item){
+    function handleTopScroll(){
         // console.log(topScroll.scrollLeft)
-        if (item === dict.TOPSCROLL) {
-            bottomScroll.scrollTo(topScroll.scrollLeft, 0)
-        }else if (item === dict.BOTTOMSCROLL) {
-            topScroll.scrollTo(bottomScroll.scrollLeft, 0)
-        }
+        let bottomScroll_scrollTop = bottomScroll.scrollTop
+        console.log('handleTopScroll', bottomScroll_scrollTop)
+        bottomScroll.scrollTo(topScroll.scrollLeft, bottomScroll_scrollTop)
+    }
+    function handleBottomScroll(){
+        // 如果页面拖动超过了topScroll的底部，就不用管topScrol啦, 废弃，屏幕好的，没有主页面scroll啦
+        // if(windowScrollTop<147){
+        let bottomScroll_scrollTop = bottomScroll.scrollTop
+        topScroll.scrollTo(bottomScroll.scrollLeft, 0)
+        bottomScroll.scrollTo(bottomScroll.scrollLeft, bottomScroll_scrollTop)
     }
 
     //标题相关参数 每页全部title的列表，
@@ -3730,6 +3736,7 @@
 
     let openLineNum = settingsStore.get("ifShowLineNum")
 
+    // let windowScrollTop
     onMount(async () => {
         loadingShow = true
         __updateSubmenuGroups()
@@ -3754,6 +3761,15 @@
 
 
         document.addEventListener('contextmenu', __handleContextMenu)
+        // window.onscroll = (e)=>{
+        //     windowScrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        //     console.log('window.onscroll', windowScrollTop)
+        //     let topScrollLeft = topScroll.scrollLeft
+        //     let bottomScrollLeft = bottomScroll.scrollLeft
+        //     if(windowScrollTop<147 && topScrollLeft!==bottomScrollLeft){
+        //         topScroll.scrollTo(bottomScrollLeft, 0)
+        //     }
+        // };
 
         await __getPageData()
 

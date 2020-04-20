@@ -138,7 +138,8 @@ app.on('ready', ()=>{
     ipcMain.on('set-ipc-connect-status', (obj)=>{
         let status = JSON.parse(JSON.stringify(obj))
         let toolMenu = process.platform === 'darwin'? menu.items[4] : menu.items[3]
-        toolMenu.submenu.items[2].submenu.items[0].checked = status.toggle
+        // console.log(toolMenu, toolMenu.submenu.items[2])
+        toolMenu.submenu.items[3].submenu.items[0].checked = status.toggle
         switch (status.type) {
             case "error":
                 break

@@ -260,6 +260,9 @@ export const sheetDisplayConfigList = [
                 value: 'merge_complex_loci',
                 content: '复杂位点合并'
             }, {
+                value: 'benign',
+                content: '良性'
+            }, {
                 value: 'other',
                 content: '其它'
             }
@@ -498,6 +501,9 @@ export const sheetDisplayConfigList = [
                 value: 'merge_complex_loci',
                 content: '复杂位点合并'
             }, {
+                value: 'benign',
+                content: '良性'
+            }, {
                 value: 'other',
                 content: '其它'
             }
@@ -669,6 +675,9 @@ export const sheetDisplayConfigList = [
             }, {
                 value: 'merge_complex_loci',
                 content: '复杂位点合并'
+            }, {
+                value: 'benign',
+                content: '良性'
             }, {
                 value: 'other',
                 content: '其它'
