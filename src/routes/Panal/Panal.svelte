@@ -654,13 +654,13 @@
     // }
 
     function __resetFileRelated() {
-        // 文件名置空
+        // 1）文件名置空
         file_name = ''
-        // 全部的file_list重置为空
-        // 筛选过的selected_file_list 置空
-        // up_sheet_value_dict重置
+        // 2）全部的file_list重置为空
         file_list = []
+        // 3）筛选过的selected_file_list 置空
         selected_file_list = []
+        // 4）up_sheet_value_dict重置
         up_sheet_title_template_dict = JSON.parse(JSON.stringify(up_sheet_title_template_dict_ori))
     }
     // 文件替换时候
@@ -744,11 +744,13 @@
                 if (up_sheet_name_list.length !== 0) {
                     // sheet_name_list改为file的sheet_name_dict
                     for (let name of up_sheet_name_list){
-                        let sheet_lines = file[dict.SHEETDICT][name].length===0? 0:file[dict.SHEETDICT][name].length - up_sheet_name_dict[name][dict.SKIP]
-                        let status = sheet_lines >0 ? true: false
+                        // let sheet_lines = file[dict.SHEETDICT][name].length===0? 0:file[dict.SHEETDICT][name].length - up_sheet_name_dict[name][dict.SKIP]
+                        // let status = sheet_lines >0 ? true: false
+
+                        // status不再判断有无内容，全部勾选
                         file[dict.UPSHEETNAMELIST].push({
                             name: name,
-                            status: status
+                            status: true
                         })
                     }
                     selected_file_list.push(file)
