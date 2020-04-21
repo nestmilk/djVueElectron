@@ -1,3 +1,6 @@
+import js2excel from 'js2excel'
+
+
 let fileUtil = {
     // 文件名截断到一个'.'
     getKey (filename) {
@@ -18,6 +21,14 @@ let fileUtil = {
             }
         }
         return file_dict
+    },
+
+    getJsonFromBlob (blob){
+        return new Promise(function(resolve, reject){
+            js2excel.excel2json([blob], (data) => {
+                resolve(data)
+            }, 'excel2json')
+        })
     }
 }
 

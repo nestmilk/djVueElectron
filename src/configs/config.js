@@ -2131,3 +2131,26 @@ export const idsGroupSelections = [
         translate: '使用未审核、未提交的IDs(限已浏览页)'
     },
 ]
+
+export const up_sheet_name_dict = {
+    target: {value: "target", skip: 1},
+    靶向: {value: "target", skip: 1},
+    hereditary: {value: "hereditary", skip: 1},
+    遗传: {value: "hereditary", skip: 1},
+    TMB: {value: "TMB", skip: 1},
+    QC: {value: "QC", skip: 0},
+    样本信息: {value: "sampleInfo", skip: 1},
+    immune: {value: "immune", skip: 1},
+    免疫: {value: "immune", skip: 1},
+    TNB: {value: "TNB", skip: 1},
+    HLA: {value: "HLA", skip: 1},
+    fusion: {value: "fusion", skip: 1},
+    融合: {value: "fusion", skip: 1},
+    chemical: {value: "chemical", skip: 1},
+    化疗: {value: "chemical", skip: 1},
+    CNA: {value: "CNA", skip: 1},
+    MSI: {value: "MSI", skip: 0},
+    clinicaltrials: {value: "clinicaltrials", skip: 0},
+    HRR: {value: "HRR", skip: 0},
+    MLPA:{value: "MLPA", skip: 1}
+}

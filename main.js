@@ -167,5 +167,21 @@ app.on('ready', ()=>{
     ipcMain.on('set-ifShowLineNum-toggle',()=>{
         mainWindow.webContents.send('toggle-line-num')
     })
+
+    ipcMain.on('open-single-excel', async ()=> {
+        dialog.showOpenDialog({
+            properties: ['openFile'],
+            filters: [{
+                name: 'excel',
+                extensions: ['xlsx']
+            }]
+        }).then(files=>{
+            // console.log('open-excel-for-more-data', files.filePaths[0])
+            mainWindow.webContents.send('load-single-excel', files.filePaths[0])
+        }).catch(error=>{
+            dialog.showErrorBox('main.js中打开文件出错')
+        })
+
+    })
     
 })

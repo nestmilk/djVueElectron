@@ -228,6 +228,8 @@
     import {push} from 'svelte-spa-router'
     import js2excel from 'js2excel'
 
+    import {up_sheet_name_dict} from '../../configs/config'
+
     import Header from '../../components/Header/Header.svelte'
     import Footer from '../../components/Footer/Footer.svelte'
     import LeftMenus from '../../components/LeftMenus/LeftMenus.svelte'
@@ -262,46 +264,53 @@
     let dictTranslate = {delete: '删除', done: '完成', panal: 'Panal'}
 
     // TODO 用于检索可以上传的sheet名称，后续可以继续添加，仅仅用到了key，value还没有用
-    let up_sheet_name_dict = {
-        target: {value: dict.TARGET, skip: 1},
-        靶向: {value: dict.TARGET, skip: 1},
-        hereditary: {value: dict.HEREDITARY, skip: 1},
-        遗传: {value: dict.HEREDITARY, skip: 1},
-        TMB: {value: dict.TMB, skip: 1},
-        QC: {value: dict.QC, skip: 0},
-        样本信息: {value: dict.SAMPLEINFO, skip: 1},
-        immune: {value: dict.IMMUNE, skip: 1},
-        免疫: {value: dict.IMMUNE, skip: 1},
-        TNB: {value: dict.TNB, skip: 1},
-        HLA: {value: dict.HLA, skip: 1},
-        fusion: {value: dict.FUSION, skip: 1},
-        融合: {value: dict.FUSION, skip: 1},
-        chemical: {value: dict.CHEMICAL, skip: 1},
-        化疗: {value: dict.CHEMICAL, skip: 1},
-        CNA: {value: dict.CNA, skip: 1},
-        MSI: {value: dict.MSI, skip: 0},
-        clinicaltrials: {value: dict.CLINICAL_TRIALS, skip: 0},
-        HRR: {value: dict.HRR, skip: 0},
-        MLPA:{value: dict.MLPA, skip: 1}
-    }
+    // let up_sheet_name_dict = {
+    //     target: {value: dict.TARGET, skip: 1},
+    //     靶向: {value: dict.TARGET, skip: 1},
+    //     hereditary: {value: dict.HEREDITARY, skip: 1},
+    //     遗传: {value: dict.HEREDITARY, skip: 1},
+    //     TMB: {value: dict.TMB, skip: 1},
+    //     QC: {value: dict.QC, skip: 0},
+    //     样本信息: {value: dict.SAMPLEINFO, skip: 1},
+    //     immune: {value: dict.IMMUNE, skip: 1},
+    //     免疫: {value: dict.IMMUNE, skip: 1},
+    //     TNB: {value: dict.TNB, skip: 1},
+    //     HLA: {value: dict.HLA, skip: 1},
+    //     fusion: {value: dict.FUSION, skip: 1},
+    //     融合: {value: dict.FUSION, skip: 1},
+    //     chemical: {value: dict.CHEMICAL, skip: 1},
+    //     化疗: {value: dict.CHEMICAL, skip: 1},
+    //     CNA: {value: dict.CNA, skip: 1},
+    //     MSI: {value: dict.MSI, skip: 0},
+    //     clinicaltrials: {value: dict.CLINICAL_TRIALS, skip: 0},
+    //     HRR: {value: dict.HRR, skip: 0},
+    //     MLPA:{value: dict.MLPA, skip: 1}
+    // }
     // 用于上传标题模板选择, key需要和dict中一致，即和up_sheet_name_dict中的value一致
-    let up_sheet_title_template_dict = {
-        target: [],
-        hereditary: [],
-        TMB: [],
-        QC: [],
-        sampleInfo: [],
-        immune: [],
-        TNB: [],
-        HLA: [],
-        fusion: [],
-        chemical: [],
-        CNA: [],
-        MSI: [],
-        clinicaltrials: [],
-        HRR: [],
-        MLPA: []
-    }
+    // let up_sheet_title_template_dict = {
+    //     target: [],
+    //     hereditary: [],
+    //     TMB: [],
+    //     QC: [],
+    //     sampleInfo: [],
+    //     immune: [],
+    //     TNB: [],
+    //     HLA: [],
+    //     fusion: [],
+    //     chemical: [],
+    //     CNA: [],
+    //     MSI: [],
+    //     clinicaltrials: [],
+    //     HRR: [],
+    //     MLPA: []
+    // }
+    let up_sheet_title_template_dict =  Object.keys(up_sheet_name_dict).reduce((result, sheet_name)=>{
+        let sheet_name_value = up_sheet_name_dict[sheet_name][dict.VALUE]
+        if(!result.hasOwnProperty(sheet_name_value)){
+            result[sheet_name_value] = []
+        }
+        return result
+    },{})
     let up_sheet_title_template_dict_ori = JSON.parse(JSON.stringify(up_sheet_title_template_dict))
 
     let panal_list = []
@@ -475,9 +484,10 @@
         // console.log(selected_file_list)
         // console.log(up_sheet_value_dict)
         // 使用Promise.all处理
-        console.log(panal_list)
+        // console.log(panal_list)
         // console.log(qc_list)
         // console.log(sample_list, sample_dict)
+        console.log(up_sheet_title_template_dict)
     }
 
     async function handlePanalFilter(field, selectedStatus) {
@@ -683,6 +693,7 @@
             let file_item = {}
             file_item[dict.NAME] = file.name
             file_item[dict.FILE] = file
+            // file的json2excel后的sheet数据字典
             file_item[dict.SHEETDICT] = {}
             file_item[dict.UPSHEETNAMELIST] = []
             file_list = [...file_list, file_item]
@@ -837,6 +848,7 @@
             file_dict[file[dict.NAME]] = file[dict.FILE]
         }
         let template_dict = {}
+        console.log('upload up_sheet_title_template_dict', up_sheet_title_template_dict)
         for (let type in up_sheet_title_template_dict){
             for (let item of up_sheet_title_template_dict[type]){
                 if (item.status){
@@ -850,7 +862,7 @@
                 }
             }
         }
-        // console.log('template_dict', template_dict)
+        console.log('template_dict', template_dict)
         // 添加模板字典json
         form.append('template_dict', JSON.stringify(template_dict))
 

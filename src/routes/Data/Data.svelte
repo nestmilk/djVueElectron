@@ -20,7 +20,8 @@
                 {/each}
             </div>
             <div class="subMenuDirection icon-circle-right {submenu_page===submenu_total_page-1?'inactive':''}"
-                 on:click={()=>handleChangeSubmenuPage(1)}></div>
+                 on:click={()=>handleChangeSubmenuPage(1)}>
+            </div>
         </div>
         <div class="middleContent">
             {#if params.type !== dict.SAMPLEINFOINPANAL}
@@ -184,7 +185,8 @@
                             <span>提交状态:</span>
                             <!--testValue也能触发$: if (pre_params_type !== params.type) 可能是params.type! 暂时先偷个巧-->
                             <!-- bug 但是，如果首页是例如target等包含此类选择的页面，第一次登入无法控制$: if 需要切到其它页面再转入才行！！-->
-                            <select value={all_subFilter_indexes_dict[params.type][dict.DONE][0]}
+                            <select bind:this={doneFilter}
+                                    value={all_subFilter_indexes_dict[params.type][dict.DONE][0]}
                                     on:change={(e)=>handleChangeFilter(e, dict.DONE)}
                             >
                                 {#each subFilter_selections_dict[dict.DONE] as selection, index}
@@ -194,9 +196,23 @@
                                 {/each}
                             </select>
                         </div>
+                        <div class="deleteWrapper">
+                            <span>删除状态:</span>
+                            <select bind:this={deleteFilter}
+                                    value={all_subFilter_indexes_dict[params.type][dict.DELETE][0]}
+                                    on:change={(e)=>handleChangeFilter(e, dict.DELETE)}
+                            >
+                                {#each subFilter_selections_dict[dict.DELETE] as selection, index}
+                                    <option value={index}>
+                                        {selection[dict.CONTENT]}
+                                    </option>
+                                {/each}
+                            </select>
+                        </div>
                         <div class="logsEditWrapper">
                             <span>修改历史:</span>
-                            <select value={all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]}
+                            <select bind:this={logsEditFilter}
+                                    value={all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]}
                                     on:change={(e)=>handleChangeFilter(e, dict.LOGSEDIT)}
                             >
                                 {#each subFilter_selections_dict[dict.LOGSEDIT] as selection, index}
@@ -288,9 +304,16 @@
                     </div>
 
 
-                    <div class="titleTableWrapper" bind:this={topScroll} on:scroll={()=>handleScroll(dict.TOPSCROLL)} >
+                    <div class="titleTableWrapper" bind:this={topScroll}
+                         on:scroll={handleTopScroll} >
                         <table class="upTable rightDataTable">
                             <tr class="lineTitle">
+                                <!--显示行号-->
+                                {#if openLineNum}
+                                    <th class="affirmed short">
+                                        行号
+                                    </th>
+                                {/if}
                                 <!--针对概览页，选择 已经全部提交的样本条目-->
                                 {#if params.type===dict.SAMPLEINFOINPANAL}
                                     <th class="affirmed short hoverGreen"
@@ -423,7 +446,7 @@
                     </div><!--titleTableWrapper-->
                     <div class="dataTableWrapper"
                          bind:this={bottomScroll}
-                         on:scroll={()=>handleScroll(dict.BOTTOMSCROLL)}
+                         on:scroll={handleBottomScroll}
                     >
                         <table class="downTable rightDataTable">
                             {#each page_data as line_data, index}
@@ -439,6 +462,12 @@
                                     data-id="{line_data.id}"
                                     data-sampleid="{line_data[dict.SAMPLEID]}"
                                 >
+                                    <!--显示行号-->
+                                    {#if openLineNum}
+                                        <td class="affirmed short">
+                                            {index+1}
+                                        </td>
+                                    {/if}
                                     <!--针对概览页，选择 已经全部提交的样本条目-->
                                     {#if params.type===dict.SAMPLEINFOINPANAL}
                                         <td class="affirmed short">
@@ -668,6 +697,13 @@
         on:sure={handleAddReasonSure}
     ></Reason>
 {/if}
+{#if addDataShow}
+    <AddData
+        sheet_data="{added_data_dict[dict.SHEET_INFO_LIST]}"
+        on:submit={handleAddDataSubmit}
+        on:cancel={handleAddDataCancel}
+    ></AddData>
+{/if}
 
 {#if logDetailsShow}
     <LogDetails
@@ -700,6 +736,7 @@
     import Sure from '../../components/Sure/Sure.svelte'
     import Reason from '../../components/Reason/Reason.svelte'
     import LogDetails from '../../components/LogDetails/Logdetails.svelte'
+    import AddData from '../../components/AddData/AddData.svelte'
 
 
     // 引入本地脚本
@@ -708,7 +745,8 @@
     import {
         removeFromUniqueArray,
         ifContentEqualArrays,
-        arrayToDict
+        arrayToDict,
+        findIndexByFieldValue
     } from '../../utils/arrays'
     import {getTime, getParentNodeByParentClassName} from "../../utils/common";
     import {
@@ -716,9 +754,11 @@
         common_filter_subFilters_dict,
         common_subFilter_selections_dict,
         affirmSelectionConfig,
-        idsGroupSelections
-    } from './config'
+        idsGroupSelections,
+        up_sheet_name_dict
+    } from '../../configs/config'
     import {dict_translate} from '../../utils/dict'
+
     const sheetDisplayConfigDict = arrayToDict(sheetDisplayConfigList, 'sheet')
 
     // 引入electron相关包
@@ -727,6 +767,7 @@
     // const iconv = window.require('iconv-lite');
     const Store = window.require('electron-store')
     const isDev = window.require('electron-is-dev')
+    const fs = window.require('fs').promises
     const settingsStore = new Store({name: 'Settings'})
 
     let dict = {
@@ -763,7 +804,8 @@
         FREE_UNMODIFIED: 'free_unmodified', NEED_ALL_CHECK: 'need_all_check',
         MUL_AFF_IDS: "multiple_affirmed_ids", UA_US_IDS: "unaffirmed_unsubmited_ids", A_US_IDS: "affirmed_unsubmited_ids",
         E_US_IDS: "edited_unsubmited_ids", NOW_SELECTED_IDS: "now_selected_ids",
-
+        NAME: 'name', FILE: 'file', SHEET_DATA_DICT: 'sheet_data_dict', SHEET_INFO_LIST: 'sheet_info_list',
+        SKIP: 'skip',
     }
     // 获取路径中的：值
     export let params = {}
@@ -792,7 +834,6 @@
 
     async function __handleCopyData(){
         loadingShow = true
-        console.log("__handleCopyData", userInfo.getToken())
 
         let copy_data_id
         let sample_id = all_now_sample_id[params.type]
@@ -803,7 +844,7 @@
                 uuidv4(),
                 userInfo.getToken()
         ).then(response=>{
-            console.log("__handleCopyData", response.data)
+            // console.log("__handleCopyData", response.data)
             success = true
 
             // 利用返回id更换now_id
@@ -811,40 +852,58 @@
             __change_dataIds_and_sampleIds(copy_data_id, sample_id)
         }).catch(error=>{
             console.log('__handleCopyData copyData', error)
+            errors = error
         })
 
+        // 获取当前搜索参数下，复制后的所有数据，从而找出copy数据所在页码
+        let all_data
+        // 如果存在ids筛选，则加入copy数据的id
+        let ids_param = all_search_params_dict[params.type][dict.IDS]
+        let ids = ids_param?`${ids_param},${copy_data_id}`:null
         if(success){
             // 修改sample和sheet record中的总数
             __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, null, dict.US_UADATA)
-
-            // 如果存在ids筛选，则加入copy数据的id
-            let ids_param = all_search_params_dict[params.type][dict.IDS]
-            let ids = ids_param?`${ids_param},${copy_data_id}`:null
 
             // 计算页内数据总数，作为page_size
             let count = Object.keys(all_sheet_record_dict[params.type]).reduce((count, count_name)=>{
                 return count + all_sheet_record_dict[params.type][count_name]
             }, 0)
 
+            let name = params.type
+            name = name.slice(0, 1).toUpperCase() + name.slice(1)
             await api[`list${name}`]({
                 ...all_search_params_dict[params.type],
                 page: 1,
                 page_size: count,
                 ids
             }).then(response=>{
-                console.log("__handleCopyData list...", response.data)
+                // console.log("__handleCopyData list...", response.data)
+                all_data = response.data.results
             }).catch(error=>{
                 console.log("__handleCopyData list...", error)
+                errors = error
             })
-
-
         }
+
+        let copy_data_page
+        if(all_data){
+            let index = findIndexByFieldValue(all_data, dict.ID, copy_data_id)
+            let page_size = all_search_params_dict[params.type][dict.PAGE_SIZE]
+            copy_data_page = Math.ceil((index+1)/page_size)
+            console.log("__handleCopyData", all_data, index, page_size, copy_data_page)
+        }
+
+        // 更新all_search_params_dict中page, ids
+        all_search_params_dict[params.type][dict.PAGE] = copy_data_page
+        all_search_params_dict[params.type][dict.IDS] = ids
+
+        await __getPageData()
 
         loadingShow = false
     }
 
 
-    async function __check_selectedSampleIds_freeandUnmodified_data(){
+    async function __affirmCheck_selectedSampleIds_beFreeandUnmodified_data(){
         loadingShow = true
         let panalId = params[dict.PANALID]
         let sampleIds = selected_sampleId_list.join(',')
@@ -854,7 +913,7 @@
             count = count + all_sample_record_dict[params.type][sample_id][dict.ALLDATA]
             return count
         }, 0)
-        console.log('__check_allData_freeandUnmodified', panalId, sampleIds, search, count)
+        // console.log('__check_allData_freeandUnmodified', panalId, sampleIds, search, count)
 
         let results = []
         //A) 如果记录的数据总条数 和 状态库中存储的数据条数 不一致，下载所有数据
@@ -882,16 +941,28 @@
                 }
             }).catch(error=>{
                 console.log('__check_allData_freeandUnmodified', error)
+                errors = error
             })
 
             if(success){
                 // B) 更新所有数据的status，nowValue, preValue
                 __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(results)
+            }else{
+                remote.dialog.showErrorBox('更新所需ids错误', '网络不稳定，请稍后尝试')
+                return
             }
         }
 
-        // C) 判断本地存储到的数据，是否free，是否unmodified，如果符合提交
-        let ids = results.map(data=>data[dict.ID])
+        // C) 判断本地存储到的数据，selected_sampleId_list中样本id对应的所有ids
+        // 是否free，是否unmodified，如果符合提交
+        let ids = Object.keys(all_preValue_of_data_dict[params.type]).reduce((result, id)=>{
+            if (selected_sampleId_list.indexOf(all_preValue_of_data_dict[params.type][id][dict.SAMPLEID])!==-1 &&
+                    result.indexOf(id)===-1){
+                result.push(id)
+            }
+            return result
+        }, [])
+        console.log('__check_allData_freeandUnmodified ids', ids)
         for (let id of ids){
             let sample_id = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
             let status = all_status_of_data_dict[params.type][id]
@@ -921,11 +992,16 @@
         // console.log('handleSureReply', e.detail.status)
         let reply = e.detail.status
 
+        // 先关闭sure窗口，不然太丑了！
+        sureShow = false
+
         switch (sureEvent) {
             case dict.MULTIPLE_AFFIRM:
                 switch (sureOperation) {
                     case dict.CANCEL:
-                        if (reply) __handleCancelMulAffirm()
+                        if (reply) {
+                            __handleCancelMulAffirm()
+                        }
                         break
                     default:
                         break
@@ -936,8 +1012,8 @@
                     case dict.CANCEL:
                         // console.log('handleSureReply 取消相关提交', selected_ids_forCancelDone)
                         if (reply){
-                            await __handleCancelSelectedIdsDone()
                             logDetailsShow = false
+                            await __handleCancelSelectedIdsDone()
                         }
 
                         cancelSubmit = false
@@ -966,7 +1042,7 @@
                     case dict.CHECK:
                         // console.log('handleSureReply 未审核未修改 确认审核')
                         if(reply){
-                            await __check_selectedSampleIds_freeandUnmodified_data()
+                            await __affirmCheck_selectedSampleIds_beFreeandUnmodified_data()
                         }
                         break
                     default:
@@ -989,7 +1065,6 @@
                 break
         }
 
-        sureShow = false
     }
 
     let singleAffirmSelectionConfig = JSON.parse(JSON.stringify(affirmSelectionConfig.reduce((result,item)=>{
@@ -1117,6 +1192,7 @@
                 return __checkIfInsideMultipleAffirm(id)
             case dict.ADJUST_MULAFF_ITEMS:
                 let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+                // console.log('__check_availSelect_of_oneData_already...', locked_logId, logs_together_dict, logs_together_dict[locked_logId])
                 if (locked_logId){
                     let locked_ids = logs_together_dict[locked_logId][dict.IDS]
                     // console.log("__check_availSelect_of_oneData_already...", locked_ids, id, locked_ids.indexOf(id)!==-1, __check_availSelect_if_FreeAndTruelyEdited(id))
@@ -1280,6 +1356,7 @@
             __update_previousLogs_byLoadedLogsandIds(ids, response.data)
         }).catch(error=> {
             console.log('__update_Ids_and_relatedIds_PreviousLogs', error)
+            errors = error
         })
 
 
@@ -1394,13 +1471,18 @@
     // 控制右侧的标题和下面mutant内容的联动
     let topScroll
     let bottomScroll
-    function handleScroll(item){
+    function handleTopScroll(){
         // console.log(topScroll.scrollLeft)
-        if (item === dict.TOPSCROLL) {
-            bottomScroll.scrollTo(topScroll.scrollLeft, 0)
-        }else if (item === dict.BOTTOMSCROLL) {
-            topScroll.scrollTo(bottomScroll.scrollLeft, 0)
-        }
+        let bottomScroll_scrollTop = bottomScroll.scrollTop
+        console.log('handleTopScroll', bottomScroll_scrollTop)
+        bottomScroll.scrollTo(topScroll.scrollLeft, bottomScroll_scrollTop)
+    }
+    function handleBottomScroll(){
+        // 如果页面拖动超过了topScroll的底部，就不用管topScrol啦, 废弃，屏幕好的，没有主页面scroll啦
+        // if(windowScrollTop<147){
+        let bottomScroll_scrollTop = bottomScroll.scrollTop
+        topScroll.scrollTo(bottomScroll.scrollLeft, 0)
+        bottomScroll.scrollTo(bottomScroll.scrollLeft, bottomScroll_scrollTop)
     }
 
     //标题相关参数 每页全部title的列表，
@@ -1742,9 +1824,17 @@
             let nowValue = sub_nowData?sub_nowData[field]:all_nowValue_of_data_dict[params.type][id][field]
             let preValue = sub_preData?sub_preData[field]:all_preValue_of_data_dict[params.type][id][field]
 
+            // posStart和posEnd数据库是Integer，而本地是number
+            // if(field===dict.POSSTART || field===dict.POSEND){
+            //     console.log('__check_unequalValues_ofModifiyFields', sub_nowData, field, nowValue, preValue)
+            //     nowValue = String(nowValue)
+            //     preValue = String(preValue)
+            // }
+
             if (nowValue!==preValue){
                 result[field] = nowValue
             }
+
             return result
         }, {})
         // console.log("__checkModifyFieldEqual")
@@ -1966,6 +2056,7 @@
                 // __update_oneId_availSelect_inPageIdAvailSelectDict(id)
             }).catch(error=>{
                 console.log('__handleCancelSelectedIdsDone', error)
+                errors = error
                 fail_num++
                 failed_ids.push(id)
             })
@@ -2037,7 +2128,8 @@
             let id = data[dict.ID]
 
             //1) 本地无此条记录 2) 或者此页需要每次都强制更新每条数据（即概览页 每次都更新数据）
-            if (!all_status_of_data_dict[params.type].hasOwnProperty(id) || sheetDisplayConfigDict[params.type][dict.PREVALUE_NOWVALUE_UPDATE]) {
+            if (!all_status_of_data_dict[params.type].hasOwnProperty(id) ||
+                    sheetDisplayConfigDict[params.type][dict.PREVALUE_NOWVALUE_UPDATE]) {
                 // 插入新数据的nowValue
                 all_nowValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
                 // 插入新数据的preValue
@@ -2057,7 +2149,7 @@
                         type: 'info',
                         title: `数据库被人修改(未处理)，数据ID为${id}`,
                         message: '最新数据：'+JSON.stringify(unequal_values)+
-                                '，目前数据：'+ JSON.stringify(Object.keys(unequal_values).reduce((result, field)=>{
+                                '，本地数据(pre)：'+ JSON.stringify(Object.keys(unequal_values).reduce((result, field)=>{
                                     result[field] = all_preValue_of_data_dict[params.type][id][field]
                                     return result
                                 }, {}))
@@ -2135,6 +2227,7 @@
             success = true
         }).catch(error=>{
             console.log("__getPageData", error)
+            errors = error
         })
 
         if(success){
@@ -2160,11 +2253,15 @@
         }
         selected_sampleId_list = sampleIds
     }
+    let doneFilter
+    let deleteFilter
+    let logsEditFilter
+    let pre_params_type
     // submenu选择
     async function handleSelectSubmenu(type){
         if (type===params.type) return
         // 只切换路由，数据没有自动刷新啊！！
-        // pre_params_type = params.type
+        pre_params_type = params.type
 
         // push之后，params.type没有立即更新，但是页面使用test获取paramstype已经更新
         // todo 只能手动强制改！
@@ -2172,7 +2269,11 @@
         params.type = type
         // console.log('handleSelectSubmenu afterPush', params.type)
 
+        //1) 更换公用的selected_ids信息
         __update_selectedIds_afterPush()
+
+        //todo 页面筛选select的更换done，delee，logsEdit, ids填写框内容 此处实际不对，页面还没更新，获取不到doneFilter等dom
+        // console.log('yes',doneFilter, topScroll)
 
         await __getPageData()
     }
@@ -2534,6 +2635,7 @@
     let pre_selected_sampleId_list = []
     // panal能否被操作的状态
     let panal_unable_handle = false
+    let panal_data
 
     //需要样本记录的页面 列表
     let sheet_needSampleRecordDict_list = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
@@ -2628,6 +2730,7 @@
                 success_logs.push(log_id)
             }).catch(error=>{
                 console.log("submitAffirmedData createLog", error)
+                errors = error
                 fail_logs.push(log_id)
             })
 
@@ -2680,6 +2783,7 @@
                 // // 3) availableEdit修改为false 替换 __getPageData()中B)全部整体初始化false
                 // __set_oneId_false_availEdit_inPageIdAvailEditDict(id)
             }).catch(error=>{
+                errors = error
                 fail_num++
                 console.log(`submitAffirmedData update${name}`, error)
             })
@@ -2713,6 +2817,11 @@
         }
         // 2）完全成功提交的删除log详情
         complete_logIds.forEach(log_id=>{
+            let locked_logId = all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+            if(locked_logId === log_id){
+                console.log('submitAffirmedData', locked_logId)
+                delete all_locked_logId_for_adjustMultipleAffirmItems[params.type]
+            }
             delete logs_together_dict[log_id]
         })
 
@@ -3008,12 +3117,14 @@
             // console.log("getPanalSummary", response.data)
 
             panal_unable_handle = response.data.done || response.data.delete ? true:false
+            panal_data = response.data
 
             // 初始化sampleId_list, 利用sampleInfoInPanals中样本信息，对手工表All_sample_record_dict初始化
             __setSampleIdList_and_AllSampleRecordDict__allSpecificFilters(response.data)
 
         }).catch(error=>{
             console.log("getSampleList", error)
+            errors = error
         })
 
         loadingShow = false
@@ -3077,15 +3188,20 @@
     }
 
     async function __handleExcelOut(){
-        await api.createExcel(
-            params[dict.PANALID],
-            all_selected_dataIds_dict[params.type].join(','),
-            userInfo.getToken()
-        ).then(response=>{
+        loadingShow = true
 
+        await api.createExcel({
+            panal_id: parseInt(params[dict.PANALID]),
+            sample_ids: all_selected_dataIds_dict[params.type].join(',')
+        }).then(response=>{
+            // console.log('__handleExcelOut', response.data)
+            window.location.href = response.data.excel
         }).catch(error=>{
-            console.log('__handleExcelOut',error)
+            console.log('__handleExcelOut', error)
+            errors = error
         })
+
+        loadingShow = false
     }
 
     async function __handleContextMenu(e){
@@ -3160,6 +3276,14 @@
                     }
                 })
                 menu.append(excel_menuItem)
+
+                let add_data_menuItem = new remote.MenuItem({
+                    label: '追加数据',
+                    click: ()=>{
+                        ipcRenderer.send('open-single-excel')
+                    }
+                })
+                menu.append(add_data_menuItem)
             }
 
             // B) 只有 需要编辑的页面 对应不同 “审核工作状态” 特有按钮
@@ -3632,6 +3756,80 @@
         }
     }
 
+    // 是否打开行数参数
+    let openLineNum = settingsStore.get("ifShowLineNum")
+
+    // 追加数据相关参数
+    let addDataShow = false
+    async function handleAddDataSubmit(e){
+        console.log('handleAddDataSubmit', e.detail.data, added_data_dict[dict.SHEET_INFO_LIST])
+        addDataShow = false
+        added_data_dict = {}
+
+        loadingShow = true
+
+        
+
+        loadingShow = false
+    }
+    function handleAddDataCancel(){
+        addDataShow = false
+        added_data_dict = {}
+    }
+
+    let added_data_dict = {}
+    async function __handleLoadAddedData(filePath){
+        loadingShow = true
+        let blob
+        let file
+        let file_name = filePath.split('\\').slice(-1)
+        await fs.readFile(filePath).then(data=>{
+            blob  = new Blob([data],{type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+            file = new File([blob], file_name, {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', lastModified: Date.now()})
+        }).catch(error=>{
+            console.log('load-single-excel', error)
+            errors = error
+        })
+
+        if(file){
+            // console.log('__handleLoadAddedData', blob, file) 样式 {clinicaltrials: [{samplesn: ...}, ...], HLA: [], ...}
+            await fileUtil.getJsonFromBlob(blob).then(data=>{
+                // console.log('load-single-excel', data)
+                added_data_dict[dict.FILE] = file
+                // added_data_dict[dict.SHEET_DATA_DICT] = data
+                added_data_dict[dict.SHEET_INFO_LIST] = Object.keys(data).reduce((result, sheet_name)=>{
+                    if(up_sheet_name_dict.hasOwnProperty(sheet_name)){
+                        // 有数据的勾选 status
+                        // console.log(data[sheet_name], data[sheet_name].length, up_sheet_name_dict[sheet_name][dict.SKIP])
+                        let data_length =  data[sheet_name].length
+                        let pure_data_length = data_length? data_length - up_sheet_name_dict[sheet_name][dict.SKIP] : 0
+                        let status_for_data_update = pure_data_length > 0
+                        let hasTitles_inSheet = data_length!==0
+
+                        let sheet_name_value = up_sheet_name_dict[sheet_name][dict.VALUE]
+                        let template = panal_data[`${sheet_name_value.toLowerCase()}_template_fields`]
+                        let hasTemplate_inDatabase = !!template
+
+                        result.push({
+                            name: sheet_name,
+                            pure_data_length,
+                            status_for_data_update,
+                            hasTitles_inSheet,
+                            hasTemplate_inDatabase,
+                            status_for_template_update: !hasTemplate_inDatabase
+                        })
+                    }
+
+                    return result
+                },[])
+                // console.log('__handleLoadAddedData', added_data_dict)
+            })
+        }
+
+        loadingShow = false
+        addDataShow = true
+    }
+    // let windowScrollTop
     onMount(async () => {
         loadingShow = true
         __updateSubmenuGroups()
@@ -3650,8 +3848,25 @@
         ipcRenderer.on('reset-errors', ()=>{
             __reset_errors()
         })
+        ipcRenderer.on('toggle-line-num', ()=>{
+            openLineNum = !openLineNum
+        })
+        ipcRenderer.on('load-single-excel', (event, filePath)=>{
+            // console.log('<=== onmount load-single-excel', filePath)
+            __handleLoadAddedData(filePath)
+        })
+
 
         document.addEventListener('contextmenu', __handleContextMenu)
+        // window.onscroll = (e)=>{
+        //     windowScrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        //     console.log('window.onscroll', windowScrollTop)
+        //     let topScrollLeft = topScroll.scrollLeft
+        //     let bottomScrollLeft = bottomScroll.scrollLeft
+        //     if(windowScrollTop<147 && topScrollLeft!==bottomScrollLeft){
+        //         topScroll.scrollTo(bottomScrollLeft, 0)
+        //     }
+        // };
 
         await __getPageData()
 
@@ -3664,12 +3879,39 @@
     })
 
     beforeUpdate(()=>{
+        // before after都一样，都能截取到target hereditary
+        // console.log('beforeUpdate', pre_params_type, params.type, doneFilter)
+
         // TODO clientHeight：包括padding但不包括border、水平滚动条、margin的元素的高度。 offsetHeight为含边框的div高度，scrollTop为元素被上边框遮住的部分，scrollHeight为内容高度
         autoscroll = uploadMessageDiv && (uploadMessageDiv.scrollTop + uploadMessageDiv.clientHeight) < uploadMessageDiv.scrollHeight
     })
 
+    //
+    function __update_filter_dom_value(){
+        if(doneFilter){
+            // console.log('__update_filter_dom_value', all_subFilter_indexes_dict[params.type][dict.DONE][0])
+            doneFilter.value = all_subFilter_indexes_dict[params.type][dict.DONE][0]
+        }
+        if(deleteFilter){
+            deleteFilter.value = all_subFilter_indexes_dict[params.type][dict.DELETE][0]
+        }
+        if(logsEditFilter){
+            logsEditFilter.value = all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]
+        }
+    }
     afterUpdate(()=>{
-        if (autoscroll) uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
+        // console.log('afterUpdate', pre_params_type, params.type, doneFilter)
+
+        if (autoscroll) {
+            uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
+        }
+
+        //手动更新公用过滤的dom的value值,done,delete,logsEdit
+        if(params.type!==pre_params_type){
+            __update_filter_dom_value()
+            pre_params_type = params.type
+        }
+
     })
 
     // let testValue = JSON.parse(JSON.stringify(Object.keys(sheetDisplayConfigDict).reduce((result, sheet)=>{
@@ -3683,7 +3925,7 @@
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict)
         // console.log(all_sheet_record_dict)
-        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
@@ -3691,7 +3933,7 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
-        // console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
@@ -3705,7 +3947,7 @@
         // console.log(track_configs_dict, bamAndBai_path_dict, sampleSn_inTrackConfigDict_list)
         // console.log(field_needCheck_inSampleInfoinPanal)
         // console.log(sheet_needAllCheck_list)
-        console.log(submenu_group_list, submenu_total_page, submenu_page)
+        // console.log(submenu_group_list, submenu_total_page, submenu_page)
     }
 
 </script>
@@ -4106,6 +4348,11 @@
          height: 33px;
          margin-right: 12px;
      }
+    .contentRight .filterWrapper .deleteWrapper{
+        flex: 0 0 160px;
+        height: 33px;
+        margin-right: 12px;
+    }
     .contentRight .filterWrapper .logsEditWrapper{
         flex: 0 0 160px;
         height: 33px;
@@ -4120,7 +4367,7 @@
         float: left;
         padding: 0 30px 0 5px;
         margin: 1px;
-        width: 300px;
+        width: 80%;
         height: 30px;
     }
     .contentRight .filterWrapper .idsWrapper input::-webkit-input-placeholder {

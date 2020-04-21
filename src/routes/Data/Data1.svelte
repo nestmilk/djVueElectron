@@ -708,7 +708,7 @@
         common_subFilter_selections_dict,
         affirmSelectionConfig,
         idsGroupSelections
-    } from './config'
+    } from '../../configs/config'
     import {dict_translate} from '../../utils/dict'
     const sheetDisplayConfigDict = arrayToDict(sheetDisplayConfigList, 'sheet')
 

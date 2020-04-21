@@ -487,7 +487,7 @@
 
     const dispatch = createEventDispatcher()
 
-    import {mutantDisplayConfigList} from './config'
+    import {mutantDisplayConfigList} from '../../configs/config'
     import {sheetDisplayConfigList} from './config1'
 
 
