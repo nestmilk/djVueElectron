@@ -21,17 +21,14 @@
                         <td class="medium">{sheet.pure_data_length}</td>
                         <td class="small">
                             {#if sheet.pure_data_length}
-                                <button class="{sheet.status_for_data_update?'icon-checkbox-checked':'icon-checkbox-unchecked'}
-                                                hoverGreen"
+                                <button class="{sheet.status_for_data_update?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
                                     on:click={()=>handleSelectData(sheet.name)}
                                 />
                             {/if}
                         </td>
                         <td class="small">
                             {#if sheet.hasTitles_inSheet}
-                                <button class="{sheet.status_for_template_update?'icon-checkbox-checked':'icon-checkbox-unchecked'}
-                                             {sheet.pure_data_length===0 || sheet.hasTemplate_inDatabase?'hoverGreen':'gray'}"
-                                    disabled={sheet.pure_data_length===0 || sheet.hasTemplate_inDatabase?'':'disabled'}
+                                <button class="{sheet.status_for_template_update?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
                                     on:click={()=>handleSelectTemplate(sheet.name)}
                                 />
                             {/if}
@@ -66,21 +63,24 @@
     function handleSelectData(sheet_name){
         let sheet = sheet_data_copy.find(sheet=>sheet.name===sheet_name)
         sheet.status_for_data_update = !sheet.status_for_data_update
-        // 如果没有模板，联动选择
-        if(!sheet.hasTemplate_inDatabase){
-            sheet.status_for_template_update = !sheet.status_for_template_update
+        // 如果是要更新data，数据库中又没有对应模板，则联动勾选更新template
+        if(sheet.status_for_data_update && !sheet.hasTemplate_inDatabase){
+            sheet.status_for_template_update = true
         }
         sheet_data_copy = sheet_data_copy
     }
 
     function handleSelectTemplate(sheet_name){
-        // 如果’没有数据‘，或者’数据库有模板‘，可以选择
         let sheet = sheet_data_copy.find(sheet=>sheet.name===sheet_name)
         // console.log('AddData handleSelectTemplate', sheet)
-        if(sheet.pure_data_length===0 || sheet.hasTemplate_inDatabase){
-            sheet.status_for_template_update = !sheet.status_for_template_update
-            sheet_data_copy = sheet_data_copy
+        // if(sheet.pure_data_length===0 || sheet.hasTemplate_inDatabase)  // 如果’没有数据‘，或者’数据库有模板‘，可以选择
+        sheet.status_for_template_update = !sheet.status_for_template_update
+        // 如果是取消模板，并且此时需要更新data，而且data库中没有模板, 则联动取消更新data
+        if(!sheet.status_for_template_update && sheet.status_for_data_update
+            && !sheet.hasTemplate_inDatabase){
+            sheet.status_for_data_update = false
         }
+        sheet_data_copy = sheet_data_copy
     }
 </script>
 

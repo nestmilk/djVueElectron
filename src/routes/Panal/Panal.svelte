@@ -984,13 +984,26 @@
 
 
     function __setsampleListQC(){
-        console.log("__setsampleListQC", qc_list, sample_dict)
-        qc_list.forEach(qc=>{
-            // qc表数据可能比sample中的样本多
-            if(sample_dict.hasOwnProperty(qc.sample)){
+        console.log("__setsampleListQC", qc_list)
+        // 按样板id归类，一个样本可能有多份qc
+        let qc_list_dict = qc_list.reduce((result, qc)=>{
+            let _qc = JSON.parse(JSON.stringify(qc))
+            if(result.hasOwnProperty(_qc.sample)){
+                result[_qc.sample].push(_qc)
+            }else{
+                result[_qc.sample] = [_qc]
+            }
+            return result
+        }, {})
+        // qc_list_dict按id排倒序
+        console.log("__setsampleListQC", qc_list_dict, sample_dict)
+        for (let sample_id in qc_list_dict){
+            qc_list_dict[sample_id].sort((a,b)=>b.id-a.id)
+            let qc = qc_list_dict[sample_id][0]
+            if(sample_dict.hasOwnProperty(sample_id)){
                 sample_dict[qc.sample][dict.QC] = qc
             }
-        })
+        }
     }
 
     async function getSamplesList() {

@@ -94,3 +94,5 @@ export const copyData = (sheet, data_id, log_id, token) => {return axios.get(`${
 
 // 创建excel
 export const createExcel = params => {return axios.post(`${host()}/excels/`, params)}
+// 追加数据
+export const addData = form => {return axios.post(`${host()}/adddata/`, form, config)}

@@ -805,7 +805,7 @@
         MUL_AFF_IDS: "multiple_affirmed_ids", UA_US_IDS: "unaffirmed_unsubmited_ids", A_US_IDS: "affirmed_unsubmited_ids",
         E_US_IDS: "edited_unsubmited_ids", NOW_SELECTED_IDS: "now_selected_ids",
         NAME: 'name', FILE: 'file', SHEET_DATA_DICT: 'sheet_data_dict', SHEET_INFO_LIST: 'sheet_info_list',
-        SKIP: 'skip',
+        SKIP: 'skip', STATUS_FOR_DATA_UPDATE: "status_for_data_update", STATUS_FOR_TEMPLATE_UPDATE: "status_for_template_update",
     }
     // 获取路径中的：值
     export let params = {}
@@ -3762,14 +3762,43 @@
     // 追加数据相关参数
     let addDataShow = false
     async function handleAddDataSubmit(e){
-        console.log('handleAddDataSubmit', e.detail.data, added_data_dict[dict.SHEET_INFO_LIST])
-        addDataShow = false
-        added_data_dict = {}
+        // console.log('handleAddDataSubmit', e.detail.data, added_data_dict[dict.SHEET_INFO_LIST])
 
+        addDataShow = false
         loadingShow = true
 
-        
+        let data_info = e.detail.data
+        let data_sheet = data_info.reduce((result, data)=>{
+            if(data[dict.STATUS_FOR_DATA_UPDATE]){
+                result[data[dict.VALUE]] = data[dict.NAME]
+            }
+            return result
+        }, {})
+        let template_sheet = data_info.reduce((result, data)=>{
+            if(data[dict.STATUS_FOR_TEMPLATE_UPDATE]){
+                result[data[dict.VALUE]] = data[dict.NAME]
+            }
+            return result
+        }, {})
+        console.log("handleAddDataSubmit", data_sheet, template_sheet)
 
+        let form = new FormData()
+
+        form.append('data_sheet', JSON.stringify(data_sheet))
+        form.append('template_sheet', JSON.stringify((template_sheet)))
+        form.append('file', added_data_dict[dict.FILE])
+        form.append('token', userInfo.getToken())
+        form.append('panal_id', params.panalId)
+        await api.addData(form).then(response=>{
+            console.log('handleAddDataSubmit', response)
+
+        }).catch(error=>{
+            console.log('handleAddDataSubmit', error)
+            errors = error
+        })
+
+        // 清空数据
+        added_data_dict = {}
         loadingShow = false
     }
     function handleAddDataCancel(){
@@ -3812,11 +3841,12 @@
 
                         result.push({
                             name: sheet_name,
+                            value: sheet_name_value,
                             pure_data_length,
                             status_for_data_update,
                             hasTitles_inSheet,
                             hasTemplate_inDatabase,
-                            status_for_template_update: !hasTemplate_inDatabase
+                            status_for_template_update: !hasTemplate_inDatabase && hasTitles_inSheet
                         })
                     }
 

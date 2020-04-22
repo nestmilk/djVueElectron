@@ -9,7 +9,7 @@
             <label>密码</label>
             <input type="password" bind:value={password} on:keydown={handleKeydown}/>
         </div>
-        <div class="error">{error}</div>
+        <div class="error">{errors}</div>
         <input type='button' value='登录'  on:click={login}>
         <input type="button" value="注册" on:click={register}>
         <div>
@@ -40,7 +40,7 @@
 
     let username = settingsStore.get('username')
     let password = settingsStore.get('password')
-    let error=''
+    let errors=''
     let loadingShow = false
     let keep = false
 
@@ -54,15 +54,17 @@
             let token = response.data.token
             userInfo.updateToken(token)
             console.log('token', token)
-        }).catch((response)=>{
+        }).catch(error=>{
             console.error('login api 出错', error)
-            if (error.data) {
-                error = response.data.non_field_errors[0]
+            if(typeof error === 'string'){
+                errors = '网络连接错误！'
+            }else{
+                errors = response.data.non_field_errors[0]
             }
         })
 
         // 同步可以获取到了
-        console.log('login ' + userInfo.getToken())
+        // console.log('login ' + userInfo.getToken())
 
         if(!userInfo.getToken()) {
             loadingShow = false
