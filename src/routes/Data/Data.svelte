@@ -3801,6 +3801,7 @@
         if (data){
             // 1) 更新sample_list，sampleSn_dict
             let added_sampleSn_dict = data.samples
+            console.log('handleAddDataSubmit added_sampleSn_dict', added_sampleSn_dict)
             for (let sampleSn in added_sampleSn_dict){
                 let sample_id = added_sampleSn_dict[sampleSn]
                 sample_list.push({
@@ -3816,7 +3817,7 @@
                 let sheet = item[dict.SHEET]
                 all_search_params_dict[sheet][dict.SAMPLEIDS] = selected_sampleId_list.join(',')
             })
-            console.log('handleAddDataSubmit', sample_list, sampleSn_dict, data.info)
+            // console.log('handleAddDataSubmit', sample_list, sampleSn_dict)
 
             // 2) 更新all_sample_record_dict， all_sheet_record_dict
             // a)为新的sample进行初始化
@@ -3834,6 +3835,7 @@
 
             // b) 为新增的数据信息，更新记录
             let info = data.info
+            console.log('handleAddDataSubmit info', info)
             for (let sheet in info){
                 let total = 0
                 let sheet_need_edit = sheetDisplayConfigDict[sheet][dict.FILTERS].indexOf(dict.LOGSEDIT) > -1
@@ -3868,6 +3870,7 @@
 
             // 3)更新subFilter_selections_dict
             let exonicfuncRefgenes = data.exonicfuncRefgenes
+            console.log('handleAddDataSubmit exonicfuncRefgenes', exonicfuncRefgenes)
             for (let sheet in exonicfuncRefgenes){
                 let values = exonicfuncRefgenes[sheet]
                 // 就算values没有，也要添加默认项
@@ -3882,8 +3885,9 @@
                 subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
             }
 
-            // TMB和sampleInfo中数据可能被更新, 更新preValue，nowValue
+            //4) TMB和sampleInfo中数据可能被更新, 更新preValue，nowValue
             let updatedData = data.updatedData
+            console.log('handleAddDataSubmit updatedData', updatedData)
             for (let updated_data of updatedData){
                 let sheet = updated_data[dict.SHEET]
                 let id = updated_data[dict.ID]
