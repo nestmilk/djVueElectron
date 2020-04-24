@@ -2263,7 +2263,7 @@
         // 只切换路由，数据没有自动刷新啊！！
         pre_params_type = params.type
 
-        // push之后，params.type没有立即更新，但是页面使用test获取paramstype已经更新
+        // push之后，params.type没有立即更新，但是页面使用tes获取paramstype已经更新
         // todo 只能手动强制改！
         // push(`/${type}/${params[dict.PANALID]}`)
         params.type = type
@@ -3029,7 +3029,7 @@
         }
 
         // 3) 更新all_specific_filters
-        // 先更新all_subFilters_dict中的三张表名, 再再all_exonicfuncRefgenes中添加这三张表
+        // 先更新all_subFilters_dict中的三张表名, 再再subFilter_selections_dict中添加这三张表
         for (let sheet of [dict.TARGET, dict.HEREDITARY, dict.TMB]) {
             //先更新all_subFilters_dict中的表名
             all_subFilter_names_dict[sheet][dict.EXONICFUNCREFGENE] = [`${sheet.toLowerCase()}_exonicfuncRefgene`]
@@ -3789,13 +3789,114 @@
         form.append('file', added_data_dict[dict.FILE])
         form.append('token', userInfo.getToken())
         form.append('panal_id', params.panalId)
+        let data = null
         await api.addData(form).then(response=>{
             console.log('handleAddDataSubmit', response)
-
+            data = response.data
         }).catch(error=>{
             console.log('handleAddDataSubmit', error)
             errors = error
         })
+
+        if (data){
+            // 1) 更新sample_list，sampleSn_dict
+            let added_sampleSn_dict = data.samples
+            for (let sampleSn in added_sampleSn_dict){
+                let sample_id = added_sampleSn_dict[sampleSn]
+                sample_list.push({
+                    id: sample_id,
+                    sampleSn
+                })
+                sampleSn_dict[sampleSn] = sample_id
+            }
+            // 样本设为全选
+            selected_sampleId_list = JSON.parse(JSON.stringify(sample_list.map(sample=>sample[dict.ID])))
+            //更新所有页sampleIds查询参数
+            sheetDisplayConfigList.forEach(item=>{
+                let sheet = item[dict.SHEET]
+                all_search_params_dict[sheet][dict.SAMPLEIDS] = selected_sampleId_list.join(',')
+            })
+            console.log('handleAddDataSubmit', sample_list, sampleSn_dict, data.info)
+
+            // 2) 更新all_sample_record_dict， all_sheet_record_dict
+            // a)为新的sample进行初始化
+            for (let sampleSn in added_sampleSn_dict){
+                let id = sampleSn_dict[sampleSn]
+                for (let sheet in all_sample_record_dict){
+                    all_sample_record_dict[sheet][id] = {
+                        allData: 0,
+                        subAndAffData: 0,
+                        unsubAndAffData: 0,
+                        unsubAndUnaffData: 0
+                    }
+                }
+            }
+
+            // b) 为新增的数据信息，更新记录
+            let info = data.info
+            for (let sheet in info){
+                let total = 0
+                let sheet_need_edit = sheetDisplayConfigDict[sheet][dict.FILTERS].indexOf(dict.LOGSEDIT) > -1
+
+                for (let sampleSn in info[sheet]) {
+                    let value = info[sheet][sampleSn]
+                    // 统计sheet页新添加总数
+                    total = total + value
+                    let id = sampleSn_dict[sampleSn]
+
+                    console.log('handleAddDataSubmit', sheet, sampleSn, id, value, total)
+                    let pre_allData = all_sample_record_dict[sheet][id][dict.ALLDATA]
+                    let pre_subAndAffData = all_sample_record_dict[sheet][id][dict.S_ADATA]
+                    let pre_unsubAndUnaffData = all_sample_record_dict[sheet][id][dict.US_UADATA]
+
+                    all_sample_record_dict[sheet][id][dict.ALLDATA] = pre_allData + value
+                    if(sheet_need_edit){
+                        all_sample_record_dict[sheet][id][dict.US_UADATA] = pre_unsubAndUnaffData + value
+                    }else{
+                        all_sample_record_dict[sheet][id][dict.S_ADATA] = pre_subAndAffData + value
+                    }
+
+                }
+
+                // 更新all_sheet_record_dict
+                if(sheet_need_edit){
+                    all_sheet_record_dict[sheet][dict.US_UADATA] = all_sheet_record_dict[sheet][dict.US_UADATA] + total
+                }else{
+                    all_sheet_record_dict[sheet][dict.S_ADATA] = all_sheet_record_dict[sheet][dict.S_ADATA] + total
+                }
+            }
+
+            // 3)更新subFilter_selections_dict
+            let exonicfuncRefgenes = data.exonicfuncRefgenes
+            for (let sheet in exonicfuncRefgenes){
+                let values = exonicfuncRefgenes[sheet]
+                // 就算values没有，也要添加默认项
+                let new_selections = []
+                if(values){
+                    let value_list = values.split(';')
+                    value_list.forEach(value=>new_selections.push({
+                        value: value,
+                        content: value
+                    }))
+                }
+                subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
+            }
+
+            // TMB和sampleInfo中数据可能被更新, 更新preValue，nowValue
+            let updatedData = data.updatedData
+            for (let updated_data of updatedData){
+                let sheet = updated_data[dict.SHEET]
+                let id = updated_data[dict.ID]
+                let data = updated_data[dict.DATA]
+
+                // 插入新数据的nowValue
+                all_nowValue_of_data_dict[sheet][id] = JSON.parse(JSON.stringify(data))
+                // 插入新数据的preValue
+                all_preValue_of_data_dict[sheet][id] = JSON.parse(JSON.stringify(data))
+            }
+
+            await __getPageData()
+        }
 
         // 清空数据
         added_data_dict = {}
@@ -3953,9 +4054,8 @@
     function test() {
         // console.log(sample_list, sampleSn_dict)
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
-        // console.log(all_sample_record_dict)
-        // console.log(all_sheet_record_dict)
-        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        // console.log(all_sample_record_dict, all_sheet_record_dict)
+        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)

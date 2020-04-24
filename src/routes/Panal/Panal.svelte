@@ -513,6 +513,8 @@
     async function changePanal(panal_id) {
         if (current_panal_id === panal_id) return
         current_panal_id = panal_id
+
+        currentPage = 1
         await getSamplesList()
     }
 

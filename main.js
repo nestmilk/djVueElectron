@@ -176,8 +176,12 @@ app.on('ready', ()=>{
                 extensions: ['xlsx']
             }]
         }).then(files=>{
-            // console.log('open-excel-for-more-data', files.filePaths[0])
-            mainWindow.webContents.send('load-single-excel', files.filePaths[0])
+            // 取消时候 { canceled: true, filePaths: [] }
+            // 选择文件 {canceled: false, filePaths: [ 'E:\\result\\result14\\200103_NZD1.passed.xlsx' ] }
+            // console.log('open-excel-for-more-data', files)
+            if(!files.canceled){
+                mainWindow.webContents.send('load-single-excel', files.filePaths[0])
+            }
         }).catch(error=>{
             dialog.showErrorBox('main.js中打开文件出错')
         })
