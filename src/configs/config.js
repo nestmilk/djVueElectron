@@ -1252,6 +1252,20 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: false,
                 selectDisplay: true
+            }, {
+                title: "geneInfo",
+                translate: "基因描述",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "AA_change",
+                translate: "氨基酸改变",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
             },
         ],
     },

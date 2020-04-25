@@ -3791,7 +3791,7 @@
         form.append('panal_id', params.panalId)
         let data = null
         await api.addData(form).then(response=>{
-            console.log('handleAddDataSubmit', response)
+            // console.log('handleAddDataSubmit', response.data)
             data = response.data
         }).catch(error=>{
             console.log('handleAddDataSubmit', error)
@@ -3801,7 +3801,7 @@
         if (data){
             // 1) 更新sample_list，sampleSn_dict
             let added_sampleSn_dict = data.samples
-            console.log('handleAddDataSubmit added_sampleSn_dict', added_sampleSn_dict)
+            // console.log('handleAddDataSubmit added_sampleSn_dict', added_sampleSn_dict)
             for (let sampleSn in added_sampleSn_dict){
                 let sample_id = added_sampleSn_dict[sampleSn]
                 sample_list.push({
@@ -3835,7 +3835,7 @@
 
             // b) 为新增的数据信息，更新记录
             let info = data.info
-            console.log('handleAddDataSubmit info', info)
+            // console.log('handleAddDataSubmit info', info)
             for (let sheet in info){
                 let total = 0
                 let sheet_need_edit = sheetDisplayConfigDict[sheet][dict.FILTERS].indexOf(dict.LOGSEDIT) > -1
@@ -3846,7 +3846,7 @@
                     total = total + value
                     let id = sampleSn_dict[sampleSn]
 
-                    console.log('handleAddDataSubmit', sheet, sampleSn, id, value, total)
+                    // console.log('handleAddDataSubmit', sheet, sampleSn, id, value, total)
                     let pre_allData = all_sample_record_dict[sheet][id][dict.ALLDATA]
                     let pre_subAndAffData = all_sample_record_dict[sheet][id][dict.S_ADATA]
                     let pre_unsubAndUnaffData = all_sample_record_dict[sheet][id][dict.US_UADATA]
@@ -3870,7 +3870,8 @@
 
             // 3)更新subFilter_selections_dict
             let exonicfuncRefgenes = data.exonicfuncRefgenes
-            console.log('handleAddDataSubmit exonicfuncRefgenes', exonicfuncRefgenes)
+            // console.log('handleAddDataSubmit exonicfuncRefgenes', exonicfuncRefgenes)
+
             for (let sheet in exonicfuncRefgenes){
                 let values = exonicfuncRefgenes[sheet]
                 // 就算values没有，也要添加默认项
@@ -3887,7 +3888,8 @@
 
             //4) TMB和sampleInfo中数据可能被更新, 更新preValue，nowValue
             let updatedData = data.updatedData
-            console.log('handleAddDataSubmit updatedData', updatedData)
+            // console.log('handleAddDataSubmit updatedData', updatedData)
+
             for (let updated_data of updatedData){
                 let sheet = updated_data[dict.SHEET]
                 let id = updated_data[dict.ID]
