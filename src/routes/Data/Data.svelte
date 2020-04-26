@@ -969,7 +969,7 @@
             let unequal_values = __check_unequalValues_ofModifiyFields(id)
             if(status===dict.FREE && Object.keys(unequal_values).length===0){
                 // 将状态从free设置为checked
-                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.CHECKED)
+                __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.CHECKED)
             }
         }
 
@@ -1667,7 +1667,7 @@
 
     }
 
-    function __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null, adjust_mulAff_items=false, cancel_submit=false){
+    function __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null, adjust_mulAff_items=false, cancel_submit=false){
         // console.log('<=== __change_dataStatus_params_logs_availSelect_sampleRecord_sheetRecord begin')
         // 1) 修改此条数据的status
         all_status_of_data_dict[params.type][id] = status
@@ -1801,17 +1801,18 @@
 
     // 将sample_record_dict和sheet_record_dict中相关总数进行增减
     // from为null，为copy情况
-    function __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, from, to){
+    function __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, from, to, sheet=null){
         // console.log("__moveCountFromToInAllSampleRecordandAllSheetRecord", sample_id, all_sample_record_dict, all_sheet_record_dict, from, to)
+        let defalult_sheet = sheet?sheet:params.type
         if(from){
-            all_sample_record_dict[params.type][sample_id][from]--
-            all_sheet_record_dict[params.type][from]--
+            all_sample_record_dict[defalult_sheet][sample_id][from]--
+            all_sheet_record_dict[defalult_sheet][from]--
         }else{
-            all_sample_record_dict[params.type][sample_id][dict.ALLDATA]++
+            all_sample_record_dict[defalult_sheet][sample_id][dict.ALLDATA]++
         }
 
-        all_sample_record_dict[params.type][sample_id][to]++
-        all_sheet_record_dict[params.type][to]++
+        all_sample_record_dict[defalult_sheet][sample_id][to]++
+        all_sheet_record_dict[defalult_sheet][to]++
     }
     // 查看此条数据，所有modifyTitle列表对应的值是否有过修改
     function __check_unequalValues_ofModifiyFields(id, modify_list=[], sub_nowData=null, sub_preData=null){
@@ -1851,7 +1852,7 @@
             // console.log("handleSingleAffirm", unequal_values)
             if (Object.keys(unequal_values).length === 0) {
                 // 将状态从free设置为checked
-                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.CHECKED)
+                __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.CHECKED)
                 return
             }else{
                 // 显示修改原因填写页面, 逻辑跳转handleAddReasonSure处理
@@ -1863,7 +1864,7 @@
         }else if([dict.CHECKED, dict.DELETED, dict.EDITED].indexOf(status) !== -1){
             // 如果数据状态是已审核中一种，按钮点击为 取消审核确认
             // 修改状态为free
-            __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.FREE)
+            __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_id, dict.FREE)
         }
     }
 
@@ -1930,7 +1931,7 @@
         let id_list  = all_selected_dataIds_dict[params.type]
         let sampleId_dict = __getSampleIdsDict_by_dataIdsList(id_list)
         id_list.forEach(id=>{
-            __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId_dict[id], dict.FREE)
+            __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sampleId_dict[id], dict.FREE)
         })
 
         //1) 清空id选中列表
@@ -2051,7 +2052,7 @@
                 success = true
                 success_num++
                 // 1) 更新相关参数
-                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.FREE, null, null, null, false, true)
+                __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.FREE, null, null, null, false, true)
                 // // 2) 更新页面的availableSelect
                 // __update_oneId_availSelect_inPageIdAvailSelectDict(id)
             }).catch(error=>{
@@ -2122,27 +2123,30 @@
         result[item[dict.SHEET]] = {}
         return result
     }, {})))
-    function __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(data_list=null){
+    function __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(data_list=null, sheet=null, force='empty'){
         let default_data_list = data_list && data_list.length>0?data_list:page_data
+        let default_sheet = sheet?sheet:params.type
+        // 配置文件需要当前sheet更新, 或者按参数更新
+        let default_force = force === 'empty'? sheetDisplayConfigDict[default_sheet][dict.PREVALUE_NOWVALUE_UPDATE]:force
+
         for (let data of default_data_list) {
             let id = data[dict.ID]
 
             //1) 本地无此条记录 2) 或者此页需要每次都强制更新每条数据（即概览页 每次都更新数据）
-            if (!all_status_of_data_dict[params.type].hasOwnProperty(id) ||
-                    sheetDisplayConfigDict[params.type][dict.PREVALUE_NOWVALUE_UPDATE]) {
+            if (!all_status_of_data_dict[default_sheet].hasOwnProperty(id) || default_force) {
                 // 插入新数据的nowValue
-                all_nowValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
+                all_nowValue_of_data_dict[default_sheet][id] = JSON.parse(JSON.stringify(data))
                 // 插入新数据的preValue
-                all_preValue_of_data_dict[params.type][id] = JSON.parse(JSON.stringify(data))
+                all_preValue_of_data_dict[default_sheet][id] = JSON.parse(JSON.stringify(data))
                 // 插入新数据的状态大表
-                all_status_of_data_dict[params.type][id] = data[dict.DONE]?dict.DONE:dict.FREE
+                all_status_of_data_dict[default_sheet][id] = data[dict.DONE]?dict.DONE:dict.FREE
             }else{
                 // 如果有记录，再判断数据是否外部可能会被人修改了，
                 // 最常见为测试，其次为多人操作
                 // 整个title表都查一遍，反正查了
                 // console.log('__update_allDataStatusDict_allNowVal... do not update')
                 let unequal_values = __check_unequalValues_ofModifiyFields(id,
-                        [...all_wholeTitle_list_dict[params.type], dict.DELETE, dict.DONE], data)
+                        [...all_wholeTitle_list_dict[default_sheet], dict.DELETE, dict.DONE], data)
 
                 if(Object.keys(unequal_values).length>0) {
                     remote.dialog.showMessageBox({
@@ -2150,7 +2154,7 @@
                         title: `数据库被人修改(未处理)，数据ID为${id}`,
                         message: '最新数据：'+JSON.stringify(unequal_values)+
                                 '，本地数据(pre)：'+ JSON.stringify(Object.keys(unequal_values).reduce((result, field)=>{
-                                    result[field] = all_preValue_of_data_dict[params.type][id][field]
+                                    result[field] = all_preValue_of_data_dict[default_sheet][id][field]
                                     return result
                                 }, {}))
                     })
@@ -2777,7 +2781,7 @@
                     success_ids_dict[log_id] = [id]
                 }
                 // 1) 更新相关参数
-                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
+                __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
                 // // 2) 更新页面的availableSelect 替换 __getPageData()中G)全部整体更新
                 // __update_oneId_availSelect_inPageIdAvailSelectDict(id)
                 // // 3) availableEdit修改为false 替换 __getPageData()中B)全部整体初始化false
@@ -2882,7 +2886,7 @@
                 let type = unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]?dict.DELETED:dict.EDITED
 
                 //1) 修改数据相关记录
-                __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, type, reason, unequal_values)
+                __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_id, type, reason, unequal_values)
                 break
             case dict.EDIT_SINAFF_REASON:
                 // 仅仅需要更新本条数据的log详情
@@ -2907,7 +2911,7 @@
                     let type = unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]?dict.DELETED:dict.EDITED
 
                     // 1) 分别修改相关记录，reason不用提交了
-                    __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_id, type, null, unequal_values, log_id_mulAffirm)
+                    __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_id, type, null, unequal_values, log_id_mulAffirm)
                     // 2）重置availableSelect
                     __update_oneId_availSelect_inPageIdAvailSelectDict(id)
                 }
@@ -2934,7 +2938,7 @@
                 locked_log_detail[dict.DESC] = reason[dict.DESC]
 
                 difference[dict.DELETED_IDS].forEach(id=>{
-                    __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_ids[id], dict.FREE, null, null, null, true)
+                    __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_ids[id], dict.FREE, null, null, null, true)
                     __update_oneId_availSelect_inPageIdAvailSelectDict(id)
                 })
                 difference[dict.ADDED_IDS].forEach(id=>{
@@ -2943,7 +2947,7 @@
                     let type = unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]?dict.DELETED:dict.EDITED
                     // console.log('handleAddReasonSure', unequal_values, type, id)
                     // 1) 分别修改相关记录，reason不用提交了
-                    __change_dataStatus_params_logs_sampleRecord_sheetRecord(id, sample_ids[id], type, null, unequal_values, locked_logId, true)
+                    __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_ids[id], type, null, unequal_values, locked_logId, true)
                     __update_oneId_availSelect_inPageIdAvailSelectDict(id)
                 })
 
@@ -3790,6 +3794,7 @@
         form.append('token', userInfo.getToken())
         form.append('panal_id', params.panalId)
         let data = null
+        // 发送上传追加的数据
         await api.addData(form).then(response=>{
             // console.log('handleAddDataSubmit', response.data)
             data = response.data
@@ -3820,7 +3825,7 @@
             // console.log('handleAddDataSubmit', sample_list, sampleSn_dict)
 
             // 2) 更新all_sample_record_dict， all_sheet_record_dict
-            // a)为新的sample进行初始化
+            // 为新的sample进行初始化
             for (let sampleSn in added_sampleSn_dict){
                 let id = sampleSn_dict[sampleSn]
                 for (let sheet in all_sample_record_dict){
@@ -3833,7 +3838,7 @@
                 }
             }
 
-            // b) 为新增的数据信息，更新记录
+            // 3）为新增的数据信息，更新记录
             let info = data.info
             // console.log('handleAddDataSubmit info', info)
             for (let sheet in info){
@@ -3868,7 +3873,7 @@
                 }
             }
 
-            // 3)更新subFilter_selections_dict
+            // 4)更新subFilter_selections_dict
             let exonicfuncRefgenes = data.exonicfuncRefgenes
             // console.log('handleAddDataSubmit exonicfuncRefgenes', exonicfuncRefgenes)
 
@@ -3886,7 +3891,7 @@
                 subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
             }
 
-            //4) TMB和sampleInfo中数据可能被更新, 更新preValue，nowValue
+            //5) 更新preValue，nowValue，TMB和sampleInfo中数据可能被更新而非仅仅是自动添加,
             let updatedData = data.updatedData
             // console.log('handleAddDataSubmit updatedData', updatedData)
 
@@ -3895,10 +3900,36 @@
                 let id = updated_data[dict.ID]
                 let data = updated_data[dict.DATA]
 
-                // 插入新数据的nowValue
-                all_nowValue_of_data_dict[sheet][id] = JSON.parse(JSON.stringify(data))
-                // 插入新数据的preValue
-                all_preValue_of_data_dict[sheet][id] = JSON.parse(JSON.stringify(data))
+                // 先查看本地是否有此条数据
+                if (all_status_of_data_dict[sheet].hasOwnProperty(id)){
+                    let status = all_status_of_data_dict[sheet][id]
+                    let sample_id = all_preValue_of_data_dict[sheet][id][dict.SAMPLEID]
+                    // 如果是已审核状态，需要sheet，sample统计迁移
+                    if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status)!==-1){
+                        __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA, sheet)
+                    }
+
+                    // 判断是否有日志
+                    if (all_submit_logs_dict[sheet].hasOwnProperty(id)){
+                        // 如果有日志
+                        let log_id = all_submit_logs_dict[sheet][id]
+                        let log_detail = logs_together_dict[log_id]
+                        let ids = log_detail[dict.IDS]
+                        // 1）判断是否在组内, 即是否还有其它数据, 修改或删除日志详情
+                        if (ids.length > 1) {
+                            logs_together_dict[log_id][dict.IDS] = removeFromUniqueArray(ids, id)
+                        }else{
+                            delete logs_together_dict[log_id]
+                        }
+                        // 2）删除数据对应的log_id
+                        delete all_submit_logs_dict[sheet][id]
+                        // 3）删除数据对应的params
+                        delete all_submit_params_dict[sheet][id]
+                    }
+                }
+
+                // 直接强制利用数据注入status, nowValue, preValue
+                __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([data], sheet, true)
             }
 
             await __getPageData()
@@ -4071,8 +4102,8 @@
         // console.log(all_selected_dataIds_dict)
         console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
-        // console.log(all_submit_params_dict)
-        // console.log(all_submit_logs_dict, logs_together_dict)
+        console.log(all_submit_params_dict)
+        console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(page_id_modifyField_mouseEnter_dicts, page_id_availableSelect_dict, page_id_availableEdit_dict)
