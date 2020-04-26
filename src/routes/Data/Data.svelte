@@ -653,8 +653,18 @@
                                                                     all_nowValue_of_data_dict[params.type][line_data.id] &&
                                                                     all_nowValue_of_data_dict[dict.TMB][all_nowValue_of_data_dict[params.type][line_data.id][field]] &&
                                                                     all_nowValue_of_data_dict[dict.TMB][all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.DELETE]?'tmbDelete':''}
+                                                                {field===dict.SAMPLESN?dict.SAMPLESN:''}
                                                                 "
                                                     >
+                                                        {#if field===dict.SAMPLESN}
+                                                            <div class="iconWrapper">
+                                                                <div class="icon
+                                                                            {all_nowValue_of_data_dict[params.type][line_data.id] && sample_dict[all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.TYPE]==='positive'?'icon-plus':''}
+                                                                            "
+                                                                ></div>
+                                                            </div>
+                                                        {/if}
+
                                                         {all_nowValue_of_data_dict[params.type][line_data.id]?
                                                             all_nowValue_of_data_dict[params.type][line_data.id][field]:''}
                                                     </div>
@@ -2632,8 +2642,9 @@
 
     // 整个表的sampleId的列表
     let sample_list = []
-    // sampleSn对应sampleId
-    let sampleSn_dict = {}
+    // key为sampleSn, value为sample_list中值
+    let sample_dict = {}
+
     // 选中的样本id列表
     let selected_sampleId_list = []
     let pre_selected_sampleId_list = []
@@ -2995,13 +3006,16 @@
     }
 
     // 加载初始化
-    function __setSampleIdList_and_AllSampleRecordDict__allSpecificFilters(data){
+    function __setSampleList_and_AllSampleRecordDict__allSpecificFilters(data){
         //1） 更新sample_list
         let sampleInfoInPanals = data.sampleInfoInPanals
+
         sample_list = JSON.parse(JSON.stringify(sampleInfoInPanals.map(sampleInfoInPanal=>{
+            let sample = sampleInfoInPanal[dict.SAMPLE]
             return {
-                id: sampleInfoInPanal[dict.SAMPLE][dict.ID],
-                sampleSn: sampleInfoInPanal[dict.SAMPLE][dict.SAMPLESN]
+                id: sample[dict.ID],
+                sampleSn: sample[dict.SAMPLESN],
+                type: sample[dict.TYPE]
             }
         })))
         // console.log("__setSampleIdList_and_AllSampleRecordDict__allSpecificFilters", sampleInfoInPanals, sample_list)
@@ -3010,8 +3024,10 @@
         selected_sampleId_list = JSON.parse(JSON.stringify(sample_list.map(sample=>sample[dict.ID])))
 
         // 顺便初始化 {NGS200306-14: 1, NGS200306-22: 2, NGS200306-42: 3, NGS200208-38: 4}
-        sampleSn_dict = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
-            result[sampleInfoInPanal[dict.SAMPLE][dict.SAMPLESN]] = sampleInfoInPanal[dict.SAMPLE][dict.ID]
+        sample_dict = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
+            let sample = sampleInfoInPanal[dict.SAMPLE]
+            let sampleSn = sample[dict.SAMPLESN]
+            result[sampleSn] = sample
             return result
         }, {})))
 
@@ -3124,7 +3140,7 @@
             panal_data = response.data
 
             // 初始化sampleId_list, 利用sampleInfoInPanals中样本信息，对手工表All_sample_record_dict初始化
-            __setSampleIdList_and_AllSampleRecordDict__allSpecificFilters(response.data)
+            __setSampleList_and_AllSampleRecordDict__allSpecificFilters(response.data)
 
         }).catch(error=>{
             console.log("getSampleList", error)
@@ -3566,7 +3582,7 @@
         // console.log("__addTrackConfigs", paired_Files)
 
         for (let sampleSn in paired_Files) {
-            let sampleId = sampleSn_dict[sampleSn]
+            let sampleId = sample_dict[sampleSn][dict.ID]
             if (sampleId === undefined) continue
 
             track_configs_dict[sampleId] = {
@@ -3805,15 +3821,16 @@
 
         if (data){
             // 1) 更新sample_list，sampleSn_dict
-            let added_sampleSn_dict = data.samples
-            // console.log('handleAddDataSubmit added_sampleSn_dict', added_sampleSn_dict)
-            for (let sampleSn in added_sampleSn_dict){
-                let sample_id = added_sampleSn_dict[sampleSn]
+            let added_sample_dict = data.samples
+            console.log('handleAddDataSubmit added_sampleSn_dict', added_sample_dict)
+            for (let sampleSn in added_sample_dict){
+                let sample = added_sample_dict[sampleSn]
                 sample_list.push({
-                    id: sample_id,
-                    sampleSn
+                    id: sample[dict.ID],
+                    sampleSn,
+                    type: sample[dict.TYPE]
                 })
-                sampleSn_dict[sampleSn] = sample_id
+                sample_dict[sampleSn] = sample
             }
             // 样本设为全选
             selected_sampleId_list = JSON.parse(JSON.stringify(sample_list.map(sample=>sample[dict.ID])))
@@ -3826,8 +3843,8 @@
 
             // 2) 更新all_sample_record_dict， all_sheet_record_dict
             // 为新的sample进行初始化
-            for (let sampleSn in added_sampleSn_dict){
-                let id = sampleSn_dict[sampleSn]
+            for (let sampleSn in added_sample_dict){
+                let id = sample_dict[sampleSn][dict.ID]
                 for (let sheet in all_sample_record_dict){
                     all_sample_record_dict[sheet][id] = {
                         allData: 0,
@@ -3849,13 +3866,14 @@
                     let value = info[sheet][sampleSn]
                     // 统计sheet页新添加总数
                     total = total + value
-                    let id = sampleSn_dict[sampleSn]
+                    let id = sample_dict[sampleSn][dict.ID]
 
                     // console.log('handleAddDataSubmit', sheet, sampleSn, id, value, total)
                     let pre_allData = all_sample_record_dict[sheet][id][dict.ALLDATA]
                     let pre_subAndAffData = all_sample_record_dict[sheet][id][dict.S_ADATA]
                     let pre_unsubAndUnaffData = all_sample_record_dict[sheet][id][dict.US_UADATA]
 
+                    // console.log('handleAddDataSubmit', pre_allData, pre_subAndAffData, pre_unsubAndUnaffData)
                     all_sample_record_dict[sheet][id][dict.ALLDATA] = pre_allData + value
                     if(sheet_need_edit){
                         all_sample_record_dict[sheet][id][dict.US_UADATA] = pre_unsubAndUnaffData + value
@@ -4100,10 +4118,11 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
-        console.log(all_status_of_data_dict, all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        // console.log(all_status_of_data_dict)
+        // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        // console.log(all_submit_params_dict)
+        // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
-        console.log(all_submit_params_dict)
-        console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(page_id_modifyField_mouseEnter_dicts, page_id_availableSelect_dict, page_id_availableEdit_dict)
@@ -4115,6 +4134,7 @@
         // console.log(field_needCheck_inSampleInfoinPanal)
         // console.log(sheet_needAllCheck_list)
         // console.log(submenu_group_list, submenu_total_page, submenu_page)
+        console.log(sample_list)
     }
 
 </script>
@@ -4826,6 +4846,21 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+
+        position: relative;
+    }
+    .contentRight .rightDataTable .lineData td .inside.sampleSn .iconWrapper{
+        position: absolute;
+        top: 1px;
+        left: 3px;
+        height: 12px;
+    }
+    .contentRight .rightDataTable .lineData td .inside.sampleSn .iconWrapper .icon{
+        height: 12px;
+        width: 12px;
+        font-size: 12px;
+        margin-right: 5px;
+        float: left;
     }
     .contentRight .rightDataTable .lineData td .inside.tmbDelete{
         color: red;
