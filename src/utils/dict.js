@@ -12,6 +12,8 @@ export const dict_translate = {
     modify: '修改',
     free_unmodified: '未审核未修改数据',
     check: '确认审核',
+    sample_type: '样本类型',
+    change: '更改',
 }
 
 

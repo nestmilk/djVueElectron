@@ -2168,3 +2168,23 @@ export const up_sheet_name_dict = {
     HRR: {value: "HRR", skip: 0},
     MLPA:{value: "MLPA", skip: 1}
 }
+
+export const sampleTypeConfig = [
+    {
+        value: 'sample',
+        translate: '实验样本',
+        icon: 'icon-lab'
+    }, {
+        value: 'positive',
+        translate: '阳性对照',
+        icon: 'icon-plus'
+    }, {
+        value: 'negative',
+        translate: '阴性对照',
+        icon: 'icon-minus'
+    }, {
+        value: 'test',
+        translate: '测试对照',
+        icon: 'icon-tumblr'
+    }
+]

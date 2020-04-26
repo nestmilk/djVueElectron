@@ -659,7 +659,9 @@
                                                         {#if field===dict.SAMPLESN}
                                                             <div class="iconWrapper">
                                                                 <div class="icon
-                                                                            {all_nowValue_of_data_dict[params.type][line_data.id] && sample_dict[all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.TYPE]==='positive'?'icon-plus':''}
+                                                                            {all_nowValue_of_data_dict[params.type][line_data.id]?
+                                                                                (sampleTypeConfigDict.hasOwnProperty(sample_dict[all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.TYPE])?
+                                                                                    sampleTypeConfigDict[sample_dict[all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.TYPE]][dict.ICON]:''):''}
                                                                             "
                                                                 ></div>
                                                             </div>
@@ -765,11 +767,13 @@
         common_subFilter_selections_dict,
         affirmSelectionConfig,
         idsGroupSelections,
-        up_sheet_name_dict
+        up_sheet_name_dict,
+        sampleTypeConfig
     } from '../../configs/config'
     import {dict_translate} from '../../utils/dict'
 
     const sheetDisplayConfigDict = arrayToDict(sheetDisplayConfigList, 'sheet')
+    const sampleTypeConfigDict = arrayToDict(sampleTypeConfig, 'value')
 
     // 引入electron相关包
     const { ipcRenderer, remote } =window.require('electron')
@@ -816,6 +820,8 @@
         E_US_IDS: "edited_unsubmited_ids", NOW_SELECTED_IDS: "now_selected_ids",
         NAME: 'name', FILE: 'file', SHEET_DATA_DICT: 'sheet_data_dict', SHEET_INFO_LIST: 'sheet_info_list',
         SKIP: 'skip', STATUS_FOR_DATA_UPDATE: "status_for_data_update", STATUS_FOR_TEMPLATE_UPDATE: "status_for_template_update",
+        POSITIVE: 'positive', NEGATIVE: 'negative', TEST: 'test', ICON: 'icon',
+        SAMPLE_TYPE: "sample_type", CHANGE: "change",
     }
     // 获取路径中的：值
     export let params = {}
@@ -912,6 +918,13 @@
         loadingShow = false
     }
 
+    async function __handleChangeSampleType(){
+        let {sample_id, sampleSn, type} = sureData
+        console.log('__handleChangeSampleType', sample_id, sampleSn, type)
+
+        
+
+    }
 
     async function __affirmCheck_selectedSampleIds_beFreeandUnmodified_data(){
         loadingShow = true
@@ -994,9 +1007,18 @@
     }
     let sureEvent
     let sureOperation
+    let sureData = {}
     let sureMessage = ''
-    function changeSendSureMessage() {
+    function __changeSendSureMessage() {
         sureMessage = "是否对" + dict_translate[sureEvent] + "进行" + dict_translate[sureOperation] + "相关操作!"
+    }
+    function openSureMessage(event, operation, data){
+        // console.log('openSureMessage', event, operation, data)
+        sureEvent = event
+        sureOperation = operation
+        sureData = data
+        __changeSendSureMessage()
+        sureShow = true
     }
     async function handleSureReply(e){
         // console.log('handleSureReply', e.detail.status)
@@ -1065,6 +1087,18 @@
                         // console.log('handleSureReply 数据复制')
                         if(reply){
                             await __handleCopyData()
+                        }
+                        break
+                    default:
+                        break
+                }
+                break
+            case dict.SAMPLE_TYPE:
+                switch (sureOperation){
+                    case dict.CHANGE:
+                        if(reply){
+                            // console.log('handleSureReply', sureData)
+                            await __handleChangeSampleType()
                         }
                         break
                     default:
@@ -1925,10 +1959,7 @@
     }
     // 批量审核中，处理多选的恢复
     function __handleMultipleRecover(){
-        sureEvent = dict.MODIFY
-        sureOperation = dict.CANCEL
-        changeSendSureMessage()
-        sureShow = true
+        openSureMessage(dict.MODIFY, dict.CANCEL)
     }
     // 针对选择多选组，用于选取同批提交的ids
     function handle_lineTDClick_for_idsInSameCheckedGroup(id){
@@ -2034,10 +2065,7 @@
         console.log("handleCancelSelectedIdsDone", e.detail[dict.IDS])
         selected_ids_forCancelDone = e.detail[dict.IDS]
 
-        sureEvent = dict.SUBMIT
-        sureOperation = dict.CANCEL
-        changeSendSureMessage()
-        sureShow = true
+        openSureMessage(dict.SUBMIT, dict.CANCEL)
     }
     // 用于实际处理撤销提交操作
     async function __handleCancelSelectedIdsDone(){
@@ -3224,6 +3252,30 @@
         loadingShow = false
     }
 
+    function __getSampleTypeSubMenu(sample_id) {
+        // console.log("__getSampleTypeSubMenu", sample_list, sample_id)
+        let sampleSn = sample_list.find(item=>item.id===sample_id)[dict.SAMPLESN]
+        return sampleTypeConfig.map(item=>{
+            let type = item[dict.VALUE]
+            let name = item[dict.TRANSLATE]
+            // console.log("__getSampleTypeSubMenu", type, sampleSn,  sample_dict)
+
+            return {
+                label: name,
+                type: 'checkbox',
+                checked: type === sample_dict[sampleSn][dict.TYPE],
+                click: ()=>{
+                    console.log("__getSampleTypeSubMenu click")
+                    openSureMessage(dict.SAMPLE_TYPE, dict.CHANGE, {
+                        sample_id,
+                        sampleSn,
+                        type
+                    })
+                }
+            }
+        })
+    }
+
     async function __handleContextMenu(e){
         // sheet页选择
         if (document.querySelector('.subMenuWrapper').contains(e.target)){
@@ -3246,10 +3298,7 @@
                     enabled: count!==0,
                     click: ()=>{
                         // console.log('全部审核')
-                        sureEvent = dict.FREE_UNMODIFIED
-                        sureOperation = dict.CHECK
-                        changeSendSureMessage()
-                        sureShow = true
+                        openSureMessage(dict.FREE_UNMODIFIED, dict.CHECK)
                     }
                 })
                 menu.append(recoverMenuItem)
@@ -3277,11 +3326,14 @@
             let lineData_element = getParentNodeByParentClassName(e.target, 'lineData')
             // 使用右键获取当前data的id和sample的id，20.3.19弃用
             let right_id = parseInt(lineData_element.dataset.id)
+            let right_sample_id = parseInt(lineData_element.dataset.sampleid)
             let right_id_status = all_status_of_data_dict[params.type][right_id]
 
             let id = all_now_data_id[params.type]
             let sample_id = all_now_sample_id[params.type]
             let status = all_status_of_data_dict[params.type][id]
+
+            // console.log('handleContextMenu .downTable', lineData_element, right_id, right_sample_id)
 
             // 多选和非多选状态，生成的右键菜单应该不同
             let menu = new remote.Menu
@@ -3304,6 +3356,13 @@
                     }
                 })
                 menu.append(add_data_menuItem)
+
+                let change_sample_type_menuItem = new remote.MenuItem({
+                    label: '更换样本类型',
+                    enabled: right_sample_id === sample_id,
+                    submenu: __getSampleTypeSubMenu(right_sample_id)
+                })
+                menu.append(change_sample_type_menuItem)
             }
 
             // B) 只有 需要编辑的页面 对应不同 “审核工作状态” 特有按钮
@@ -3319,10 +3378,7 @@
                             label: '单项复制',
                             enabled: id===right_id && status===dict.FREE ,
                             click: ()=>{
-                                sureEvent = dict.DATA
-                                sureOperation = dict.COPY
-                                changeSendSureMessage()
-                                sureShow = true
+                                openSureMessage(dict.DATA, dict.COPY)
                             }
                         })
                         menu.append(single_copy_MenuItem)
@@ -3411,10 +3467,7 @@
                             label: `取消审核(共${num_cancelMulAff}条)`,
                             enabled: num_cancelMulAff>0,
                             click: ()=>{
-                                sureEvent = dict.MULTIPLE_AFFIRM
-                                sureOperation = dict.CANCEL
-                                changeSendSureMessage()
-                                sureShow = true
+                                openSureMessage(dict.MULTIPLE_AFFIRM, dict.CANCEL)
                             }
                         })
                         menu.append(cancel_mulAff_affirm_MenuItem)
