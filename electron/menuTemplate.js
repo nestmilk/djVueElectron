@@ -80,15 +80,26 @@ let template = [
         role: 'help',
         submenu: [
             {
-                label: '显示行号',
-                type: 'checkbox',
-                checked: settingsStore.get('ifShowLineNum'),
-                click: () => {
-                    settingsStore.set('ifShowLineNum', !settingsStore.get('ifShowLineNum'))
-
-                    ipcMain.emit('set-ifShowLineNum-toggle')
-
-                }
+                label: '页面显示',
+                submenu: [
+                    {
+                        label: '显示行号',
+                        type: 'checkbox',
+                        checked: settingsStore.get('ifShowLineNum'),
+                        click: () => {
+                            settingsStore.set('ifShowLineNum', !settingsStore.get('ifShowLineNum'))
+                            ipcMain.emit('set-ifShowLineNum-toggle')
+                        }
+                    }, {
+                        label: '显示样本信息',
+                        type: 'checkbox',
+                        checked: settingsStore.get('ifShowSampleInfo'),
+                        click: () => {
+                            settingsStore.set('ifShowSampleInfo', !settingsStore.get('ifShowSampleInfo'))
+                            ipcMain.emit('set-ifShowSampleInfo-toggle')
+                        }
+                    }
+                ]
             }, {
                 label: '打开Ensembl',
                 click: () => {

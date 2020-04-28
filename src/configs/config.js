@@ -1210,15 +1210,8 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
-            },  {
-                title: "immune",
-                translate: "靶向药",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
             }, {
-                title: "drugs",
+                title: "immune",
                 translate: "免疫相关",
                 type: "text",
                 modify: false,
@@ -2173,18 +2166,22 @@ export const sampleTypeConfig = [
     {
         value: 'sample',
         translate: '实验样本',
-        icon: 'icon-lab'
+        icon: 'icon-lab',
+        done: false,
     }, {
         value: 'positive',
         translate: '阳性对照',
-        icon: 'icon-plus'
+        icon: 'icon-plus',
+        done: true,
     }, {
         value: 'negative',
         translate: '阴性对照',
-        icon: 'icon-minus'
+        icon: 'icon-minus',
+        done: true,
     }, {
         value: 'test',
         translate: '测试对照',
-        icon: 'icon-tumblr'
+        icon: 'icon-tumblr',
+        done: true,
     }
 ]

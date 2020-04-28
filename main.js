@@ -168,6 +168,10 @@ app.on('ready', ()=>{
         mainWindow.webContents.send('toggle-line-num')
     })
 
+    ipcMain.on('set-ifShowSampleInfo-toggle', ()=>{
+        mainWindow.webContents.send('toggle-sample-info')
+    })
+
     ipcMain.on('open-single-excel', async ()=> {
         dialog.showOpenDialog({
             properties: ['openFile'],

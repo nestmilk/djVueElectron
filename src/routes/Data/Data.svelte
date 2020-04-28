@@ -638,7 +638,7 @@
                                                                     page_id_availableEdit_dict[line_data.id]?'show':''
                                                                 }
                                                             "
-                                                         on:click={()=>recover_values_InNowPageDataDict([line_data.id],[field])}
+                                                         on:click={()=>recover_nowValue_byIDs_fields([line_data.id],[field])}
                                                     ></div>
                                                 </td>
                                             {:else}
@@ -656,7 +656,8 @@
                                                                 {field===dict.SAMPLESN?dict.SAMPLESN:''}
                                                                 "
                                                     >
-                                                        {#if field===dict.SAMPLESN}
+                                                        {#if (params.type===dict.SAMPLEINFOINPANAL && field===dict.SAMPLESN) ||
+                                                                (field===dict.SAMPLESN && openSampleInfo)}
                                                             <div class="iconWrapper">
                                                                 <div class="icon
                                                                             {all_nowValue_of_data_dict[params.type][line_data.id]?
@@ -918,12 +919,121 @@
         loadingShow = false
     }
 
+    function __change_sampleType(sample_id, type){
+        let sampleSn = __get_sampleSn_bySampleId_inSampleList(sample_id)
+        // 1) 修改sample_list中样本类型
+        let sample = sample_list.find(sample=>sample[dict.ID]===sample_id)
+        sample[dict.TYPE] = type
+        // 2) 修改sample_dict中样本类型
+        sample_dict[sampleSn][dict.TYPE] = type
+    }
+
+    function __recover_nowValue_afterSetPreValue__Done(sheet, id ,done){
+        all_preValue_of_data_dict[sheet][id][dict.DONE] = done
+        recover_nowValue_byIDs_fields([id], [...all_modifyTitle_list_dict[params.type], dict.DELETE, dict.DONE], true, sheet)
+    }
+    function __handle_localData_afterChangeSampleType(goal_done, sheet, id, sample_id){
+        let status = all_status_of_data_dict[sheet][id]
+        // 1) 修改status
+        let goal_status = goal_done?dict.DONE:dict.FREE
+        all_status_of_data_dict[sheet][id] = goal_status
+
+        // 2) 修改nowValue(修改preValue: done),
+        __recover_nowValue_afterSetPreValue__Done(sheet, id ,goal_done)
+
+        //3) 移动count改value
+        if(goal_done){
+            // 目的状态为Done， 本身Done的不用修改
+            switch (status){
+                case dict.FREE:
+                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA ,sheet)
+                    break
+                case dict.CHECKED: case dict.EDITED: case dict.DELETED:
+                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.S_ADATA ,sheet)
+                    break
+                default:
+                    break
+            }
+        }else{
+            // 目的状态为Free，本身Free的不用改，
+            switch (status) {
+                case dict.DONE:
+                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA ,sheet)
+                    break
+                case dict.CHECKED: case dict.EDITED: case dict.DELETED:
+                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA ,sheet)
+                    break
+                default:
+                    break
+            }
+
+            // 4）删除对应的日志
+            __delete_oneData_params_logRelated(sheet, id)
+        }
+    }
     async function __handleChangeSampleType(){
-        let {sample_id, sampleSn, type} = sureData
-        console.log('__handleChangeSampleType', sample_id, sampleSn, type)
+        loadingShow = true
 
-        
+        let {sample_id, panal_id, sampleSn, type} = sureData
+        console.log('__handleChangeSampleType', sample_id, panal_id, sampleSn, type)
 
+        let form = new FormData()
+        form.append('sample_id', sample_id)
+        form.append('panal_id', panal_id)
+        form.append('type', type)
+        form.append('token', userInfo.getToken())
+
+        let data = null
+        await api.changeSampleType(form).then(response=>{
+            console.log("__handleChangeSampleType", response.data.data)
+            // data为sheet页中修改为goal_done的数据
+            data = response.data.data
+            // 1) 修改样本类型
+            __change_sampleType(sample_id, type)
+        }).catch(error=>{
+            console.log("__handleChangeSampleType", error)
+            errors = error
+        })
+
+        if(data){
+            let goal_done = sampleTypeConfigDict[type][dict.DONE]
+            // data为sheet页中修改为goal_done的数据
+            for (let sheet in data){
+                let sheet_data = data[sheet]
+
+                // 收集更新数据中存在，而本地存储中不存在id
+                let ids_notLoaded_inSheetData = []
+                // a）处理修改返回的数据
+                for(let id in sheet_data){
+                    let data = sheet_data[id]
+                    if(!all_status_of_data_dict[sheet].hasOwnProperty(id)){
+                        ids_notLoaded_inSheetData.push(id)
+                        // 没有数据强制注入status,nowValue,preValue
+                        __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([data], sheet, true)
+                        if(goal_done){
+                            // 原本注入时候肯定为free， 现在要冲free移动到done
+                            __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA ,sheet)
+                        }else{
+                            // 原本注入时候肯定为free， 现在要冲free移动到done
+                            __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA ,sheet)
+                        }
+                    }
+                }
+
+                // a）本地已经缓存的数据
+                for (let id in all_status_of_data_dict[sheet]){
+                    let __sampleId = all_preValue_of_data_dict[sheet][id][dict.SAMPLEID]
+                    if(__sampleId===sample_id && !ids_notLoaded_inSheetData.hasOwnProperty(id)){
+                        __handle_localData_afterChangeSampleType(goal_done, sheet, id, sample_id)
+                    }
+                }
+            }
+        }
+
+        // 更新smpleInfoInPanal页
+        await __getPageData()
+
+        loadingShow = false
     }
 
     async function __affirmCheck_selectedSampleIds_beFreeandUnmodified_data(){
@@ -1005,6 +1115,8 @@
 
         loadingShow = false
     }
+
+
     let sureEvent
     let sureOperation
     let sureData = {}
@@ -1058,7 +1170,7 @@
                 switch (sureOperation) {
                     case dict.CANCEL:
                         if(reply){
-                            recover_values_InNowPageDataDict(all_selected_dataIds_dict[params.type], [...all_modifyTitle_list_dict[params.type], dict.DELETE])
+                            recover_nowValue_byIDs_fields(all_selected_dataIds_dict[params.type], [...all_modifyTitle_list_dict[params.type], dict.DELETE])
                             // 全面懒更新可否选择
                             __update_allIds_availSelect_inPageIdAvailSelectDict()
                             // 清空all_selected_dataIds_dict
@@ -1335,8 +1447,8 @@
 
         return ids
     }
-    // 按单个id的单个log数据，更新all_previous_logs_dict
-    function __update_oneId_byLogs_inAllPreviousLogListDict(id, logs){
+    // 按单个id的单个log数据，更新all_previous_log_list_dict
+    function __update_ByOneIdandManyLogs_inAllPreviousLogListDict(id, logs){
         // console.log('__update_oneId_byLogs_inAllPreviousLogListDict id logs', id, logs)
         //先清空数据id对应的previousLogs列表
         all_previousLog_list_dict[params.type][id] = []
@@ -1367,7 +1479,7 @@
     function __update_previousLogs_byLoadedLogsandIds(id_list, logs){
         let absolute_related_ids = []
         id_list.forEach(id=>{
-            let related_ids = __update_oneId_byLogs_inAllPreviousLogListDict(id, logs)
+            let related_ids = __update_ByOneIdandManyLogs_inAllPreviousLogListDict(id, logs)
             related_ids.forEach(related_id=>{
                 if (absolute_related_ids.indexOf(related_id)===-1 &&
                     id_list.indexOf(related_id)===-1){
@@ -1379,7 +1491,7 @@
         // console.log('__update_previousLogs_byLoadedLogsandIds absolute_related_ids', absolute_related_ids)
 
         absolute_related_ids.forEach(id=>{
-            __update_oneId_byLogs_inAllPreviousLogListDict(id, logs)
+            __update_ByOneIdandManyLogs_inAllPreviousLogListDict(id, logs)
         })
 
     }
@@ -1640,17 +1752,21 @@
 
 
     // 修改all_nowValue_of_data_dict中的值
-    function recover_values_InNowPageDataDict(id_list, field_list=[]){
-        // console.log('recoverValuesInNowPageDataDict', id_list, field_list, all_status_of_data_dict[params.type])
-        let recover_field_list = all_modifyTitle_list_dict[params.type]
-        if (field_list.length > 0) {
+    function recover_nowValue_byIDs_fields(id_list, field_list=[], force=false, sheet=null){
+        // console.log('recoverValuesInNowPageDataDict', id_list, field_list)
+        let default_sheet = sheet?sheet:params.type
+
+        let recover_field_list = all_modifyTitle_list_dict[default_sheet]
+        if (field_list && field_list.length > 0) {
             recover_field_list = field_list
         }
+
+
         id_list.forEach(id=>{
             // 判断数据条目是否为free状态,free才能修改
-            if (all_status_of_data_dict[params.type][id]===dict.FREE) {
+            if (all_status_of_data_dict[default_sheet][id]===dict.FREE || force) {
                 recover_field_list.forEach(field=>{
-                    all_nowValue_of_data_dict[params.type][id][field] = all_preValue_of_data_dict[params.type][id][field]
+                    all_nowValue_of_data_dict[default_sheet][id][field] = all_preValue_of_data_dict[default_sheet][id][field]
                 })
             }
         })
@@ -1662,7 +1778,7 @@
                 let pre_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
                 all_nowValue_of_data_dict[params.type][id][dict.DELETE] = !pre_nowValue
                 // 同时需要将其余已修改的项恢复
-                recover_values_InNowPageDataDict([id])
+                recover_nowValue_byIDs_fields([id])
             }else{
                 // 操作前先将delete置换为false
                 all_nowValue_of_data_dict[params.type][id][dict.DELETE] = false
@@ -3252,25 +3368,33 @@
         loadingShow = false
     }
 
+    function __get_sampleSn_bySampleId_inSampleList(sample_id) {
+        let sample = sample_list.find(item=>item.id===sample_id)
+        return sample? sample[dict.SAMPLESN] : null
+    }
     function __getSampleTypeSubMenu(sample_id) {
         // console.log("__getSampleTypeSubMenu", sample_list, sample_id)
-        let sampleSn = sample_list.find(item=>item.id===sample_id)[dict.SAMPLESN]
+        let sampleSn = __get_sampleSn_bySampleId_inSampleList(sample_id)
         return sampleTypeConfig.map(item=>{
             let type = item[dict.VALUE]
             let name = item[dict.TRANSLATE]
+            let sample_type = sample_dict[sampleSn][dict.TYPE]
             // console.log("__getSampleTypeSubMenu", type, sampleSn,  sample_dict)
 
             return {
                 label: name,
                 type: 'checkbox',
-                checked: type === sample_dict[sampleSn][dict.TYPE],
+                checked: type === sample_type,
                 click: ()=>{
-                    console.log("__getSampleTypeSubMenu click")
-                    openSureMessage(dict.SAMPLE_TYPE, dict.CHANGE, {
-                        sample_id,
-                        sampleSn,
-                        type
-                    })
+                    // console.log("__getSampleTypeSubMenu click")
+                    if(type!==sample_type){
+                        openSureMessage(dict.SAMPLE_TYPE, dict.CHANGE, {
+                            sample_id,
+                            panal_id: params.panalId,
+                            sampleSn,
+                            type
+                        })
+                    }
                 }
             }
         })
@@ -3399,7 +3523,7 @@
                                     page_id_availableEdit_dict[id] &&
                                     modified__sinCancelorAffirm,
                             click: ()=>{
-                                recover_values_InNowPageDataDict([id], [...all_modifyTitle_list_dict[params.type], dict.DELETE])
+                                recover_nowValue_byIDs_fields([id], [...all_modifyTitle_list_dict[params.type], dict.DELETE])
                             }
                         })
                         menu.append(single_recover_MenuItem)
@@ -3831,6 +3955,33 @@
 
     // 是否打开行数参数
     let openLineNum = settingsStore.get("ifShowLineNum")
+    // 是否打开样本信息图标，目前为sample type
+    let openSampleInfo = settingsStore.get("ifShowSampleInfo")
+
+    // 删除某条记录的1. params, 2. log_id，3. 日志详情中的ids剔除或整个删除
+    function __delete_oneData_params_logRelated(sheet, id){
+        // console.log("__delete_oneData_params_logRelated all_submit_logs_dict[sheet] logs_together_dict", all_submit_logs_dict[sheet], logs_together_dict)
+        if (all_submit_logs_dict[sheet].hasOwnProperty(id)){
+            let log_id = all_submit_logs_dict[sheet][id]
+            //1)判断日志是否有详情, 修改ids 或 删除日志详情
+            if(logs_together_dict.hasOwnProperty(log_id)){
+                let log_detail = logs_together_dict[log_id]
+                // console.log("__delete_oneData_params_logRelated log_id, log_detail", log_id, log_detail)
+                let ids = log_detail[dict.IDS]
+                // 判断是否在组内, 即是否还有其它数据
+                if (ids.length > 1) {
+                    logs_together_dict[log_id][dict.IDS] = removeFromUniqueArray(ids, id)
+                }else{
+                    delete logs_together_dict[log_id]
+                }
+            }
+
+            // 2）删除数据对应的log_id
+            delete all_submit_logs_dict[sheet][id]
+            // 3）删除数据对应的params
+            delete all_submit_params_dict[sheet][id]
+        }
+    }
 
     // 追加数据相关参数
     let addDataShow = false
@@ -3979,24 +4130,9 @@
                     if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status)!==-1){
                         __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA, sheet)
                     }
-
                     // 判断是否有日志
-                    if (all_submit_logs_dict[sheet].hasOwnProperty(id)){
-                        // 如果有日志
-                        let log_id = all_submit_logs_dict[sheet][id]
-                        let log_detail = logs_together_dict[log_id]
-                        let ids = log_detail[dict.IDS]
-                        // 1）判断是否在组内, 即是否还有其它数据, 修改或删除日志详情
-                        if (ids.length > 1) {
-                            logs_together_dict[log_id][dict.IDS] = removeFromUniqueArray(ids, id)
-                        }else{
-                            delete logs_together_dict[log_id]
-                        }
-                        // 2）删除数据对应的log_id
-                        delete all_submit_logs_dict[sheet][id]
-                        // 3）删除数据对应的params
-                        delete all_submit_params_dict[sheet][id]
-                    }
+                    __delete_oneData_params_logRelated(sheet, id)
+
                 }
 
                 // 直接强制利用数据注入status, nowValue, preValue
@@ -4090,6 +4226,9 @@
         ipcRenderer.on('toggle-line-num', ()=>{
             openLineNum = !openLineNum
         })
+        ipcRenderer.on('toggle-sample-info', ()=>{
+            openSampleInfo = !openSampleInfo
+        })
         ipcRenderer.on('load-single-excel', (event, filePath)=>{
             // console.log('<=== onmount load-single-excel', filePath)
             __handleLoadAddedData(filePath)
@@ -4171,10 +4310,10 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
-        // console.log(all_status_of_data_dict)
-        // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
-        // console.log(all_submit_params_dict)
-        // console.log(all_submit_logs_dict, logs_together_dict)
+        console.log(all_status_of_data_dict)
+        console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        console.log(all_submit_params_dict)
+        console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
@@ -4187,7 +4326,7 @@
         // console.log(field_needCheck_inSampleInfoinPanal)
         // console.log(sheet_needAllCheck_list)
         // console.log(submenu_group_list, submenu_total_page, submenu_page)
-        console.log(sample_list)
+        // console.log(sample_list)
     }
 
 </script>
