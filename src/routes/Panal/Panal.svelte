@@ -38,7 +38,7 @@
                                                     {/if}
                                                     <td class="sheet">{sheet.name}</td>
                                                     <td class="lines">{file[dict.SHEETDICT][sheet.name].length===0?
-                                                        0:file[dict.SHEETDICT][sheet.name].length - up_sheet_name_dict[sheet.name][dict.SKIP]}</td>
+                                                        0:file[dict.SHEETDICT][sheet.name].length - upSheet_name_dict[sheet.name][dict.SKIP]}</td>
                                                     <td class="select">
                                                         <button class="{sheet.status?'icon-checkbox-checked':'icon-checkbox-unchecked'}"
                                                             on:click={()=>handleSelectSheet(file_index, sheet_index)}></button>
@@ -58,11 +58,11 @@
                                             <th class="sheet">sheet页名</th>
                                             <th class="select">选择</th>
                                         </tr>
-                                        {#each Object.keys(up_sheet_title_template_dict) as sheet_value}
-                                            {#each up_sheet_title_template_dict[sheet_value] as item, index}
+                                        {#each Object.keys(upSheet_titleTemplate_dict) as sheet_value}
+                                            {#each upSheet_titleTemplate_dict[sheet_value] as item, index}
                                                 <tr>
                                                     {#if index === 0}
-                                                        <td class="templateName" rowspan="{up_sheet_title_template_dict[sheet_value].length}">{sheet_value}</td>
+                                                        <td class="templateName" rowspan="{upSheet_titleTemplate_dict[sheet_value].length}">{sheet_value}</td>
                                                     {/if}
                                                     <td class="excel">{item.excel_name}</td>
                                                     <td class="sheet">{item.sheet_name}</td>
@@ -228,7 +228,7 @@
     import {push} from 'svelte-spa-router'
     import js2excel from 'js2excel'
 
-    import {up_sheet_name_dict} from '../../configs/config'
+    import {upSheet_name_dict} from '../../configs/config'
 
     import Header from '../../components/Header/Header.svelte'
     import Footer from '../../components/Footer/Footer.svelte'
@@ -304,14 +304,14 @@
     //     HRR: [],
     //     MLPA: []
     // }
-    let up_sheet_title_template_dict =  Object.keys(up_sheet_name_dict).reduce((result, sheet_name)=>{
-        let sheet_name_value = up_sheet_name_dict[sheet_name][dict.VALUE]
+    let upSheet_titleTemplate_dict =  Object.keys(upSheet_name_dict).reduce((result, sheet_name)=>{
+        let sheet_name_value = upSheet_name_dict[sheet_name][dict.VALUE]
         if(!result.hasOwnProperty(sheet_name_value)){
             result[sheet_name_value] = []
         }
         return result
     },{})
-    let up_sheet_title_template_dict_ori = JSON.parse(JSON.stringify(up_sheet_title_template_dict))
+    let up_sheet_title_template_dict_ori = JSON.parse(JSON.stringify(upSheet_titleTemplate_dict))
 
     let panal_list = []
     let sample_list = []
@@ -487,7 +487,7 @@
         // console.log(panal_list)
         // console.log(qc_list)
         // console.log(sample_list, sample_dict)
-        console.log(up_sheet_title_template_dict)
+        console.log(upSheet_titleTemplate_dict)
     }
 
     async function handlePanalFilter(field, selectedStatus) {
@@ -673,7 +673,7 @@
         // 3）筛选过的selected_file_list 置空
         selected_file_list = []
         // 4）up_sheet_value_dict重置
-        up_sheet_title_template_dict = JSON.parse(JSON.stringify(up_sheet_title_template_dict_ori))
+        upSheet_titleTemplate_dict = JSON.parse(JSON.stringify(up_sheet_title_template_dict_ori))
     }
     // 文件替换时候
     function load() {
@@ -743,20 +743,20 @@
 
                 // console.log(sheet_name_list)
                 // excel中真实存在的上传列表名
-                let up_sheet_name_list = []
+                let upSheet_name_list = []
                 for (let sheet_name of sheet_name_list) {
                     // 在全局上传字典up_sheet_name_dict中能找到，
                     // 在局部上传列表up_sheet_name_list中尚不存在
-                    if (up_sheet_name_dict.hasOwnProperty(sheet_name) &&
-                            up_sheet_name_list.indexOf(sheet_name) === -1) {
-                        up_sheet_name_list.push(sheet_name)
+                    if (upSheet_name_dict.hasOwnProperty(sheet_name) &&
+                            upSheet_name_list.indexOf(sheet_name) === -1) {
+                        upSheet_name_list.push(sheet_name)
                     }
                 }
 
                 // 如果 局部上传列表up_sheet_name_list的长度不等于0，则包含
-                if (up_sheet_name_list.length !== 0) {
+                if (upSheet_name_list.length !== 0) {
                     // sheet_name_list改为file的sheet_name_dict
-                    for (let name of up_sheet_name_list){
+                    for (let name of upSheet_name_list){
                         // let sheet_lines = file[dict.SHEETDICT][name].length===0? 0:file[dict.SHEETDICT][name].length - up_sheet_name_dict[name][dict.SKIP]
                         // let status = sheet_lines >0 ? true: false
 
@@ -784,17 +784,17 @@
                     // console.log('$: if ', num)
                     if (num===0) continue
 
-                    let value = up_sheet_name_dict[sheet_name[dict.NAME]][dict.VALUE]
-                    if (up_sheet_title_template_dict[value]) {
+                    let value = upSheet_name_dict[sheet_name[dict.NAME]][dict.VALUE]
+                    if (upSheet_titleTemplate_dict[value]) {
                         // console.log('$: if', value)
                         // 第一项默认选中
-                        let status = up_sheet_title_template_dict[value].length===0?true:false
+                        let status = upSheet_titleTemplate_dict[value].length===0?true:false
                         let item = {
                             excel_name: file[dict.NAME],
                             sheet_name: sheet_name[dict.NAME],
                             status: status
                         }
-                        up_sheet_title_template_dict[value].push(item)
+                        upSheet_titleTemplate_dict[value].push(item)
                     }
                 }
             }
@@ -850,9 +850,9 @@
             file_dict[file[dict.NAME]] = file[dict.FILE]
         }
         let template_dict = {}
-        console.log('upload up_sheet_title_template_dict', up_sheet_title_template_dict)
-        for (let type in up_sheet_title_template_dict){
-            for (let item of up_sheet_title_template_dict[type]){
+        console.log('upload up_sheet_title_template_dict', upSheet_titleTemplate_dict)
+        for (let type in upSheet_titleTemplate_dict){
+            for (let item of upSheet_titleTemplate_dict[type]){
                 if (item.status){
                     template_dict[type] = {}
                     template_dict[type] = {excel: item.excel_name, sheet: item.sheet_name}
@@ -900,9 +900,9 @@
     }
     // 选择sheet作为模板
     function handleSelectTemplate(sheet_value, item_index){
-        if (up_sheet_title_template_dict[sheet_value][item_index] === true) return
+        if (upSheet_titleTemplate_dict[sheet_value][item_index] === true) return
 
-        up_sheet_title_template_dict[sheet_value].forEach((item, index)=>{
+        upSheet_titleTemplate_dict[sheet_value].forEach((item, index)=>{
             // console.log(item, index)
             if (item_index===index){
                 item[dict.STATUS] = true
@@ -911,7 +911,7 @@
             }
         })
 
-        up_sheet_title_template_dict = up_sheet_title_template_dict
+        upSheet_titleTemplate_dict = upSheet_titleTemplate_dict
         // console.log(up_sheet_value_dict)
     }
 

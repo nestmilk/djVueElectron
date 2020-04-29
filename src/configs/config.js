@@ -2139,7 +2139,7 @@ export const idsGroupSelections = [
     },
 ]
 
-export const up_sheet_name_dict = {
+export const upSheet_name_dict = {
     target: {value: "target", skip: 1},
     靶向: {value: "target", skip: 1},
     hereditary: {value: "hereditary", skip: 1},

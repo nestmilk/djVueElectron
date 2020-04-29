@@ -6,7 +6,12 @@ export const removeFromUniqueArray = (list, item) => {
     // slice （start， end) 不包括end
     let copied_list = JSON.parse(JSON.stringify(list))
     let i = copied_list.indexOf(item)
-    return [].concat(copied_list.slice(0,i), copied_list.slice(i+1))
+    if (i === -1){
+        return copied_list
+    }else{
+        return [].concat(copied_list.slice(0,i), copied_list.slice(i+1))
+    }
+
 }
 
 

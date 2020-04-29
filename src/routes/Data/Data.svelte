@@ -768,7 +768,7 @@
         common_subFilter_selections_dict,
         affirmSelectionConfig,
         idsGroupSelections,
-        up_sheet_name_dict,
+        upSheet_name_dict,
         sampleTypeConfig
     } from '../../configs/config'
     import {dict_translate} from '../../utils/dict'
@@ -930,7 +930,7 @@
 
     function __recover_nowValue_afterSetPreValue__Done(sheet, id ,done){
         all_preValue_of_data_dict[sheet][id][dict.DONE] = done
-        recover_nowValue_byIDs_fields([id], [...all_modifyTitle_list_dict[params.type], dict.DELETE, dict.DONE], true, sheet)
+        recover_nowValue_byIDs_fields([id], [...all_modifyTitle_list_dict[sheet], dict.DELETE, dict.DONE], true, sheet)
     }
     function __handle_localData_afterChangeSampleType(goal_done, sheet, id, sample_id){
         let status = all_status_of_data_dict[sheet][id]
@@ -966,22 +966,24 @@
                 default:
                     break
             }
-
-            // 4）删除对应的日志
-            __delete_oneData_params_logRelated(sheet, id)
         }
+
+        // 4）删除对应的日志
+        __delete_oneData_params_logRelated(sheet, id)
     }
     async function __handleChangeSampleType(){
         loadingShow = true
 
         let {sample_id, panal_id, sampleSn, type} = sureData
         console.log('__handleChangeSampleType', sample_id, panal_id, sampleSn, type)
+        let log_id = uuidv4()
 
         let form = new FormData()
         form.append('sample_id', sample_id)
         form.append('panal_id', panal_id)
         form.append('type', type)
         form.append('token', userInfo.getToken())
+        form.append('log_id', log_id)
 
         let data = null
         await api.changeSampleType(form).then(response=>{
@@ -1002,12 +1004,12 @@
                 let sheet_data = data[sheet]
 
                 // 收集更新数据中存在，而本地存储中不存在id
-                let ids_notLoaded_inSheetData = []
+                let ids_notLocalLoaded_butInSheetData = []
                 // a）处理修改返回的数据
                 for(let id in sheet_data){
                     let data = sheet_data[id]
                     if(!all_status_of_data_dict[sheet].hasOwnProperty(id)){
-                        ids_notLoaded_inSheetData.push(id)
+                        ids_notLocalLoaded_butInSheetData.push(id)
                         // 没有数据强制注入status,nowValue,preValue
                         __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([data], sheet, true)
                         if(goal_done){
@@ -1019,11 +1021,14 @@
                         }
                     }
                 }
+                // console.log("__handleChangeSampleType sheet ids_notLoaded_inSheetData", sheet, ids_notLocalLoaded_butInSheetData)
 
                 // a）本地已经缓存的数据
                 for (let id in all_status_of_data_dict[sheet]){
                     let __sampleId = all_preValue_of_data_dict[sheet][id][dict.SAMPLEID]
-                    if(__sampleId===sample_id && !ids_notLoaded_inSheetData.hasOwnProperty(id)){
+                    if(__sampleId===sample_id &&
+                            !ids_notLocalLoaded_butInSheetData.hasOwnProperty(id)){
+                        // console.log("__handleChangeSampleType loaded_id", id)
                         __handle_localData_afterChangeSampleType(goal_done, sheet, id, sample_id)
                     }
                 }
@@ -1413,7 +1418,8 @@
     }, {})))
 
     // 根据一个id的，某个包含它相关的log，进行一次previousLog的列表推入实践
-    function __pushOnce_byOneIdandOneLog__inAllPreviousLogListDict(id, log){
+    // return： 此log下的所有data的id列表
+    function __pushOnce_inAllPreviousLogListDict_byOneIdandOneLog(id, log){
         let ids = []
         let log_details = {}
         for (let detail of log[dict.LOG_DETAILS]){
@@ -1448,7 +1454,7 @@
         return ids
     }
     // 按单个id的单个log数据，更新all_previous_log_list_dict
-    function __update_ByOneIdandManyLogs_inAllPreviousLogListDict(id, logs){
+    function __update_inAllPreviousLogListDict_byOneIdandManyLogs(id, logs){
         // console.log('__update_oneId_byLogs_inAllPreviousLogListDict id logs', id, logs)
         //先清空数据id对应的previousLogs列表
         all_previousLog_list_dict[params.type][id] = []
@@ -1464,7 +1470,8 @@
                 }
             }
             if (found) {
-                let ids = __pushOnce_byOneIdandOneLog__inAllPreviousLogListDict(id, log)
+                // ids为此log中所有涉及的data的id列表
+                let ids = __pushOnce_inAllPreviousLogListDict_byOneIdandOneLog(id, log)
                 ids.forEach(related_id=>{
                     if(related_ids.indexOf(related_id)===-1) {
                         related_ids.push(related_id)
@@ -1477,12 +1484,13 @@
     }
     // 根据ids获取所有相关logs，根据id_list列表，更新all_previousLog_list_dict
     function __update_previousLogs_byLoadedLogsandIds(id_list, logs){
+        // 收集id_list在logs中涉及的id列表，不包括id_list自身
         let absolute_related_ids = []
         id_list.forEach(id=>{
-            let related_ids = __update_ByOneIdandManyLogs_inAllPreviousLogListDict(id, logs)
+            let related_ids = __update_inAllPreviousLogListDict_byOneIdandManyLogs(id, logs)
             related_ids.forEach(related_id=>{
                 if (absolute_related_ids.indexOf(related_id)===-1 &&
-                    id_list.indexOf(related_id)===-1){
+                        id_list.indexOf(related_id)===-1){
                     absolute_related_ids.push(related_id)
                 }
             })
@@ -1491,7 +1499,7 @@
         // console.log('__update_previousLogs_byLoadedLogsandIds absolute_related_ids', absolute_related_ids)
 
         absolute_related_ids.forEach(id=>{
-            __update_ByOneIdandManyLogs_inAllPreviousLogListDict(id, logs)
+            __update_inAllPreviousLogListDict_byOneIdandManyLogs(id, logs)
         })
 
     }
@@ -1533,7 +1541,7 @@
 
         // 如果之前工作状态是检查过往日志记录，需要确定logEdits的subfilter坐标是不是0，如果不是需要切换回去0
         if (pre_affirm_status===dict.CHECK_SINSUB_LOGS &&
-            all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]!==0){
+                all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]!==0){
             __reset_indexes_inAllSubFilterIndexesDict_params_inAllSearchParamsDict([dict.LOGSEDIT])
 
             __set_page_inAllSearchParamsDict(1)
@@ -3959,8 +3967,10 @@
     let openSampleInfo = settingsStore.get("ifShowSampleInfo")
 
     // 删除某条记录的1. params, 2. log_id，3. 日志详情中的ids剔除或整个删除
-    function __delete_oneData_params_logRelated(sheet, id){
-        // console.log("__delete_oneData_params_logRelated all_submit_logs_dict[sheet] logs_together_dict", all_submit_logs_dict[sheet], logs_together_dict)
+    function __delete_oneData_params_logRelated(sheet, str_id){
+        let id = parseInt(str_id)
+        // console.log("__delete_oneData_params_logRelated all_submit_logs_dict[sheet] logs_together_dict sheet id", JSON.parse(JSON.stringify(all_submit_logs_dict[sheet])), JSON.parse(JSON.stringify(logs_together_dict)), sheet, id)
+
         if (all_submit_logs_dict[sheet].hasOwnProperty(id)){
             let log_id = all_submit_logs_dict[sheet][id]
             //1)判断日志是否有详情, 修改ids 或 删除日志详情
@@ -4172,15 +4182,15 @@
                 added_data_dict[dict.FILE] = file
                 // added_data_dict[dict.SHEET_DATA_DICT] = data
                 added_data_dict[dict.SHEET_INFO_LIST] = Object.keys(data).reduce((result, sheet_name)=>{
-                    if(up_sheet_name_dict.hasOwnProperty(sheet_name)){
+                    if(upSheet_name_dict.hasOwnProperty(sheet_name)){
                         // 有数据的勾选 status
                         // console.log(data[sheet_name], data[sheet_name].length, up_sheet_name_dict[sheet_name][dict.SKIP])
                         let data_length =  data[sheet_name].length
-                        let pure_data_length = data_length? data_length - up_sheet_name_dict[sheet_name][dict.SKIP] : 0
+                        let pure_data_length = data_length? data_length - upSheet_name_dict[sheet_name][dict.SKIP] : 0
                         let status_for_data_update = pure_data_length > 0
                         let hasTitles_inSheet = data_length!==0
 
-                        let sheet_name_value = up_sheet_name_dict[sheet_name][dict.VALUE]
+                        let sheet_name_value = upSheet_name_dict[sheet_name][dict.VALUE]
                         let template = panal_data[`${sheet_name_value.toLowerCase()}_template_fields`]
                         let hasTemplate_inDatabase = !!template
 
