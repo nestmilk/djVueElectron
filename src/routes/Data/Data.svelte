@@ -605,12 +605,20 @@
                                         {#if all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]}
                                             <!--区分处理一些特殊的field-->
                                             {#if all_titleListItem_dict[params.type][field][dict.CONNECT_IMMUNE]}
-                                                {#if all_preValue_of_data_dict[params.type][line_data.id]}
-                                                    <td class="">
-                                                        {#each genes_connectImmune_dict[field] as instance }
-                                                            <div>{instance[dict.ID]}</div>
-                                                        {/each}
-                                                    </td>
+                                                <!--显示免疫表中与target, fusion, CNA的关联-->
+                                                <td class="">
+                                                        {#if field === line_data[dict.SHEET]}
+                                                            {#if line_data[`${line_data[dict.SHEET]}s`].length > 0}
+                                                                {#each line_data[`${line_data[dict.SHEET]}s`] as instance}
+                                                                    <div>{instance[dict.ID]}</div>
+                                                                {/each}
+                                                            {:else}
+                                                                --
+                                                            {/if}
+                                                        {:else}
+                                                            --
+                                                        {/if}
+                                                </td>
                                             {:else}
                                                 <!--
                                                     1.首先该filed的config设定为可编辑modify
@@ -3172,6 +3180,7 @@
         }
         return result
     }, {})))
+    let sheets_connectImmune_list = Object.keys(genes_connectImmune_dict)
 
     // 加载初始化
     function __setSampleList_and_AllSampleRecordDict__allSpecificFilters(data){

@@ -244,7 +244,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "target",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids',],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames'],
         submenu_translate: '靶向',
         need_all_check: true,
         igv_control: true,
@@ -2233,3 +2233,4 @@ export const sampleTypeConfig = [
         done: true,
     }
 ]
+
