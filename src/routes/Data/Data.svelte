@@ -603,77 +603,85 @@
 
                                     {#each all_wholeTitle_list_dict[params.type] as field}
                                         {#if all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]}
-                                            <!--
-                                                1.首先该filed的config设定为可编辑modify
-                                                2. 该filed在当前页，人为操作设为availableEdit，以便操作
-                                                3. 或者被修改了，强制显示为input状态，呈现差异
-                                            -->
-                                            {#if all_titleListItem_dict[params.type][field][dict.MODIFY] &&
-                                                (
-                                                    page_id_availableEdit_dict[line_data.id] ||
-                                                    (all_nowValue_of_data_dict[params.type][line_data.id] && all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field])
-                                                )
-                                            }
-                                                <td class="{field} containInput
+                                            <!--区分处理一些特殊的field-->
+                                            {#if all_titleListItem_dict[params.type][field][dict.CONNECT_IMMUNE]}
+                                                {#if all_preValue_of_data_dict[params.type][line_data.id]}
+                                                    <td class="">
+                                                        {#each genes_connectImmune_dict[field] as instance }
+                                                            <div>{instance[dict.ID]}</div>
+                                                        {/each}
+                                                    </td>
+                                            {:else}
+                                                <!--
+                                                    1.首先该filed的config设定为可编辑modify
+                                                    2. 该filed在当前页，人为操作设为availableEdit，以便操作
+                                                    3. 或者被修改了，强制显示为input状态，呈现差异
+                                                -->
+                                                {#if all_titleListItem_dict[params.type][field][dict.MODIFY] &&
+                                                    (page_id_availableEdit_dict[line_data.id] ||
+                                                        (all_nowValue_of_data_dict[params.type][line_data.id] && all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]))
+                                                }
+                                                    <td class="{field} containInput
                                                         {all_nowValue_of_data_dict[params.type][line_data.id]?
                                                             (all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]?'unequal':''):''}
                                                       "
-                                                    title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
-                                                    on:mouseenter={()=>handleMutantTDMouseenter(field, line_data.id)}
-                                                    on:mouseleave={()=>handleMutantTDMouseleave(field, line_data.id)}
-                                                >
-                                                    <input class="dataInput" type={all_titleListItem_dict[params.type][field][dict.TYPE]}
-                                                           value="{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}"
-                                                           disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
-                                                                    page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
-                                                           on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data.id, field)}
-                                                           on:focus={(e)=>focusNowField(e, line_data.id, field)}
+                                                        title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
+                                                        on:mouseenter={()=>handleMutantTDMouseenter(field, line_data.id)}
+                                                        on:mouseleave={()=>handleMutantTDMouseleave(field, line_data.id)}
                                                     >
-                                                    <div class="upBesideInput icon-warning"></div>
-                                                    <!--__getPageData 此时获取到新的page_data 开始更新界面
-                                                        但是page_id_modifyField_mouseEnter_dicts还是旧的那页的，会找不到数据id-->
-                                                    <div class="downBesideInput icon-undo2
+                                                        <input class="dataInput" type={all_titleListItem_dict[params.type][field][dict.TYPE]}
+                                                               value="{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}"
+                                                               disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
+                                                                    page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
+                                                               on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data.id, field)}
+                                                               on:focus={(e)=>focusNowField(e, line_data.id, field)}
+                                                        >
+                                                        <div class="upBesideInput icon-warning"></div>
+                                                        <!--__getPageData 此时获取到新的page_data 开始更新界面
+                                                            但是page_id_modifyField_mouseEnter_dicts还是旧的那页的，会找不到数据id-->
+                                                        <div class="downBesideInput icon-undo2
                                                                 {page_id_modifyField_mouseEnter_dicts[line_data.id] &&
                                                                     page_id_modifyField_mouseEnter_dicts[line_data.id][field] &&
                                                                     page_id_availableEdit_dict[line_data.id]?'show':''
                                                                 }
                                                             "
-                                                         on:click={()=>recover_nowValue_byIDs_fields([line_data.id],[field])}
-                                                    ></div>
-                                                </td>
-                                            {:else}
-                                                <td class="{field} contentTD
+                                                             on:click={()=>recover_nowValue_byIDs_fields([line_data.id],[field])}
+                                                        ></div>
+                                                    </td>
+                                                {:else}
+                                                    <td class="{field} contentTD
                                                             {params.type===dict.SAMPLEINFOINPANAL && field.includes('SubmitCount') &&
                                                                 all_nowValue_of_data_dict[params.type][line_data.id] &&
                                                                 all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_nowValue_of_data_dict[params.type][line_data.id][field.replace('Submit', '')]?'unequal':''}
                                                             "
-                                                    title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
-                                                >
-                                                    <div class="inside {params.type===dict.TNB && field===dict.tmb &&
+                                                        title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
+                                                    >
+                                                        <div class="inside {params.type===dict.TNB && field===dict.tmb &&
                                                                     all_nowValue_of_data_dict[params.type][line_data.id] &&
                                                                     all_nowValue_of_data_dict[dict.TMB][all_nowValue_of_data_dict[params.type][line_data.id][field]] &&
                                                                     all_nowValue_of_data_dict[dict.TMB][all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.DELETE]?'tmbDelete':''}
                                                                 {field===dict.SAMPLESN?dict.SAMPLESN:''}
                                                                 "
-                                                    >
-                                                        {#if (params.type===dict.SAMPLEINFOINPANAL && field===dict.SAMPLESN) ||
-                                                                (field===dict.SAMPLESN && openSampleInfo)}
-                                                            <div class="iconWrapper">
-                                                                <div class="icon
+                                                        >
+                                                            {#if (params.type===dict.SAMPLEINFOINPANAL && field===dict.SAMPLESN) ||
+                                                            (field===dict.SAMPLESN && openSampleInfo)}
+                                                                <div class="iconWrapper">
+                                                                    <div class="icon
                                                                             {all_nowValue_of_data_dict[params.type][line_data.id]?
                                                                                 (sampleTypeConfigDict.hasOwnProperty(sample_dict[all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.TYPE])?
                                                                                     sampleTypeConfigDict[sample_dict[all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.TYPE]][dict.ICON]:''):''}
                                                                             "
-                                                                ></div>
-                                                            </div>
-                                                        {/if}
+                                                                    ></div>
+                                                                </div>
+                                                            {/if}
 
-                                                        {all_nowValue_of_data_dict[params.type][line_data.id]?
+                                                            {all_nowValue_of_data_dict[params.type][line_data.id]?
                                                             all_nowValue_of_data_dict[params.type][line_data.id][field]:''}
-                                                    </div>
-                                                </td>
-                                            {/if}
-                                        {/if}
+                                                        </div>
+                                                    </td>
+                                                {/if}<!--普通标题栏，区分编辑input还是普通div显示-->
+                                            {/if}<!--处理特殊标题栏-->
+                                        {/if}<!--处理当前标题栏是否显示-->
 
                                     {/each}
                                 </tr>
@@ -822,7 +830,7 @@
         NAME: 'name', FILE: 'file', SHEET_DATA_DICT: 'sheet_data_dict', SHEET_INFO_LIST: 'sheet_info_list',
         SKIP: 'skip', STATUS_FOR_DATA_UPDATE: "status_for_data_update", STATUS_FOR_TEMPLATE_UPDATE: "status_for_template_update",
         POSITIVE: 'positive', NEGATIVE: 'negative', TEST: 'test', ICON: 'icon',
-        SAMPLE_TYPE: "sample_type", CHANGE: "change",
+        SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune',
     }
     // 获取路径中的：值
     export let params = {}
@@ -3157,6 +3165,14 @@
         __handleUpdateIgvShow()
     }
 
+    let genes_connectImmune_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        let sheet = item[dict.SHEET]
+        if (item[dict.CONNECT_IMMUNE]){
+            result[sheet] = []
+        }
+        return result
+    }, {})))
+
     // 加载初始化
     function __setSampleList_and_AllSampleRecordDict__allSpecificFilters(data){
         //1） 更新sample_list
@@ -3220,6 +3236,12 @@
 
             subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
 
+        }
+
+        // 4) 加载与免疫相关的各个表的基因
+        for (let sheet in genes_connectImmune_dict){
+            let genes = data[`${sheet.toLowerCase()}_genes_inImmune`].split(';')
+            genes_connectImmune_dict[sheet] = genes
         }
 
         // 顺便更新所有的页面搜索参数初始化
@@ -4337,6 +4359,7 @@
         // console.log(sheet_needAllCheck_list)
         // console.log(submenu_group_list, submenu_total_page, submenu_page)
         // console.log(sample_list)
+        console.log(genes_connectImmune_dict)
     }
 
 </script>

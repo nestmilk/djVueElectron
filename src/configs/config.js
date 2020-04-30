@@ -249,6 +249,7 @@ export const sheetDisplayConfigList = [
         need_all_check: true,
         igv_control: true,
         need_copy: true,
+        connect_immune: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -377,6 +378,13 @@ export const sheetDisplayConfigList = [
                 translate: "位点解析",
                 type: "text",
                 modify: true,
+                defaultDisplay: true,
+                selectDisplay: true
+            }, {
+                title: "immuneId",
+                type: "text",
+                translate: "免疫ID",
+                modify: false,
                 defaultDisplay: true,
                 selectDisplay: true
             },
@@ -776,194 +784,12 @@ export const sheetDisplayConfigList = [
     },
 
     {
-        sheet: "immune",
-        ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids',],
-        submenu_translate: '免疫',
-        need_all_check: true,
-        need_copy: true,
-        reason_type: [
-            {
-                value: 'nothing',
-                content: '请选择'
-            }, {
-                value: 'TMB_related_modify',
-                content: 'TMB相关修改'
-            }, {
-                value: 'target_related_modify',
-                content: '靶向相关修改'
-            }, {
-                value: 'other',
-                content: '其它'
-            }
-        ],
-        title_list: [
-            {
-                title: "sampleSn",
-                translate: "sampleSn",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "_geneName",
-                translate: "基因名称",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "clinicalGuide",
-                translate: "检测意义",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "testResult",
-                translate: "检测结果",
-                type: "text",
-                modify: true,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "effect",
-                translate: "疗效预测",
-                type: "text",
-                modify: true,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "dataInfo",
-                translate: "结果说明",
-                type: "text",
-                modify: true,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "projectAbbr",
-                translate: "项目简称",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            },
-        ],
-    },
-
-    {
-        sheet: "TNB",
-        ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids',],
-        submenu_translate: 'TNB',
-        need_all_check: true,
-        reason_type: [
-            {
-                value: 'nothing',
-                content: '请选择'
-            }, {
-                value: 'TMB_related_modify',
-                content: 'TMB相关修改'
-            }, {
-                value: 'other',
-                content: '其它'
-            }
-        ],
-        title_list: [
-            {
-                title: "sampleSn",
-                translate: "样本编码*",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "r2",
-                translate: "基因*",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "locusName",
-                translate: "突变肽段",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r3",
-                translate: "Neoantigen 打分",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r4",
-                translate: "野生型肽段",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r5",
-                translate: "HLA分型",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r6",
-                translate: "新表位打分",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r7",
-                translate: "野生型表位打分",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r8",
-                translate: "突变频率",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "r9",
-                translate: "染色体编号",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "r10",
-                translate: "突变位置",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "tmb",
-                translate: "对应TMB的ID",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            },
-        ],
-    },
-
-    {
         sheet: "fusion",
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids'],
         submenu_translate: '融合',
         need_all_check: true,
+        connect_immune: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -1146,6 +972,13 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
+                title: "immuneId",
+                type: "text",
+                translate: "免疫ID",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: true
+            }, {
                 title: "researchStatus",
                 translate: "研究状态",
                 type: "text",
@@ -1162,6 +995,7 @@ export const sheetDisplayConfigList = [
         filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids'],
         submenu_translate: 'CNA',
         need_all_check: true,
+        connect_immune: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -1224,7 +1058,14 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: false
-            },{
+            }, {
+                title: "immuneId",
+                type: "text",
+                translate: "免疫ID",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: true
+            }, {
                 title: "chr",
                 translate: "染色体",
                 type: "text",
@@ -1260,6 +1101,213 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: false,
                 selectDisplay: true
             },
+        ],
+    },
+
+    {
+        sheet: "TNB",
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids',],
+        submenu_translate: 'TNB',
+        need_all_check: true,
+        reason_type: [
+            {
+                value: 'nothing',
+                content: '请选择'
+            }, {
+                value: 'TMB_related_modify',
+                content: 'TMB相关修改'
+            }, {
+                value: 'other',
+                content: '其它'
+            }
+        ],
+        title_list: [
+            {
+                title: "sampleSn",
+                translate: "样本编码*",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r2",
+                translate: "基因*",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "locusName",
+                translate: "突变肽段",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r3",
+                translate: "Neoantigen 打分",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r4",
+                translate: "野生型肽段",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r5",
+                translate: "HLA分型",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r6",
+                translate: "新表位打分",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r7",
+                translate: "野生型表位打分",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r8",
+                translate: "突变频率",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r9",
+                translate: "染色体编号",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r10",
+                translate: "突变位置",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "tmb",
+                translate: "对应TMB的ID",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            },
+        ],
+    },
+
+    {
+        sheet: "immune",
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids',],
+        submenu_translate: '免疫',
+        need_all_check: true,
+        need_copy: true,
+        reason_type: [
+            {
+                value: 'nothing',
+                content: '请选择'
+            }, {
+                value: 'TMB_related_modify',
+                content: 'TMB相关修改'
+            }, {
+                value: 'target_related_modify',
+                content: '靶向相关修改'
+            }, {
+                value: 'other',
+                content: '其它'
+            }
+        ],
+        title_list: [
+            {
+                title: "sampleSn",
+                translate: "sampleSn",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "_geneName",
+                translate: "基因名称",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "clinicalGuide",
+                translate: "检测意义",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "testResult",
+                translate: "检测结果",
+                type: "text",
+                modify: true,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "effect",
+                translate: "疗效预测",
+                type: "text",
+                modify: true,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "dataInfo",
+                translate: "结果说明",
+                type: "text",
+                modify: true,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "target",
+                translate: "靶向表IDs",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: true,
+                connect_immune: true,
+            },  {
+                title: "fusion",
+                translate: "融合表IDs",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: true,
+                connect_immune: true,
+            },  {
+                title: "CNA",
+                translate: "CNA表IDs",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: true,
+                connect_immune: true,
+            }, {
+                title: "projectAbbr",
+                translate: "项目简称",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }
         ],
     },
 
