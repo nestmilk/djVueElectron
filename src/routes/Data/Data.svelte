@@ -40,7 +40,7 @@
                         {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1 &&
                             singleAffirmSelectionShow
                         }
-                            <div class="AffrimeWrapper singleAffirmWrapper"
+                            <div class="AffrimWrapper singleAffirmWrapper"
                                  on:mouseleave={closeAffirmSelectionShow}
                             >
                                 <table>
@@ -73,7 +73,7 @@
                         {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1 &&
                             multipleAffirmSelectionShow
                         }
-                            <div class="AffrimeWrapper multipleAffirmWrapper"
+                            <div class="AffrimWrapper multipleAffirmWrapper"
                                  on:mouseleave={closeAffirmSelectionShow}
                             >
                                 <table>
@@ -180,7 +180,7 @@
 
             <div class="contentRight">
                 {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
-                    <div class="filterWrapper">
+                    <div class="filterWrapper" bind:this={filter_wrapper}>
                         <div class="doneWrapper">
                             <span>提交状态:</span>
                             <!--testValue也能触发$: if (pre_params_type !== params.type) 可能是params.type! 暂时先偷个巧-->
@@ -222,14 +222,25 @@
                                 {/each}
                             </select>
                         </div>
+
+                        <div class="geneNamesWrapper">
+                            <span>基因名:</span>
+                            <input
+                                bind:value="{query_genes}"
+                                placeholder="多个基因名空格分隔"
+                                on:keydown={handleGenesQueryKeydown}
+                            />
+                        </div>
+
                         <div class="idsWrapper">
                             <span>数据ID:</span>
-                            <input bind:value="{query_ids}"
-                                   bind:this={idsInput}
-                                   placeholder="请填写数据Id，多个id间空格分隔"
-                                   on:click={handleOpenIDsGroupSelect}
-                                   on:input={handleCloseIDsGroupSelect}
-                                   on:keydown={handleIdsQueryKeydown}
+                            <input
+                                bind:value="{query_ids}"
+                                bind:this={idsInput}
+                                placeholder="多个数据id间空格分隔"
+                                on:click={handleOpenIDsGroupSelect}
+                                on:input={handleCloseIDsGroupSelect}
+                                on:keydown={handleIdsQueryKeydown}
                             />
 
                             {#if idsGroupSelectShow}
@@ -239,13 +250,14 @@
                                     {/each}
                                 </div>
                             {/if}
-
-                            <button class="icon-undo2"
-                                    title="清空所有过滤条件"
-                                    on:click={handleClearQueryIDS}
-                            ></button>
                         </div>
 
+                        <div class="clearBnWrapper">
+                            <button class="icon-undo2"
+                                    title="清空所有过滤条件"
+                                    on:click={handleClear_queryIDS_queryGenes}
+                            ></button>
+                        </div>
                     </div>
                     <div class="editBigInputWrapper">
                         <span class="abstract">
@@ -604,20 +616,39 @@
                                     {#each all_wholeTitle_list_dict[params.type] as field}
                                         {#if all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]}
                                             <!--区分处理一些特殊的field-->
-                                            {#if all_titleListItem_dict[params.type][field][dict.CONNECT_IMMUNE]}
+                                            {#if all_titleListItem_dict[params.type][field][dict.IMMUNE_CONNECT]}
                                                 <!--显示免疫表中与target, fusion, CNA的关联-->
                                                 <td class="">
-                                                        {#if field === line_data[dict.SHEET]}
-                                                            {#if line_data[`${line_data[dict.SHEET]}s`].length > 0}
-                                                                {#each line_data[`${line_data[dict.SHEET]}s`] as instance}
-                                                                    <div>{instance[dict.ID]}</div>
-                                                                {/each}
-                                                            {:else}
-                                                                --
-                                                            {/if}
-                                                        {:else}
-                                                            --
-                                                        {/if}
+                                                    {#if line_data.hasOwnProperty(`${line_data[dict.SHEET]}s`)
+                                                        && line_data[`${line_data[dict.SHEET]}s`].length > 0}
+                                                        <table class="immuneConnectTable">
+                                                            {#each line_data[`${line_data[dict.SHEET]}s`] as instance}
+                                                                <tr title="{line_data[dict.SHEET]===dict.TARGET?instance[dict.HGVS]:''}"
+                                                                    on:click={(e)=>handle_changeSheet_findIdData(line_data[dict.SHEET], instance[dict.ID], e)}
+                                                                >
+                                                                    <td class="sheet">{line_data[dict.SHEET]}</td>
+                                                                    <td class="id">{instance[dict.ID]}</td>
+                                                                    <td class="delete icon-cross"
+                                                                        on:click={(e)=>handle_immuneConnecting_dataDelete(line_data[dict.SHEET], instance[dict.ID], e)}
+                                                                    ></td>
+                                                                </tr>
+                                                            {/each}
+                                                        </table>
+                                                    {:else}
+                                                        —
+                                                    {/if}
+                                                </td>
+                                            {:else if all_titleListItem_dict[params.type][field][dict.REDIRECT]}
+                                                <td>
+                                                    <div class="inside redirect"
+                                                         on:click={(e)=>handle_changeSheet_findIdData(
+                                                             all_titleListItem_dict[params.type][field][dict.REDIRECT],
+                                                             all_nowValue_of_data_dict[params.type][line_data.id][field],
+                                                             e)}
+                                                    >
+                                                        {all_nowValue_of_data_dict[params.type][line_data.id]?
+                                                            all_nowValue_of_data_dict[params.type][line_data.id][field]:''}
+                                                    </div>
                                                 </td>
                                             {:else}
                                                 <!--
@@ -664,15 +695,16 @@
                                                             "
                                                         title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
                                                     >
-                                                        <div class="inside {params.type===dict.TNB && field===dict.tmb &&
-                                                                    all_nowValue_of_data_dict[params.type][line_data.id] &&
-                                                                    all_nowValue_of_data_dict[dict.TMB][all_nowValue_of_data_dict[params.type][line_data.id][field]] &&
-                                                                    all_nowValue_of_data_dict[dict.TMB][all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.DELETE]?'tmbDelete':''}
-                                                                {field===dict.SAMPLESN?dict.SAMPLESN:''}
+                                                        <div class="inside
+                                                                    {params.type===dict.TNB && field===dict.tmb &&
+                                                                        all_nowValue_of_data_dict[params.type][line_data.id] &&
+                                                                        all_nowValue_of_data_dict[dict.TMB][all_nowValue_of_data_dict[params.type][line_data.id][field]] &&
+                                                                        all_nowValue_of_data_dict[dict.TMB][all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.DELETE]?'tmbDelete':''}
+                                                                    {field===dict.SAMPLESN?dict.SAMPLESN:''}
                                                                 "
                                                         >
                                                             {#if (params.type===dict.SAMPLEINFOINPANAL && field===dict.SAMPLESN) ||
-                                                            (field===dict.SAMPLESN && openSampleInfo)}
+                                                                (field===dict.SAMPLESN && openSampleInfo)}
                                                                 <div class="iconWrapper">
                                                                     <div class="icon
                                                                             {all_nowValue_of_data_dict[params.type][line_data.id]?
@@ -684,7 +716,7 @@
                                                             {/if}
 
                                                             {all_nowValue_of_data_dict[params.type][line_data.id]?
-                                                            all_nowValue_of_data_dict[params.type][line_data.id][field]:''}
+                                                                all_nowValue_of_data_dict[params.type][line_data.id][field]:''}
                                                         </div>
                                                     </td>
                                                 {/if}<!--普通标题栏，区分编辑input还是普通div显示-->
@@ -838,7 +870,8 @@
         NAME: 'name', FILE: 'file', SHEET_DATA_DICT: 'sheet_data_dict', SHEET_INFO_LIST: 'sheet_info_list',
         SKIP: 'skip', STATUS_FOR_DATA_UPDATE: "status_for_data_update", STATUS_FOR_TEMPLATE_UPDATE: "status_for_template_update",
         POSITIVE: 'positive', NEGATIVE: 'negative', TEST: 'test', ICON: 'icon',
-        SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune',
+        SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune', IMMUNE_CONNECT: "immune_connect",
+        GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect',
     }
     // 获取路径中的：值
     export let params = {}
@@ -1234,6 +1267,17 @@
                             await __handleChangeSampleType()
                         }
                         break
+                    default:
+                        break
+                }
+                break
+            case dict.IMMUNE_CONNECT:
+                switch (sureOperation){
+                    case dict.DELETE:
+                        if(reply){
+                            let {sheet, id} = sureData
+                            await __handle_delete_dataConnectImmune(sheet, id)
+                        }
                     default:
                         break
                 }
@@ -2435,12 +2479,13 @@
         }
         selected_sampleId_list = sampleIds
     }
+
     let doneFilter
     let deleteFilter
     let logsEditFilter
     let pre_params_type
     // submenu选择
-    async function handleSelectSubmenu(type){
+    async function handleSelectSubmenu(type, get_page_data=true){
         if (type===params.type) return
         // 只切换路由，数据没有自动刷新啊！！
         pre_params_type = params.type
@@ -2457,7 +2502,9 @@
         //todo 页面筛选select的更换done，delee，logsEdit, ids填写框内容 此处实际不对，页面还没更新，获取不到doneFilter等dom
         // console.log('yes',doneFilter, topScroll)
 
-        await __getPageData()
+        if (get_page_data){
+            await __getPageData()
+        }
     }
     // 1) 每页的filter的定制版subFilters的名字列表，因为三张mutant表的exonicfuncRefGene
     // 如果表是ifSimpleOrdering，需要将ordering的内容更正为['sample__id']
@@ -2651,11 +2698,14 @@
     function __set_param_ids_inAllSearchParamsDict(ids){
         all_search_params_dict[params.type][dict.IDS] = ids && ids.length>0?ids.join(','):null
     }
+    function __set_param_geneNames_inAllSearchParamsDict(genes){
+        all_search_params_dict[params.type][dict.GENENAMES] = genes && genes.length>0?genes.join(','):null
+    }
     // 重置页面搜索参数，如果给ids列表，就用ids列表更新搜索参数ids
     //"page_size", 没有改动！！！  "panalId",没有改动，"search",没有改动，
     //"sampleIds",使用全部样本， "page", 设为1  （"done", "logsEdit", 'ordering', "exonicfuncRefgene",）全部设为默认0号选项，
     // 'ids'，设为选定或null
-    function __reset_params_byIds_exceptPageSize_inAllSearchParamsDict(ids=null){
+    function __reset_params_byIds_exceptPageSize_inAllSearchParamsDict(ids=null, genes=null){
         // 重置所有特殊过滤的坐标, 以及params, 包括exonicfuncRefene，done，logEdits，ordering
         __reset_indexes_inAllSubFilterIndexesDict_params_inAllSearchParamsDict()
         // 重置sampleIds，全选所有样本，其中包含params
@@ -2664,7 +2714,31 @@
         __set_page_inAllSearchParamsDict(1)
         // 设置过滤ids，在params中
         __set_param_ids_inAllSearchParamsDict(ids)
+        // 设置过滤geneNames
+        __set_param_geneNames_inAllSearchParamsDict(genes)
     }
+
+    let query_genes = ''
+    async function handleGenesQueryKeydown(event){
+        if (event.which !== 13) return;
+        event.preventDefault();
+        let query_list = (query_genes.split(/[ ]+/)).map(item=>item.toUpperCase())
+        // console.log('handleGenesQueryKeydown', query_list)
+        let genes = query_list.reduce((result, query)=>{
+            if (query !== '' && result.indexOf(query) === -1){
+                result.push(query)
+            }
+            return result
+        }, [])
+        // console.log('handleGenesQueryKeydown', genes)
+        __reset_params_byIds_exceptPageSize_inAllSearchParamsDict(null, genes)
+        // 清空query_ids
+        query_ids = ''
+
+        await __getPageData()
+    }
+
+
     let query_ids = ''
     let idsInput
     let idsGroupSelectShow = false
@@ -2756,8 +2830,9 @@
         await __getPageData()
     }
 
-    async function handleClearQueryIDS(){
+    async function handleClear_queryIDS_queryGenes(){
         query_ids = ''
+        query_genes = ''
 
         __reset_params_byIds_exceptPageSize_inAllSearchParamsDict()
 
@@ -2810,7 +2885,7 @@
 
     // 整个表的sampleId的列表
     let sample_list = []
-    // key为sampleSn, value为sample_list中值
+    // key为sampleSn, value为sample实例字典
     let sample_dict = {}
 
     // 选中的样本id列表
@@ -3173,15 +3248,6 @@
         __handleUpdateIgvShow()
     }
 
-    let genes_connectImmune_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
-        let sheet = item[dict.SHEET]
-        if (item[dict.CONNECT_IMMUNE]){
-            result[sheet] = []
-        }
-        return result
-    }, {})))
-    let sheets_connectImmune_list = Object.keys(genes_connectImmune_dict)
-
     // 加载初始化
     function __setSampleList_and_AllSampleRecordDict__allSpecificFilters(data){
         //1） 更新sample_list
@@ -3247,11 +3313,6 @@
 
         }
 
-        // 4) 加载与免疫相关的各个表的基因
-        for (let sheet in genes_connectImmune_dict){
-            let genes = data[`${sheet.toLowerCase()}_genes_inImmune`].split(';')
-            genes_connectImmune_dict[sheet] = genes
-        }
 
         // 顺便更新所有的页面搜索参数初始化
         __set_all_specfic_Params_inAllSearchParamsDict()
@@ -3960,6 +4021,27 @@
         }
     }
 
+    function __update_relatedDom_size(){
+        // 1）更新页面选择组件的小组
+        __updateSubmenuGroups()
+        // 2) 更新过滤的高度
+        __updateFilterWrapperSize()
+    }
+
+    let filter_wrapper
+    function __updateFilterWrapperSize(){
+        if (!filter_wrapper) return
+        // 宽度计算
+        let min_width = 5+160*3+233*2+33+5
+        if (filter_wrapper.clientWidth > min_width){
+            filter_wrapper.style.height = '33px'
+            filter_wrapper.style.overflow = 'visible'
+        }else{
+            filter_wrapper.style.height = '50px'
+            filter_wrapper.style.overflow = 'scroll'
+        }
+    }
+
     let subMenuWrapper
     let submenu_group_list = [[]]
     let submenu_total_page = 1
@@ -4245,11 +4327,45 @@
         loadingShow = false
         addDataShow = true
     }
+
+    async function handle_changeSheet_findIdData(sheet, id, event){
+        event.stopPropagation()
+        // 更换页
+        await handleSelectSubmenu(sheet, false)
+        // 更换filter，设置id
+        __reset_params_byIds_exceptPageSize_inAllSearchParamsDict([id])
+        // 更新页面
+        await __getPageData()
+    }
+
+
+    async function __handle_delete_dataConnectImmune(sheet, id){
+        let form = new FormData()
+        form.append('sheet', sheet)
+        form.append('id', id)
+        form.append('token', userInfo.getToken())
+
+        await api.deleteDataConnectImmune(form).then(response=>{
+            console.log('__handle_delete_dataConnectImmune', response)
+        }).catch(error=>{
+            console.log('__handle_delete_dataConnectImmune', error)
+            errors = error
+        })
+    }
+
+    function handle_immuneConnecting_dataDelete(sheet, id, event){
+        event.stopPropagation()
+        openSureMessage(dict.IMMUNE_CONNECT, dict.DELETE, {
+            sheet,
+            id
+        })
+    }
+
     // let windowScrollTop
     onMount(async () => {
         loadingShow = true
-        __updateSubmenuGroups()
-        window.addEventListener('resize', __updateSubmenuGroups)
+        __update_relatedDom_size()
+        window.addEventListener('resize', __update_relatedDom_size)
 
         // pre_params_type = params.type
 
@@ -4294,7 +4410,7 @@
 
     onDestroy(()=>{
         document.removeEventListener('contextmenu', __handleContextMenu)
-        window.removeEventListener('resize', __updateSubmenuGroups)
+        window.removeEventListener('resize', __update_relatedDom_size)
     })
 
     beforeUpdate(()=>{
@@ -4305,7 +4421,7 @@
         autoscroll = uploadMessageDiv && (uploadMessageDiv.scrollTop + uploadMessageDiv.clientHeight) < uploadMessageDiv.scrollHeight
     })
 
-    //
+    // 手动更新doneFIlter， deleteFilter， logsEditFilter的选项第一位显示
     function __update_filter_dom_value(){
         if(doneFilter){
             // console.log('__update_filter_dom_value', all_subFilter_indexes_dict[params.type][dict.DONE][0])
@@ -4343,7 +4459,7 @@
         // console.log(sample_list, sampleSn_dict)
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict, all_sheet_record_dict)
-        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
@@ -4351,10 +4467,10 @@
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
-        console.log(all_status_of_data_dict)
-        console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
-        console.log(all_submit_params_dict)
-        console.log(all_submit_logs_dict, logs_together_dict)
+        // console.log(all_status_of_data_dict)
+        // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        // console.log(all_submit_params_dict)
+        // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
@@ -4367,8 +4483,8 @@
         // console.log(field_needCheck_inSampleInfoinPanal)
         // console.log(sheet_needAllCheck_list)
         // console.log(submenu_group_list, submenu_total_page, submenu_page)
-        // console.log(sample_list)
-        console.log(genes_connectImmune_dict)
+        console.log(sample_list, sample_dict)
+        // console.log(genes_connectImmune_dict)
     }
 
 </script>
@@ -4503,7 +4619,7 @@
         background: mediumorchid;
         color: white;
     }
-    .navLeft .leftAffirmSelectWrapper .AffrimeWrapper {
+    .navLeft .leftAffirmSelectWrapper .AffrimWrapper {
         position: absolute;
         width: 149px;
         min-height: 50px;
@@ -4512,7 +4628,7 @@
         border: 1px solid #939393;
         background: white;
     }
-    .navLeft .leftAffirmSelectWrapper .AffrimeWrapper .selectItemTR{
+    .navLeft .leftAffirmSelectWrapper .AffrimWrapper .selectItemTR{
         border-bottom: 1px solid #cccccc;
     }
     .navLeft .leftAffirmSelectWrapper .singleAffirmWrapper{
@@ -4746,10 +4862,11 @@
         box-sizing: border-box;
         padding: 0 5px;
         width: 100%;
-        height: 33px;
+        height: 50px;
         font-size: 14px;
         border-bottom: 1px solid #939393;
         display: flex;
+        overflow-x: auto;
     }
     .contentRight .filterWrapper span{
         padding: 0 2px;
@@ -4779,16 +4896,36 @@
         height: 33px;
         margin-right: 12px;
     }
+    .contentRight .filterWrapper .geneNamesWrapper{
+        flex: 1;
+        margin-right: 12px;
+        height: 33px;
+        display: flex;
+        flex-direction: row;
+    }
+    .contentRight .filterWrapper .geneNamesWrapper span{
+        flex: 0 0 65px
+    }
+    .contentRight .filterWrapper .geneNamesWrapper input{
+        padding: 5px;
+        margin: 1px;
+        flex: 1;
+        height: 30px;
+    }
     .contentRight .filterWrapper .idsWrapper{
         position: relative;
         flex: 1;
         height: 33px;
+        display: flex;
+        flex-direction: row;
+    }
+    .contentRight .filterWrapper .idsWrapper span{
+        flex: 0 0 65px
     }
     .contentRight .filterWrapper .idsWrapper input{
-        float: left;
-        padding: 0 30px 0 5px;
+        padding: 5px;
         margin: 1px;
-        width: 80%;
+        flex: 1;
         height: 30px;
     }
     .contentRight .filterWrapper .idsWrapper input::-webkit-input-placeholder {
@@ -4796,35 +4933,17 @@
         font-size: 14px;
         color: #666666;
     }
-    .contentRight .filterWrapper .idsWrapper button{
-        position: absolute;
-        top: 2px;
-        left: 341px;
-        padding: 0;
-        margin: 0;
-        width:28px;
-        height: 28px;
-        font-size: 16px;
-        border: none;
-        background: none;
-        color: #939393;
-        border-radius: 0;
-    }
-    .contentRight .filterWrapper .idsWrapper button:hover{
-        background: #939393;
-        color: white;
-    }
     .contentRight .filterWrapper .idsWrapper .groupSelect{
         position: absolute;
         box-sizing: border-box;
         top: 30px;
         left: 70px;
         padding: 5px;
-        width: 300px;
+        width: 265px;
         min-height: 75px;
         border: 1px solid #cccccc;
         background: white;
-        z-index: 10;
+        z-index: 20;
     }
     .contentRight .filterWrapper .idsWrapper .groupSelect .item{
         margin-down: 3px;
@@ -4835,6 +4954,26 @@
     .contentRight .filterWrapper .idsWrapper .groupSelect .item:hover{
         color: white;
         background: #69ca60;
+    }
+
+    .contentRight .filterWrapper .clearBnWrapper{
+        flex: 0 0 33px;
+    }
+    .contentRight .filterWrapper .clearBnWrapper button{
+        padding: 0;
+        margin: 0;
+        width: 33px;
+        box-sizing: border-box;
+        height: 33px;
+        font-size: 16px;
+        border: none;
+        background: none;
+        color: #939393;
+        border-radius: 0;
+    }
+    .contentRight .filterWrapper .clearBnWrapper button:hover{
+        background: #939393;
+        color: white;
     }
 
 
@@ -5100,7 +5239,35 @@
         color: red;
         text-decoration: line-through;
     }
-    /*控制短的单元格的长度*/
+    .contentRight .rightDataTable .lineData .immuneConnectTable{
+        border-collapse: collapse;
+        border: none;
+        text-align: center;
+        font-size: 12px;
+        table-layout: fixed;
+    }
+    .contentRight .rightDataTable .lineData .immuneConnectTable tr{
+        height: 25px;
+    }
+    .contentRight .rightDataTable .lineData .immuneConnectTable tr:hover{
+        background: #69ca60;
+    }
+    .contentRight .rightDataTable .lineData .immuneConnectTable .sheet{
+        width: 45px;
+    }
+    .contentRight .rightDataTable .lineData .immuneConnectTable .id{
+        width: 55px;
+    }
+    .contentRight .rightDataTable .lineData .immuneConnectTable .delete{
+        width: 25px;
+    }
+
+     /*针对跳转的数据行td*/
+    .contentRight .rightDataTable .lineData .redirect:hover{
+        background: #69ca60;
+    }
+
+     /*控制短的单元格的长度*/
     .contentRight .rightDataTable .short{
         min-width: 35px!important;
         max-width: 35px;
@@ -5109,4 +5276,6 @@
     .contentRight .dataPagerWrapper{
         flex: 1;
     }
+
+
 </style>

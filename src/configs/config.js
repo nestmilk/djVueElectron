@@ -386,7 +386,8 @@ export const sheetDisplayConfigList = [
                 translate: "免疫ID",
                 modify: false,
                 defaultDisplay: true,
-                selectDisplay: true
+                selectDisplay: true,
+                redirect: 'immune'
             },
 
 
@@ -493,7 +494,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "hereditary",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids',],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames'],
         submenu_translate: '遗传',
         need_all_check: true,
         igv_control: true,
@@ -664,12 +665,20 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: true,
                 selectDisplay: false
             },
+            {
+                title: "_geneName",
+                translate: "基因名称",
+                type: "text",
+                modify: true,
+                defaultDisplay: true,
+                selectDisplay: true
+            },
         ],
     },
 
     {
         sheet: "TMB",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids',],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames'],
         submenu_translate: 'TMB',
         need_all_check: true,
         igv_control: true,
@@ -786,7 +795,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "fusion",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids', 'geneNames'],
         submenu_translate: '融合',
         need_all_check: true,
         connect_immune: true,
@@ -977,7 +986,8 @@ export const sheetDisplayConfigList = [
                 translate: "免疫ID",
                 modify: false,
                 defaultDisplay: true,
-                selectDisplay: true
+                selectDisplay: true,
+                redirect: 'immune'
             }, {
                 title: "researchStatus",
                 translate: "研究状态",
@@ -992,7 +1002,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "CNA",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids', 'geneNames'],
         submenu_translate: 'CNA',
         need_all_check: true,
         connect_immune: true,
@@ -1064,7 +1074,8 @@ export const sheetDisplayConfigList = [
                 translate: "免疫ID",
                 modify: false,
                 defaultDisplay: true,
-                selectDisplay: true
+                selectDisplay: true,
+                redirect: 'immune'
             }, {
                 title: "chr",
                 translate: "染色体",
@@ -1107,7 +1118,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "TNB",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids',],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids', 'geneNames'],
         submenu_translate: 'TNB',
         need_all_check: true,
         reason_type: [
@@ -1214,7 +1225,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "immune",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids',],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids', 'geneNames'],
         submenu_translate: '免疫',
         need_all_check: true,
         need_copy: true,
@@ -1277,29 +1288,13 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
-                title: "target",
-                translate: "靶向表IDs",
+                title: "related_IDs",
+                translate: "关联表IDs",
                 type: "text",
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: true,
-                connect_immune: true,
-            },  {
-                title: "fusion",
-                translate: "融合表IDs",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: true,
-                connect_immune: true,
-            },  {
-                title: "CNA",
-                translate: "CNA表IDs",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: true,
-                connect_immune: true,
+                immune_connect: true,
             }, {
                 title: "projectAbbr",
                 translate: "项目简称",
