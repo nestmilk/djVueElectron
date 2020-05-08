@@ -14,7 +14,8 @@ export const dict_translate = {
     check: '确认审核',
     sample_type: '样本类型',
     change: '更改',
-    immune_connect: '免疫关联'
+    immune_connect: '免疫关联',
+    add: '添加',
 }
 
 

@@ -629,7 +629,7 @@
                                                                     <td class="sheet">{line_data[dict.SHEET]}</td>
                                                                     <td class="id">{instance[dict.ID]}</td>
                                                                     <td class="delete icon-cross"
-                                                                        on:click={(e)=>handle_immuneConnecting_dataDelete(line_data[dict.SHEET], instance[dict.ID], e)}
+                                                                        on:click={(e)=>handle_dataConnectImmune_Delete(line_data[dict.SHEET], instance[dict.ID], line_data[dict.ID], e)}
                                                                     ></td>
                                                                 </tr>
                                                             {/each}
@@ -871,7 +871,8 @@
         SKIP: 'skip', STATUS_FOR_DATA_UPDATE: "status_for_data_update", STATUS_FOR_TEMPLATE_UPDATE: "status_for_template_update",
         POSITIVE: 'positive', NEGATIVE: 'negative', TEST: 'test', ICON: 'icon',
         SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune', IMMUNE_CONNECT: "immune_connect",
-        GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect',
+        GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune',
+        TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', _GENENAME: '_geneName', ADD: 'add',
     }
     // 获取路径中的：值
     export let params = {}
@@ -1275,8 +1276,14 @@
                 switch (sureOperation){
                     case dict.DELETE:
                         if(reply){
+                            let {sheet, id, immune_id} = sureData
+                            await __handle_delete_dataConnectImmune(sheet, id, immune_id)
+                        }
+                    case dict.ADD:
+                        if(reply){
+                            console.log('handleSureReply', sureData)
                             let {sheet, id} = sureData
-                            await __handle_delete_dataConnectImmune(sheet, id)
+                            
                         }
                     default:
                         break
@@ -1810,7 +1817,11 @@
     }, {})))
     // 用于当前修改记录, 每页以id为key，value为所有field的字典
     let all_nowValue_of_data_dict = JSON.parse(JSON.stringify(all_preValue_of_data_dict))
-
+    // 同时更新nowValue和preValue
+    function __update_nowValue_preValue_simultaneously(sheet, id, field, value){
+        all_nowValue_of_data_dict[sheet][id][field] = value
+        all_preValue_of_data_dict[sheet][id][field] = value
+    }
 
     // 每页同批多选的id号
     let all_selected_dataIds_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result,item)=>{
@@ -3551,8 +3562,10 @@
             // 使用右键获取当前data的id和sample的id，20.3.19弃用
             let right_id = parseInt(lineData_element.dataset.id)
             let right_sample_id = parseInt(lineData_element.dataset.sampleid)
+            let right_sampleSn = __get_sampleSn_bySampleId_inSampleList(right_sample_id)
             let right_id_status = all_status_of_data_dict[params.type][right_id]
 
+            // 当前的id, sample_id, status
             let id = all_now_data_id[params.type]
             let sample_id = all_now_sample_id[params.type]
             let status = all_status_of_data_dict[params.type][id]
@@ -3782,6 +3795,30 @@
                     default:
                         break
                 }
+            }
+
+            // C) 针对连接免疫的表， 且有能力关联immune（此数据条geneName在该sampleSn的immune表基因列表条目中）
+            let geneName = all_preValue_of_data_dict[params.type][right_id][dict._GENENAME]
+            let genes_inImmune = sample_dict[right_sampleSn][`${params.type.toLowerCase()}_genes_inImmune`]
+            let genes_inImmune_list = genes_inImmune? genes_inImmune.split(';') : []
+            console.log('__handleContextMenu genes_inImmune_list', genes_inImmune_list)
+
+            if(sheetDisplayConfigDict[params.type][dict.CONNECT_IMMUNE] &&
+                    genes_inImmune_list.indexOf(geneName) !== -1){
+                // 先决条件右键为当前id，数据没有关联immune
+                let immuneId = all_preValue_of_data_dict[params.type][right_id][dict.IMMUNEID]
+
+                let connect_immune_menuItem = new remote.MenuItem({
+                    label: '关联免疫表',
+                    enabled: id === right_id && immuneId === '',
+                    click: ()=>{
+                        openSureMessage(dict.IMMUNE_CONNECT, dict.ADD, {
+                            sheet: params.type,
+                            id: right_id
+                        })
+                    }
+                })
+                menu.append(connect_immune_menuItem)
             }
 
             menu.popup({window: remote.getCurrentWindow()})
@@ -4339,26 +4376,39 @@
     }
 
 
-    async function __handle_delete_dataConnectImmune(sheet, id){
+    async function __handle_delete_dataConnectImmune(sheet, id, immune_id){
         let form = new FormData()
         form.append('sheet', sheet)
         form.append('id', id)
         form.append('token', userInfo.getToken())
 
         await api.deleteDataConnectImmune(form).then(response=>{
-            console.log('__handle_delete_dataConnectImmune', response)
+            // console.log('__handle_delete_dataConnectImmune', response)
+            // 如果需要修改，说明无data与immune关联了
+            let {modify, testResult, effect} = response.data
+            if (modify) {
+                __update_nowValue_preValue_simultaneously(dict.IMMUNE, immune_id, dict.TESTRESULT, testResult)
+                __update_nowValue_preValue_simultaneously(dict.IMMUNE, immune_id, dict.EFFECT, effect)
+            }
         }).catch(error=>{
             console.log('__handle_delete_dataConnectImmune', error)
             errors = error
         })
+
+        // 刷新页面
+        await __getPageData()
     }
 
-    function handle_immuneConnecting_dataDelete(sheet, id, event){
+    function handle_dataConnectImmune_Delete(sheet, id, immune_id, event){
         event.stopPropagation()
-        openSureMessage(dict.IMMUNE_CONNECT, dict.DELETE, {
-            sheet,
-            id
-        })
+        let status = all_status_of_data_dict[dict.IMMUNE][immune_id]
+        if (status === dict.FREE){
+            openSureMessage(dict.IMMUNE_CONNECT, dict.DELETE, {
+                sheet,
+                id,
+                immune_id
+            })
+        }
     }
 
     // let windowScrollTop
