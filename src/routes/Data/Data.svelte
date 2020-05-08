@@ -417,8 +417,8 @@
                                                 <th class="{field}">{all_titleListItem_dict[params.type][field][dict.TRANSLATE]}</th>
                                             {/if}
                                         {:else if field===dict.POSEND &&
-                                        sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) &&
-                                        !sheetDisplayConfigDict[params.type].ifSimpleOrdering
+                                            sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) &&
+                                            !sheetDisplayConfigDict[params.type].ifSimpleOrdering
                                         }
                                             {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) > -1}
                                                 <th class="posEnd hoverGreen" on:click={()=>handleToggleFilter(dict.POSEND)}>
@@ -428,9 +428,9 @@
                                                 <th class="{field}">{all_titleListItem_dict[params.type][field][dict.TRANSLATE]}</th>
                                             {/if}
                                         {:else if field===dict.EXONICFUNCREFGENE &&
-                                        sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.EXONICFUNCREFGENE) > -1
+                                            sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.EXONICFUNCREFGENE) > -1
                                         }
-                                        <!--                                                    on:change="{(e) => change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(e.target.value)}"-->
+                                        <!-- on:change="{(e) => change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(e.target.value)}"-->
                                             <th class="exonicfuncRefgene" >
                                                 <!--bind:value会触发页面刷新，即可触发$: if (pre_params_type !== params.type) -->
                                                 <select value={all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0]}
@@ -442,6 +442,20 @@
                                                     subFilter_selections_dict['initial_exonicfuncRefgene']
                                                     as selection, index
                                                     }
+                                                        <option value={index}>
+                                                            {selection[dict.CONTENT]}
+                                                        </option>
+                                                    {/each}
+                                                </select>
+                                            </th>
+                                        {:else if field===dict.CONNECTSHEET &&
+                                            sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.CONNECTSHEET) > -1}
+                                            <th class="connectSheet">
+                                                <select value={all_subFilter_indexes_dict[params.type][dict.CONNECTSHEET][0]}
+                                                        on:change={(e)=>handleChangeFilter(e, dict.CONNECTSHEET)}
+                                                        class="inside"
+                                                >
+                                                    {#each subFilter_selections_dict[dict.CONNECTSHEET] as selection, index}
                                                         <option value={index}>
                                                             {selection[dict.CONTENT]}
                                                         </option>
@@ -658,7 +672,8 @@
                                                 -->
                                                 {#if all_titleListItem_dict[params.type][field][dict.MODIFY] &&
                                                     (page_id_availableEdit_dict[line_data.id] ||
-                                                        (all_nowValue_of_data_dict[params.type][line_data.id] && all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]))
+                                                        (all_nowValue_of_data_dict[params.type][line_data.id] &&
+                                                            all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]))
                                                 }
                                                     <td class="{field} containInput
                                                         {all_nowValue_of_data_dict[params.type][line_data.id]?
@@ -671,21 +686,26 @@
                                                         <input class="dataInput" type={all_titleListItem_dict[params.type][field][dict.TYPE]}
                                                                value="{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}"
                                                                disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
-                                                                    page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
+                                                                            page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
                                                                on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data.id, field)}
                                                                on:focus={(e)=>focusNowField(e, line_data.id, field)}
                                                         >
-                                                        <div class="upBesideInput icon-warning"></div>
-                                                        <!--__getPageData 此时获取到新的page_data 开始更新界面
-                                                            但是page_id_modifyField_mouseEnter_dicts还是旧的那页的，会找不到数据id-->
-                                                        <div class="downBesideInput icon-undo2
+
+                                                        {#if all_nowValue_of_data_dict[params.type][line_data.id] &&
+                                                            all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]}
+                                                            <div class="upBesideInput icon-warning"></div>
+                                                            <!--__getPageData 此时获取到新的page_data 开始更新界面
+                                                                但是page_id_modifyField_mouseEnter_dicts还是旧的那页的，会找不到数据id-->
+                                                            <div class="downBesideInput icon-undo2
                                                                 {page_id_modifyField_mouseEnter_dicts[line_data.id] &&
                                                                     page_id_modifyField_mouseEnter_dicts[line_data.id][field] &&
                                                                     page_id_availableEdit_dict[line_data.id]?'show':''
                                                                 }
                                                             "
-                                                             on:click={()=>recover_nowValue_byIDs_fields([line_data.id],[field])}
-                                                        ></div>
+                                                                 on:click={()=>recover_nowValue_byIDs_fields([line_data.id],[field])}
+                                                            ></div>
+                                                        {/if}
+
                                                     </td>
                                                 {:else}
                                                     <td class="{field} contentTD
@@ -873,6 +893,7 @@
         SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune', IMMUNE_CONNECT: "immune_connect",
         GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune',
         TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', IMMUNE_ID: 'immune_id', _GENENAME: '_geneName', ADD: 'add',
+        CONNECTSHEET: 'connectSheet',
     }
     // 获取路径中的：值
     export let params = {}
@@ -1279,11 +1300,13 @@
                             let {sheet, id, immune_id} = sureData
                             await __handle_delete_dataConnectImmune(sheet, id, immune_id)
                         }
+                        break
                     case dict.ADD:
                         if(reply){
                             let {sheet, id} = sureData
                             await __handle_add_dataConnectImmune(sheet, id)
                         }
+                        break
                     default:
                         break
                 }
@@ -4418,10 +4441,17 @@
             // console.log('__handle_delete_dataConnectImmune', response)
             // 如果需要修改，说明无data与immune关联了
             let {modify, testResult, effect} = response.data
+            // 1）更新免疫数据条
             if (modify) {
                 __update_nowValue_preValue_simultaneously(dict.IMMUNE, immune_id, dict.TESTRESULT, testResult)
                 __update_nowValue_preValue_simultaneously(dict.IMMUNE, immune_id, dict.EFFECT, effect)
             }
+            // 2) 更新剔除关联数据
+            if(all_status_of_data_dict[sheet].hasOwnProperty(id)){
+                __update_nowValue_preValue_simultaneously(sheet, id, dict.IMMUNEID, "")
+                __update_nowValue_preValue_simultaneously(sheet, id, dict.IMMUNE_ID, null)
+            }
+
         }).catch(error=>{
             console.log('__handle_delete_dataConnectImmune', error)
             errors = error
@@ -4567,7 +4597,7 @@
         // console.log(field_needCheck_inSampleInfoinPanal)
         // console.log(sheet_needAllCheck_list)
         // console.log(submenu_group_list, submenu_total_page, submenu_page)
-        console.log(sample_list, sample_dict)
+        // console.log(sample_list, sample_dict)
         // console.log(genes_connectImmune_dict)
     }
 
@@ -5270,30 +5300,36 @@
     .contentRight .rightDataTable .lineData .containInput.unequal .dataInput{
         width: 98px;
     }
-    .contentRight .rightDataTable .lineData .containInput.unequal .upBesideInput{
+    .contentRight .rightDataTable .lineData .containInput .upBesideInput{
         position: absolute;
         top: 2px;
         right: 2px;
         font-size: 14px;
     }
-    .contentRight .rightDataTable .lineData .containInput.unequal .downBesideInput.show{
+    .contentRight .rightDataTable .lineData .containInput .downBesideInput{
         position: absolute;
+        top: 17px;
         right: 2px;
-        bottom: 2px;
         font-size: 14px;
+        display: none;
+    }
+    .contentRight .rightDataTable .lineData .containInput .downBesideInput.show{
+        display: block;
     }
 
     .contentRight .rightDataTable .lineTitle .hoverGreen:hover{
         background: #09c762;
         color: white;
     }
-    .contentRight .rightDataTable .lineTitle .exonicfuncRefgene .inside{
+    .contentRight .rightDataTable .lineTitle .exonicfuncRefgene .inside,
+    .contentRight .rightDataTable .lineTitle .connectSheet .inside{
         padding: 0;
         margin: 0;
         width: 119px;
         height: 100%;
         border: none;
     }
+
     .contentRight .rightDataTable .lineData td .inside{
         width: 119px;
         line-height: 35px;

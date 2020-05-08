@@ -1225,7 +1225,7 @@ export const sheetDisplayConfigList = [
     {
         sheet: "immune",
         ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids', 'geneNames'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids', 'geneNames', 'connectSheet'],
         submenu_translate: '免疫',
         need_all_check: true,
         need_copy: true,
@@ -1288,8 +1288,8 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
-                title: "related_IDs",
-                translate: "关联表IDs",
+                title: "connectSheet",
+                translate: "关联表",
                 type: "text",
                 modify: false,
                 defaultDisplay: true,
@@ -2031,12 +2031,13 @@ export const common_filter_subFilters_dict = {
     logsEdit:['logsEdit',],
     ordering: ['sample__id', 'chr', 'posStart', 'posEnd'],
     exonicfuncRefgene: ['initial_exonicfuncRefgene',],
+    connectSheet: ['connectSheet']
 }
 
 
 // 每个亚筛选项的 选择内容的列表，"exonicfuncRefgene"是3张mutant表都不一样的，需要加载获得
 export const common_subFilter_selections_dict = {
-    'delete': [
+    delete: [
         {
             value: null,
             content: '全部'
@@ -2048,7 +2049,7 @@ export const common_subFilter_selections_dict = {
             content: '已删除'
         },
     ],
-    'done': [
+    done: [
         {
             value: null,
             content: '全部'
@@ -2060,7 +2061,7 @@ export const common_subFilter_selections_dict = {
             content: '已经提交'
         },
     ],
-    'logsEdit': [
+    logsEdit: [
         {
             value: null,
             content: '全部'
@@ -2075,7 +2076,7 @@ export const common_subFilter_selections_dict = {
             content: '包含拷贝'
         },
     ],
-    'sample__id': [
+    sample__id: [
         {
             value: "sample__id",
             content: '样本编号 <span class="icon-sort-amount-asc" style="font-size: 16px"></span>'
@@ -2084,7 +2085,7 @@ export const common_subFilter_selections_dict = {
             content: '样本编号'
         },
     ],
-    'chr': [
+    chr: [
         {
             value: "chr",
             content: '染色体 <span class="icon-sort-amount-asc" style="font-size: 16px"></span>'
@@ -2093,7 +2094,7 @@ export const common_subFilter_selections_dict = {
             content: '染色体'
         },
     ],
-    'posStart': [
+    posStart: [
         {
             value: "posStart",
             content: '起始位置 <span class="icon-sort-amount-asc" style="font-size: 16px"></span>'
@@ -2102,7 +2103,7 @@ export const common_subFilter_selections_dict = {
             content: '起始位置'
         },
     ],
-    'posEnd': [
+    posEnd: [
         {
             value: "posEnd",
             content: '终止位置 <span class="icon-sort-amount-asc" style="font-size: 16px"></span>'
@@ -2111,13 +2112,30 @@ export const common_subFilter_selections_dict = {
             content: '终止位置'
         },
     ],
-    'initial_exonicfuncRefgene': [
+    initial_exonicfuncRefgene: [
         {
             value: null,
             content: "突变方式(全选)"
         },
     ],
-
+    connectSheet: [
+        {
+            value: null,
+            content: '所有关联'
+        }, {
+            value: 'all',
+            content: '存在关联(全部)'
+        }, {
+            value: 'target',
+            content: '存在关联(靶向)'
+        }, {
+            value: 'fusion',
+            content: '存在关联(融合)'
+        }, {
+            value: 'CNA',
+            content: '存在关联(CNA)'
+        }
+    ]
 }
 
 export const affirmSelectionConfig = [
