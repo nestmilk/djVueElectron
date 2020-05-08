@@ -872,7 +872,7 @@
         POSITIVE: 'positive', NEGATIVE: 'negative', TEST: 'test', ICON: 'icon',
         SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune', IMMUNE_CONNECT: "immune_connect",
         GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune',
-        TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', _GENENAME: '_geneName', ADD: 'add',
+        TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', IMMUNE_ID: 'immune_id', _GENENAME: '_geneName', ADD: 'add',
     }
     // 获取路径中的：值
     export let params = {}
@@ -1281,9 +1281,8 @@
                         }
                     case dict.ADD:
                         if(reply){
-                            console.log('handleSureReply', sureData)
                             let {sheet, id} = sureData
-                            
+                            await __handle_add_dataConnectImmune(sheet, id)
                         }
                     default:
                         break
@@ -1819,8 +1818,10 @@
     let all_nowValue_of_data_dict = JSON.parse(JSON.stringify(all_preValue_of_data_dict))
     // 同时更新nowValue和preValue
     function __update_nowValue_preValue_simultaneously(sheet, id, field, value){
-        all_nowValue_of_data_dict[sheet][id][field] = value
-        all_preValue_of_data_dict[sheet][id][field] = value
+        if (all_preValue_of_data_dict[sheet][id].hasOwnProperty(field)){
+            all_nowValue_of_data_dict[sheet][id][field] = value
+            all_preValue_of_data_dict[sheet][id][field] = value
+        }
     }
 
     // 每页同批多选的id号
@@ -3814,7 +3815,7 @@
                     click: ()=>{
                         openSureMessage(dict.IMMUNE_CONNECT, dict.ADD, {
                             sheet: params.type,
-                            id: right_id
+                            id: right_id,
                         })
                     }
                 })
@@ -4375,8 +4376,39 @@
         await __getPageData()
     }
 
+    async function __handle_add_dataConnectImmune(sheet, id){
+        loadingShow = true
 
+        let form = new FormData()
+        form.append('sheet', sheet)
+        form.append('id', id)
+        form.append('token', userInfo.getToken())
+
+        await api.addDataConnectImmune(form).then(response=>{
+            console.log('__handle_add_dataConnectImmune', response.data)
+            let {modify, testResult, effect, immune_id} = response.data
+            // 1) 如果已经下载此条immune数据，则更新
+            if (modify && all_status_of_data_dict[dict.IMMUNE].hasOwnProperty(immune_id)) {
+                __update_nowValue_preValue_simultaneously(dict.IMMUNE, immune_id, dict.TESTRESULT, testResult)
+                __update_nowValue_preValue_simultaneously(dict.IMMUNE, immune_id, dict.EFFECT, effect)
+            }
+            // 2) 更新本地此条数据的
+            __update_nowValue_preValue_simultaneously(params.type, id, dict.IMMUNEID, immune_id)
+            __update_nowValue_preValue_simultaneously(params.type, id, dict.IMMUNE_ID, immune_id)
+
+        }).catch(error=>{
+            console.log('__handle_add_dataConnectImmune', error)
+            errors = error
+        })
+
+        // 刷新页面
+        await __getPageData()
+
+        loadingShow = false
+    }
     async function __handle_delete_dataConnectImmune(sheet, id, immune_id){
+        loadingShow = true
+
         let form = new FormData()
         form.append('sheet', sheet)
         form.append('id', id)
@@ -4397,6 +4429,8 @@
 
         // 刷新页面
         await __getPageData()
+
+        loadingShow = false
     }
 
     function handle_dataConnectImmune_Delete(sheet, id, immune_id, event){

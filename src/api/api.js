@@ -100,3 +100,5 @@ export const addData = form => {return axios.post(`${host()}/adddata/`, form, co
 export const changeSampleType = form => {return axios.post(`${host()}/changesampletype/`, form)}
 // 删除数据连接的免疫实例
 export const deleteDataConnectImmune = form => {return axios.post(`${host()}/deletedataconnectimmune/`, form)}
+// 添加数据连接的免疫实例
+export const addDataConnectImmune = form => {return axios.post(`${host()}/adddataconnectimmune/`, form)}
