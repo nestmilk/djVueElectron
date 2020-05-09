@@ -436,6 +436,7 @@
                                                 <select value={all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0]}
                                                         on:change={(e)=>handleChangeFilter(e, `${params.type.toLowerCase()}_exonicfuncRefgene`)}
                                                         class="inside"
+                                                        bind:this={exonicfuncRefgene}
                                                 >
                                                     <!--初次加载还没有特异性的exonicfuncRefgene-->
                                                     {#each subFilter_selections_dict[`${params.type.toLowerCase()}_exonicfuncRefgene`] ||
@@ -454,6 +455,7 @@
                                                 <select value={all_subFilter_indexes_dict[params.type][dict.CONNECTSHEET][0]}
                                                         on:change={(e)=>handleChangeFilter(e, dict.CONNECTSHEET)}
                                                         class="inside"
+                                                        bind:this={connectSheet}
                                                 >
                                                     {#each subFilter_selections_dict[dict.CONNECTSHEET] as selection, index}
                                                         <option value={index}>
@@ -2443,7 +2445,7 @@
     }
 
     async function __set_configs_afterPageDataUpdated(){
-        // A) 当前页每条id的各个可编辑field的鼠标是否进入，初始化为false未进入
+        // A) 当前页每条id的各个 可编辑field的 鼠标是否进入，初始化为false未进入
         __set_allIdMofidyFields_mouseEnter_false_inPageIdModifyFieldMouseEnterDicts()
 
         // B) 当前页各id能否被编辑, 初始化都不能编辑
@@ -2518,6 +2520,8 @@
     let doneFilter
     let deleteFilter
     let logsEditFilter
+    let exonicfuncRefgene
+    let connectSheet
     let pre_params_type
     // submenu选择
     async function handleSelectSubmenu(type, get_page_data=true){
@@ -2526,16 +2530,12 @@
         pre_params_type = params.type
 
         // push之后，params.type没有立即更新，但是页面使用tes获取paramstype已经更新
-        // todo 只能手动强制改！
         // push(`/${type}/${params[dict.PANALID]}`)
+        // todo 只能手动强制改！
         params.type = type
-        // console.log('handleSelectSubmenu afterPush', params.type)
 
         //1) 更换公用的selected_ids信息
         __update_selectedIds_afterPush()
-
-        //todo 页面筛选select的更换done，delee，logsEdit, ids填写框内容 此处实际不对，页面还没更新，获取不到doneFilter等dom
-        // console.log('yes',doneFilter, topScroll)
 
         if (get_page_data){
             await __getPageData()
@@ -4395,6 +4395,8 @@
         await handleSelectSubmenu(sheet, false)
         // 更换filter，设置id
         __reset_params_byIds_exceptPageSize_inAllSearchParamsDict([id])
+        // 更新下query_ids
+        query_ids = id
         // 更新页面
         await __getPageData()
     }
@@ -4547,6 +4549,12 @@
         if(logsEditFilter){
             logsEditFilter.value = all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]
         }
+        if(exonicfuncRefgene && sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.EXONICFUNCREFGENE)!==-1){
+            exonicfuncRefgene.value = all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0]
+        }
+        if(connectSheet && sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.CONNECTSHEET)!==-1){
+            connectSheet.value = all_subFilter_indexes_dict[params.type][dict.CONNECTSHEET][0]
+        }
     }
     afterUpdate(()=>{
         // console.log('afterUpdate', pre_params_type, params.type, doneFilter)
@@ -4674,7 +4682,7 @@
         border-bottom: 3px solid black;
     }
     .subMenu .selectedSubMenu{
-        color: black;
+        background: orange;
         font-weight: bold;
         box-shadow: 3px 3px 3px black;
     }
@@ -4682,7 +4690,7 @@
         color: black;
     }
     .subMenu .selectedSubMenu:hover{
-        color: white;
+        color: black;
     }
 
     .middleContent{
