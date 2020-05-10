@@ -1842,10 +1842,13 @@
     // 用于当前修改记录, 每页以id为key，value为所有field的字典
     let all_nowValue_of_data_dict = JSON.parse(JSON.stringify(all_preValue_of_data_dict))
     // 同时更新nowValue和preValue
-    function __update_nowValue_preValue_simultaneously(sheet, id, field, value){
-        if (all_preValue_of_data_dict[sheet][id].hasOwnProperty(field)){
-            all_nowValue_of_data_dict[sheet][id][field] = value
-            all_preValue_of_data_dict[sheet][id][field] = value
+    function __update_oneData_multipleNowValueandPreValue_simultaneously(sheet, id, value_dict){
+        for (let field in value_dict){
+            let value = value_dict[field]
+            if (all_preValue_of_data_dict[sheet][id].hasOwnProperty(field)){
+                all_nowValue_of_data_dict[sheet][id][field] = value
+                all_preValue_of_data_dict[sheet][id][field] = value
+            }
         }
     }
 
@@ -4279,7 +4282,7 @@
                 }
             }
 
-            // 4)更新subFilter_selections_dict
+            // 4)更新subFilter_selections_dict中exonicfuncRefgenes
             let exonicfuncRefgenes = data.exonicfuncRefgenes
             // console.log('handleAddDataSubmit exonicfuncRefgenes', exonicfuncRefgenes)
 
@@ -4314,13 +4317,14 @@
                     if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status)!==-1){
                         __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA, sheet)
                     }
-                    // 判断是否有日志
+                    // 删除其params和log相关
                     __delete_oneData_params_logRelated(sheet, id)
 
+                }else{
+                    // 直接强制利用数据注入status, nowValue, preValue
+                    __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([data], sheet, true)
                 }
 
-                // 直接强制利用数据注入status, nowValue, preValue
-                __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([data], sheet, true)
             }
 
             await __getPageData()
@@ -4412,15 +4416,18 @@
         await api.addDataConnectImmune(form).then(response=>{
             console.log('__handle_add_dataConnectImmune', response.data)
             let {modify, testResult, effect, immune_id} = response.data
-            // 1) 如果已经下载此条immune数据，则更新
+            // 1) 如果已经下载此条data对应的 immune数据，则更新
             if (modify && all_status_of_data_dict[dict.IMMUNE].hasOwnProperty(immune_id)) {
-                __update_nowValue_preValue_simultaneously(dict.IMMUNE, immune_id, dict.TESTRESULT, testResult)
-                __update_nowValue_preValue_simultaneously(dict.IMMUNE, immune_id, dict.EFFECT, effect)
+                __update_oneData_multipleNowValueandPreValue_simultaneously(dict.IMMUNE, immune_id, {
+                    [dict.TESTRESULT]: testResult,
+                    [dict.EFFECT]: effect
+                })
             }
-            // 2) 更新本地此条数据的
-            __update_nowValue_preValue_simultaneously(params.type, id, dict.IMMUNEID, immune_id)
-            __update_nowValue_preValue_simultaneously(params.type, id, dict.IMMUNE_ID, immune_id)
-
+            // 2) 更新本地此条 data数据的
+            __update_oneData_multipleNowValueandPreValue_simultaneously(params.type, id, {
+                [dict.IMMUNEID]: immune_id,
+                [dict.IMMUNE_ID]: immune_id
+            })
         }).catch(error=>{
             console.log('__handle_add_dataConnectImmune', error)
             errors = error
@@ -4443,15 +4450,19 @@
             // console.log('__handle_delete_dataConnectImmune', response)
             // 如果需要修改，说明无data与immune关联了
             let {modify, testResult, effect} = response.data
-            // 1）更新免疫数据条
+            // 1）更新此条immune数据条
             if (modify) {
-                __update_nowValue_preValue_simultaneously(dict.IMMUNE, immune_id, dict.TESTRESULT, testResult)
-                __update_nowValue_preValue_simultaneously(dict.IMMUNE, immune_id, dict.EFFECT, effect)
+                __update_oneData_multipleNowValueandPreValue_simultaneously(dict.IMMUNE, immune_id, {
+                    [dict.TESTRESULT]: testResult,
+                    [dict.EFFECT]: effect
+                })
             }
-            // 2) 更新剔除关联数据
+            // 2) 更新剔除 关联data数据
             if(all_status_of_data_dict[sheet].hasOwnProperty(id)){
-                __update_nowValue_preValue_simultaneously(sheet, id, dict.IMMUNEID, "")
-                __update_nowValue_preValue_simultaneously(sheet, id, dict.IMMUNE_ID, null)
+                __update_oneData_multipleNowValueandPreValue_simultaneously(sheet, id, {
+                    [dict.IMMUNEID]: "",
+                    [dict.IMMUNE_ID]: null
+                })
             }
 
         }).catch(error=>{
