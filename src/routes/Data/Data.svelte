@@ -856,7 +856,7 @@
     const settingsStore = new Store({name: 'Settings'})
 
     let dict = {
-        SAMPLEINFOINPANAL: "sampleInfoInPanal",
+        SAMPLEINFOINPANAL: "sampleInfoInPanal", SAMPLEINFO: 'sampleInfo',
         SHEET: 'sheet', SUBMENU_TRANSLATE: "submenu_translate", FILTERS: "filters",
         PARAM: 'param', SEARCH: 'search', DATA: 'data', COPY: 'copy',
         ID: 'id', SAMPLE: 'sample', SAMPLESN: 'sampleSn',  TITLE_LIST: 'title_list',
@@ -3590,7 +3590,7 @@
             let right_id = parseInt(lineData_element.dataset.id)
             let right_sample_id = parseInt(lineData_element.dataset.sampleid)
             let right_sampleSn = __get_sampleSn_bySampleId_inSampleList(right_sample_id)
-            let right_id_status = all_status_of_data_dict[params.type][right_id]
+            let right_status = all_status_of_data_dict[params.type][right_id]
 
             // 当前的id, sample_id, status
             let id = all_now_data_id[params.type]
@@ -3832,12 +3832,12 @@
 
             if(sheetDisplayConfigDict[params.type][dict.CONNECT_IMMUNE] &&
                     genes_inImmune_list.indexOf(geneName) !== -1){
-                // 先决条件右键为当前id，数据没有关联immune
+                // 先决条件右键为当前id，数据没有关联immune, 此条数据状态为free
                 let immuneId = all_preValue_of_data_dict[params.type][right_id][dict.IMMUNEID]
 
                 let connect_immune_menuItem = new remote.MenuItem({
                     label: '关联免疫表',
-                    enabled: id === right_id && immuneId === '',
+                    enabled: id === right_id && immuneId === '' && right_status === dict.FREE,
                     click: ()=>{
                         openSureMessage(dict.IMMUNE_CONNECT, dict.ADD, {
                             sheet: params.type,
@@ -4309,22 +4309,31 @@
                 let id = updated_data[dict.ID]
                 let data = updated_data[dict.DATA]
 
-                // 先查看本地是否有此条数据
-                if (all_status_of_data_dict[sheet].hasOwnProperty(id)){
+                // 先查看本地是否有此条数据，该表是否含logsEdit,统计迁移、删除params和log相关
+                if (all_status_of_data_dict[sheet].hasOwnProperty(id) &&
+                        sheetDisplayConfigDict[sheet][dict.FILTERS].indexOf(dict.LOGSEDIT)!==-1){
+
                     let status = all_status_of_data_dict[sheet][id]
-                    let sample_id = all_preValue_of_data_dict[sheet][id][dict.SAMPLEID]
-                    // 如果是已审核状态，需要sheet，sample统计迁移
+                    // 如果是已审核状态，
                     if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status)!==-1){
+                        // 因为sample表不需要修改，所以可以这样用，sample表sampleId对应外部cms
+                        let sample_id = all_preValue_of_data_dict[sheet][id][dict.SAMPLEID]
                         __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA, sheet)
                     }
                     // 删除其params和log相关
                     __delete_oneData_params_logRelated(sheet, id)
 
-                }else{
-                    // 直接强制利用数据注入status, nowValue, preValue
-                    __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([data], sheet, true)
                 }
 
+                // 如果该表为sampleInfo，需要修改sample_dict
+                if (sheet === dict.SAMPLEINFO){
+                    let sampleSn = data['sampleSn']
+                    sample_dict[sampleSn] = data
+                    // console.log('handleAddDataSubmit sampleInfo', sampleSn, data)
+                }
+
+                // 如果本地没有load，或者已经load，都直接强制利用数据注入status, nowValue, preValue
+                __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([data], sheet, true)
             }
 
             await __getPageData()
@@ -4479,6 +4488,7 @@
     function handle_dataConnectImmune_Delete(sheet, id, immune_id, event){
         event.stopPropagation()
         let status = all_status_of_data_dict[dict.IMMUNE][immune_id]
+        // 只有free状态，才能在immune表中进行删除
         if (status === dict.FREE){
             openSureMessage(dict.IMMUNE_CONNECT, dict.DELETE, {
                 sheet,
@@ -4616,7 +4626,7 @@
         // console.log(field_needCheck_inSampleInfoinPanal)
         // console.log(sheet_needAllCheck_list)
         // console.log(submenu_group_list, submenu_total_page, submenu_page)
-        // console.log(sample_list, sample_dict)
+        console.log(sample_list, sample_dict)
         // console.log(genes_connectImmune_dict)
     }
 
