@@ -69,21 +69,6 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
-                title: "immuneCount",
-                translate: "immune总数",
-                modify: false,
-                type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "immuneSubmitCount",
-                translate: "immune提交总数",
-                need_check: true,
-                modify: false,
-                type: "number",
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
                 title: "TNBCount",
                 translate: "TNB总数",
                 modify: false,
@@ -124,6 +109,21 @@ export const sheetDisplayConfigList = [
                 translate: "CNA提交总数",
                 need_check: true,
                 modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "immuneCount",
+                translate: "immune总数",
+                modify: false,
+                type: "number",
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "immuneSubmitCount",
+                translate: "immune提交总数",
+                need_check: true,
+                modify: false,
+                type: "number",
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
@@ -793,6 +793,113 @@ export const sheetDisplayConfigList = [
     },
 
     {
+        sheet: "TNB",
+        ifSimpleOrdering: true,
+        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids', 'geneNames'],
+        submenu_translate: 'TNB',
+        need_all_check: true,
+        reason_type: [
+            {
+                value: 'nothing',
+                content: '请选择'
+            }, {
+                value: 'TMB_related_modify',
+                content: 'TMB相关修改'
+            }, {
+                value: 'other',
+                content: '其它'
+            }
+        ],
+        title_list: [
+            {
+                title: "sampleSn",
+                translate: "样本编码*",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r2",
+                translate: "基因*",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "locusName",
+                translate: "突变肽段",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r3",
+                translate: "Neoantigen 打分",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r4",
+                translate: "野生型肽段",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r5",
+                translate: "HLA分型",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r6",
+                translate: "新表位打分",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r7",
+                translate: "野生型表位打分",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            }, {
+                title: "r8",
+                translate: "突变频率",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r9",
+                translate: "染色体编号",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "r10",
+                translate: "突变位置",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            }, {
+                title: "tmb",
+                translate: "对应TMB的ID",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: false
+            },
+        ],
+    },
+
+    {
         sheet: "fusion",
         ifSimpleOrdering: true,
         filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids', 'geneNames'],
@@ -1111,113 +1218,6 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: false,
                 selectDisplay: true
-            },
-        ],
-    },
-
-    {
-        sheet: "TNB",
-        ifSimpleOrdering: true,
-        filters: ["page", "page_size", "sampleIds", "panalId", "done", 'delete', "logsEdit", "ordering", 'ids', 'geneNames'],
-        submenu_translate: 'TNB',
-        need_all_check: true,
-        reason_type: [
-            {
-                value: 'nothing',
-                content: '请选择'
-            }, {
-                value: 'TMB_related_modify',
-                content: 'TMB相关修改'
-            }, {
-                value: 'other',
-                content: '其它'
-            }
-        ],
-        title_list: [
-            {
-                title: "sampleSn",
-                translate: "样本编码*",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "r2",
-                translate: "基因*",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "locusName",
-                translate: "突变肽段",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r3",
-                translate: "Neoantigen 打分",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r4",
-                translate: "野生型肽段",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r5",
-                translate: "HLA分型",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r6",
-                translate: "新表位打分",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r7",
-                translate: "野生型表位打分",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "r8",
-                translate: "突变频率",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "r9",
-                translate: "染色体编号",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "r10",
-                translate: "突变位置",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "tmb",
-                translate: "对应TMB的ID",
-                type: "text",
-                modify: false,
-                defaultDisplay: true,
-                selectDisplay: false
             },
         ],
     },

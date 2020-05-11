@@ -1842,7 +1842,7 @@
     // 用于当前修改记录, 每页以id为key，value为所有field的字典
     let all_nowValue_of_data_dict = JSON.parse(JSON.stringify(all_preValue_of_data_dict))
     // 同时更新nowValue和preValue
-    function __update_oneData_multipleNowValueandPreValue_simultaneously(sheet, id, value_dict){
+    function __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(sheet, id, value_dict){
         for (let field in value_dict){
             let value = value_dict[field]
             if (all_preValue_of_data_dict[sheet][id].hasOwnProperty(field)){
@@ -4170,6 +4170,32 @@
         }
     }
 
+    function __substitute_oneData_byModifiedData_changeStatusDoneorFree(sheet, id, data){
+        // 1) 先查看本地是否有此条数据，该表是否含logsEdit,统计迁移、删除params和log相关
+        if (all_status_of_data_dict[sheet].hasOwnProperty(id) &&
+                sheetDisplayConfigDict[sheet][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1){
+            let status = all_status_of_data_dict[sheet][id]
+            // 如果是已审核状态，
+            if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status)!==-1){
+                // 因为sample表不需要修改，所以可以这样用，sample表sampleId对应外部cms
+                let sample_id = all_preValue_of_data_dict[sheet][id][dict.SAMPLEID]
+                // a) 移动统计
+                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA, sheet)
+            }
+            // b) 删除其params和log相关
+            __delete_oneData_params_logRelated(sheet, id)
+        }
+
+        // 2) 如果该表为sampleInfo，需要修改sample_dict
+        if (sheet === dict.SAMPLEINFO){
+            let sampleSn = data['sampleSn']
+            sample_dict[sampleSn] = data
+            // console.log('handleAddDataSubmit sampleInfo', sampleSn, data)
+        }
+
+        // 3) 如果本地没有load，或者已经load，都直接强制利用数据注入status, nowValue, preValue
+        __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([data], sheet, true)
+    }
     // 追加数据相关参数
     let addDataShow = false
     async function handleAddDataSubmit(e){
@@ -4309,31 +4335,7 @@
                 let id = updated_data[dict.ID]
                 let data = updated_data[dict.DATA]
 
-                // 先查看本地是否有此条数据，该表是否含logsEdit,统计迁移、删除params和log相关
-                if (all_status_of_data_dict[sheet].hasOwnProperty(id) &&
-                        sheetDisplayConfigDict[sheet][dict.FILTERS].indexOf(dict.LOGSEDIT)!==-1){
-
-                    let status = all_status_of_data_dict[sheet][id]
-                    // 如果是已审核状态，
-                    if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status)!==-1){
-                        // 因为sample表不需要修改，所以可以这样用，sample表sampleId对应外部cms
-                        let sample_id = all_preValue_of_data_dict[sheet][id][dict.SAMPLEID]
-                        __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA, sheet)
-                    }
-                    // 删除其params和log相关
-                    __delete_oneData_params_logRelated(sheet, id)
-
-                }
-
-                // 如果该表为sampleInfo，需要修改sample_dict
-                if (sheet === dict.SAMPLEINFO){
-                    let sampleSn = data['sampleSn']
-                    sample_dict[sampleSn] = data
-                    // console.log('handleAddDataSubmit sampleInfo', sampleSn, data)
-                }
-
-                // 如果本地没有load，或者已经load，都直接强制利用数据注入status, nowValue, preValue
-                __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([data], sheet, true)
+                __substitute_oneData_byModifiedData_changeStatusDoneorFree(sheet, id, data)
             }
 
             await __getPageData()
@@ -4422,32 +4424,39 @@
         form.append('id', id)
         form.append('token', userInfo.getToken())
 
+        let modified_immune = null
+        let immune_id = null
         await api.addDataConnectImmune(form).then(response=>{
-            console.log('__handle_add_dataConnectImmune', response.data)
-            let {modify, testResult, effect, immune_id} = response.data
-            // 1) 如果已经下载此条data对应的 immune数据，则更新
-            if (modify && all_status_of_data_dict[dict.IMMUNE].hasOwnProperty(immune_id)) {
-                __update_oneData_multipleNowValueandPreValue_simultaneously(dict.IMMUNE, immune_id, {
-                    [dict.TESTRESULT]: testResult,
-                    [dict.EFFECT]: effect
-                })
-            }
-            // 2) 更新本地此条 data数据的
-            __update_oneData_multipleNowValueandPreValue_simultaneously(params.type, id, {
-                [dict.IMMUNEID]: immune_id,
-                [dict.IMMUNE_ID]: immune_id
-            })
+            immune_id = response.data[dict.IMMUNE_ID]
+            modified_immune = response.data[dict.MODIFY]
+            console.log('__handle_add_dataConnectImmune modified_immune', immune_id, modified_immune)
         }).catch(error=>{
             console.log('__handle_add_dataConnectImmune', error)
             errors = error
         })
+
+        // 判断是否获取到修改的immune_id数据, 理论上成功添加，必然返回
+        if (immune_id){
+            // 1) 当前表，更新本地此条 data数据的, 此时data状态必然是free
+            __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(params.type, id, {
+                [dict.IMMUNEID]: immune_id,
+                [dict.IMMUNE_ID]: immune_id
+            })
+
+            // 2) immune表中，如果已经下载此条data对应的 immune数据，则使用modified_immune进行更新
+            // 因为testResult，effect为可修改项，需要替换状态
+            // 判断是否需要修改immune，如果之前immune已经关联数据将获取不到modified_immune
+            if (modified_immune && all_status_of_data_dict[dict.IMMUNE].hasOwnProperty(immune_id)) {
+                __substitute_oneData_byModifiedData_changeStatusDoneorFree(dict.IMMUNE, immune_id, modified_immune)
+            }
+        }
 
         // 刷新页面
         await __getPageData()
 
         loadingShow = false
     }
-    async function __handle_delete_dataConnectImmune(sheet, id, immune_id){
+    async function __handle_delete_dataConnectImmune(sheet, id){
         loadingShow = true
 
         let form = new FormData()
@@ -4455,29 +4464,32 @@
         form.append('id', id)
         form.append('token', userInfo.getToken())
 
+        let modified_immune = null
+        let immune_id = null
         await api.deleteDataConnectImmune(form).then(response=>{
-            // console.log('__handle_delete_dataConnectImmune', response)
-            // 如果需要修改，说明无data与immune关联了
-            let {modify, testResult, effect} = response.data
-            // 1）更新此条immune数据条
-            if (modify) {
-                __update_oneData_multipleNowValueandPreValue_simultaneously(dict.IMMUNE, immune_id, {
-                    [dict.TESTRESULT]: testResult,
-                    [dict.EFFECT]: effect
-                })
-            }
-            // 2) 更新剔除 关联data数据
-            if(all_status_of_data_dict[sheet].hasOwnProperty(id)){
-                __update_oneData_multipleNowValueandPreValue_simultaneously(sheet, id, {
-                    [dict.IMMUNEID]: "",
-                    [dict.IMMUNE_ID]: null
-                })
-            }
-
+            immune_id = response.data[dict.IMMUNE_ID]
+            modified_immune = response.data[dict.MODIFY]
+            console.log('__handle_delete_dataConnectImmune modified_immune', immune_id, modified_immune)
         }).catch(error=>{
             console.log('__handle_delete_dataConnectImmune', error)
             errors = error
         })
+        
+        if(immune_id){
+            if (modified_immune){
+                let {testResult, effect} = modified_immune
+                // 1）更新此条immune数据条（如果需要修改，说明无data与immune关联了）
+                __substitute_oneData_byModifiedData_changeStatusDoneorFree(dict.IMMUNE, immune_id, modified_immune)
+            }
+
+            // 2) 判断对应数据是否已本地下载，更新 剔除关联data数据（因为immuneId 或immune_id为不可修改项，不用考虑状态改变，直接修改）
+            if(all_status_of_data_dict[sheet].hasOwnProperty(id)){
+                __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(sheet, id, {
+                    [dict.IMMUNEID]: "",
+                    [dict.IMMUNE_ID]: null
+                })
+            }
+        }
 
         // 刷新页面
         await __getPageData()
