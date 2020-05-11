@@ -895,7 +895,7 @@
         SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune', IMMUNE_CONNECT: "immune_connect",
         GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune',
         TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', IMMUNE_ID: 'immune_id', _GENENAME: '_geneName', ADD: 'add',
-        CONNECTSHEET: 'connectSheet',
+        CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune',
     }
     // 获取路径中的：值
     export let params = {}
@@ -926,6 +926,7 @@
         loadingShow = true
 
         let copy_data_id
+        let modified_immune = null
         let sample_id = all_now_sample_id[params.type]
         let success = false
         await api.copyData(
@@ -934,11 +935,13 @@
                 uuidv4(),
                 userInfo.getToken()
         ).then(response=>{
-            // console.log("__handleCopyData", response.data)
             success = true
 
             // 利用返回id更换now_id
-            copy_data_id = response.data.id
+            copy_data_id = response.data[dict.ID]
+            modified_immune = response.data[dict.MODIFIED_IMMUNE]
+            console.log("__handleCopyData copy_data_id modified_immune", copy_data_id, modified_immune)
+
             __change_dataIds_and_sampleIds(copy_data_id, sample_id)
         }).catch(error=>{
             console.log('__handleCopyData copyData', error)
@@ -986,6 +989,12 @@
         // 更新all_search_params_dict中page, ids
         all_search_params_dict[params.type][dict.PAGE] = copy_data_page
         all_search_params_dict[params.type][dict.IDS] = ids
+
+        // 如果是TMB或TNB拷贝，还需要修改immune页对应sheet行
+        if(modified_immune && all_status_of_data_dict[dict.IMMUNE].hasOwnProperty(modified_immune[dict.ID])){
+            let immune_id = modified_immune[dict.ID]
+            __substitute_oneData_byModifiedData_changeStatusDoneorFree(dict.IMMUNE, immune_id, modified_immune)
+        }
 
         await __getPageData()
 
@@ -4474,7 +4483,7 @@
             console.log('__handle_delete_dataConnectImmune', error)
             errors = error
         })
-        
+
         if(immune_id){
             if (modified_immune){
                 let {testResult, effect} = modified_immune
