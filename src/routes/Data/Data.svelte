@@ -895,7 +895,8 @@
         SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune', IMMUNE_CONNECT: "immune_connect",
         GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune',
         TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', IMMUNE_ID: 'immune_id', _GENENAME: '_geneName', ADD: 'add',
-        CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune',
+        CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune', CNA: 'CNA', FUSION: 'fusion',
+        MODIFY_IMMUNE_NUM: 'modify_immune_num',
     }
     // 获取路径中的：值
     export let params = {}
@@ -3068,12 +3069,20 @@
             let success = false
             let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
             let log_id = all_submit_logs_dict[params.type][id]
+
+            // 收集回传的immune关联结果
+            let immune_id = null
+            let modified_immune = null
             await api[`update${name}`](id,
                     {
                         log_id,
                         ...all_submit_params_dict[params.type][id]
                     }
             ).then(response=>{
+                immune_id = response.data[dict.IMMUNE_ID]
+                modified_immune = response.data[dict.MODIFIED_IMMUNE]
+                console.log('submitAffirmedData immune_id modified_immune', immune_id, modified_immune)
+
                 success = true
                 success_num++
                 if(success_ids_dict.hasOwnProperty(log_id)){
@@ -3081,6 +3090,23 @@
                 }else{
                     success_ids_dict[log_id] = [id]
                 }
+
+                // 处理回传的immune关联, 不然params会删除，要在这之前__change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord
+                if(immune_id){
+                    switch (params.type){
+                        case dict.TMB: case dict.TNB:
+                            __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, dict.MODIFY_IMMUNE_NUM)
+                            break
+                        case dict.TARGET: case dict.FUSION: case dict.CNA:
+                            // 判断是删除，还是取消删除
+                            let type = all_submit_params_dict[params.type][id][dict.DELETE]?dict.DELETE:dict.ADD
+                            __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, type)
+                            break
+                        default:
+                            break
+                    }
+                }
+
                 // 1) 更新相关参数
                 __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
                 // // 2) 更新页面的availableSelect 替换 __getPageData()中G)全部整体更新
@@ -3095,6 +3121,7 @@
 
             let time = getTime()
             all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'提交成功。':'提交失败！'}`]
+
         }
         // console.log("submitAffirmedData success_ids fail_ids", success_ids_dict)
 
@@ -4425,6 +4452,37 @@
         await __getPageData()
     }
 
+    function __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet=null, type){
+        // 判断是否获取到修改的immune_id数据, 理论上成功添加，必然返回
+        if (immune_id){
+            // 1) 当前表，更新本地此条 data数据的, 此时data状态必然是free
+            let default_sheet = sheet?sheet:params.type
+            if (type !== dict.MODIFY_IMMUNE_NUM){
+                if(all_status_of_data_dict[default_sheet].hasOwnProperty(id)){
+                    if (type === dict.ADD) {
+                        __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(default_sheet, id, {
+                            [dict.IMMUNEID]: immune_id,
+                            [dict.IMMUNE_ID]: immune_id
+                        })
+                    }
+                    else if (type === dict.DELETE) {
+                        __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(default_sheet, id, {
+                            [dict.IMMUNEID]: "",
+                            [dict.IMMUNE_ID]: null
+                        })
+                    }
+                }
+            }
+
+
+            // 2) immune表中，如果已经下载此条data对应的 immune数据，则使用modified_immune进行更新
+            // 因为testResult，effect为可修改项，需要替换状态
+            // 判断是否需要修改immune，如果之前immune已经关联数据将获取不到modified_immune
+            if (modified_immune && all_status_of_data_dict[dict.IMMUNE].hasOwnProperty(immune_id)) {
+                __substitute_oneData_byModifiedData_changeStatusDoneorFree(dict.IMMUNE, immune_id, modified_immune)
+            }
+        }
+    }
     async function __handle_add_dataConnectImmune(sheet, id){
         loadingShow = true
 
@@ -4444,21 +4502,8 @@
             errors = error
         })
 
-        // 判断是否获取到修改的immune_id数据, 理论上成功添加，必然返回
-        if (immune_id){
-            // 1) 当前表，更新本地此条 data数据的, 此时data状态必然是free
-            __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(params.type, id, {
-                [dict.IMMUNEID]: immune_id,
-                [dict.IMMUNE_ID]: immune_id
-            })
-
-            // 2) immune表中，如果已经下载此条data对应的 immune数据，则使用modified_immune进行更新
-            // 因为testResult，effect为可修改项，需要替换状态
-            // 判断是否需要修改immune，如果之前immune已经关联数据将获取不到modified_immune
-            if (modified_immune && all_status_of_data_dict[dict.IMMUNE].hasOwnProperty(immune_id)) {
-                __substitute_oneData_byModifiedData_changeStatusDoneorFree(dict.IMMUNE, immune_id, modified_immune)
-            }
-        }
+        // 修改本地data和对应的immune
+        __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, dict.ADD)
 
         // 刷新页面
         await __getPageData()
@@ -4484,21 +4529,22 @@
             errors = error
         })
 
-        if(immune_id){
-            if (modified_immune){
-                let {testResult, effect} = modified_immune
-                // 1）更新此条immune数据条（如果需要修改，说明无data与immune关联了）
-                __substitute_oneData_byModifiedData_changeStatusDoneorFree(dict.IMMUNE, immune_id, modified_immune)
-            }
+        // if(immune_id){
+        //     if (modified_immune){
+        //         // 1）更新此条immune数据条（如果需要修改，说明无data与immune关联了）
+        //         __substitute_oneData_byModifiedData_changeStatusDoneorFree(dict.IMMUNE, immune_id, modified_immune)
+        //     }
+        //
+        //     // 2) 判断对应数据是否已本地下载，更新 剔除关联data数据（因为immuneId 或immune_id为不可修改项，不用考虑状态改变，直接修改）
+        //     if(all_status_of_data_dict[sheet].hasOwnProperty(id)){
+        //         __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(sheet, id, {
+        //             [dict.IMMUNEID]: "",
+        //             [dict.IMMUNE_ID]: null
+        //         })
+        //     }
+        // }
 
-            // 2) 判断对应数据是否已本地下载，更新 剔除关联data数据（因为immuneId 或immune_id为不可修改项，不用考虑状态改变，直接修改）
-            if(all_status_of_data_dict[sheet].hasOwnProperty(id)){
-                __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(sheet, id, {
-                    [dict.IMMUNEID]: "",
-                    [dict.IMMUNE_ID]: null
-                })
-            }
-        }
+        __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet, dict.DELETE)
 
         // 刷新页面
         await __getPageData()
