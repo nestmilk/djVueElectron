@@ -634,18 +634,29 @@
                                             <!--区分处理一些特殊的field-->
                                             {#if all_titleListItem_dict[params.type][field][dict.IMMUNE_CONNECT]}
                                                 <!--显示免疫表中与target, fusion, CNA的关联-->
-                                                <td class="">
-                                                    {#if line_data.hasOwnProperty(`${line_data[dict.SHEET]}s`)
-                                                        && line_data[`${line_data[dict.SHEET]}s`].length > 0}
+                                                <td class="connectSheet">
+                                                    {#if line_data[dict.TYPE] && line_data.hasOwnProperty(`${line_data[dict.TYPE].split('_')[0]}s`)
+                                                        && line_data[`${line_data[dict.TYPE].split('_')[0]}s`].length > 0}
                                                         <table class="immuneConnectTable">
-                                                            {#each line_data[`${line_data[dict.SHEET]}s`] as instance}
-                                                                <tr title="{line_data[dict.SHEET]===dict.TARGET?instance[dict.HGVS]:''}"
-                                                                    on:click={(e)=>handle_changeSheet_findIdData(line_data[dict.SHEET], instance[dict.ID], e)}
+                                                            {#each line_data[`${line_data[dict.TYPE].split('_')[0]}s`] as instance}
+                                                                <tr title="{line_data[dict.TYPE]===dict.MUTANT?instance[dict.HGVS]:''}"
+                                                                    on:click={(e)=>handle_changeSheet_findIdData(
+                                                                                line_data[dict.TYPE]===dict.MUTANT?instance[dict.TYPE]:line_data[dict.TYPE].split('_')[0],
+                                                                                instance[dict.ID],
+                                                                                e)}
                                                                 >
-                                                                    <td class="sheet">{line_data[dict.SHEET]}</td>
+                                                                    <td class="sheet">
+                                                                        {line_data[dict.TYPE]===dict.MUTANT?instance[dict.TYPE]:""}
+                                                                        {line_data[dict.TYPE].includes(dict.CNA)?dict.CNA:""}
+                                                                        {line_data[dict.TYPE]===dict.FUSION?dict.FUSION:""}
+                                                                    </td>
                                                                     <td class="id">{instance[dict.ID]}</td>
                                                                     <td class="delete icon-cross"
-                                                                        on:click={(e)=>handle_dataConnectImmune_Delete(line_data[dict.SHEET], instance[dict.ID], line_data[dict.ID], e)}
+                                                                        on:click={(e)=>handle_dataConnectImmune_Delete(
+                                                                                    line_data[dict.TYPE]===dict.MUTANT?instance[dict.TYPE]:line_data[dict.TYPE].split('_')[0],
+                                                                                    instance[dict.ID],
+                                                                                    line_data[dict.ID],
+                                                                                    e)}
                                                                     ></td>
                                                                 </tr>
                                                             {/each}
@@ -895,8 +906,8 @@
         SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune', IMMUNE_CONNECT: "immune_connect",
         GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune',
         TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', IMMUNE_ID: 'immune_id', _GENENAME: '_geneName', ADD: 'add',
-        CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune', CNA: 'CNA', FUSION: 'fusion',
-        MODIFY_IMMUNE_NUM: 'modify_immune_num',
+        CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune', CNA: 'CNA', FUSION: 'fusion', MUTANT: 'mutant',
+        MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio'
     }
     // 获取路径中的：值
     export let params = {}
@@ -1315,8 +1326,8 @@
                         break
                     case dict.ADD:
                         if(reply){
-                            let {sheet, id} = sureData
-                            await __handle_add_dataConnectImmune(sheet, id)
+                            let {sheet, id, cna_type} = sureData
+                            await __handle_add_dataConnectImmune(sheet, id, cna_type)
                         }
                         break
                     default:
@@ -3862,13 +3873,32 @@
 
             // C) 针对连接免疫的表， 且有能力关联immune（此数据条geneName在该sampleSn的immune表基因列表条目中）
             let geneName = all_preValue_of_data_dict[params.type][right_id][dict._GENENAME]
-            let genes_inImmune = sample_dict[right_sampleSn][`${params.type.toLowerCase()}_genes_inImmune`]
+            let genes_inImmune = null
+            let cna_type = null
+            if (params.type === dict.TARGET || params.type === dict.HEREDITARY){
+                genes_inImmune = sample_dict[right_sampleSn]['mutant_genes_inImmune']
+            }else if (params.type === dict.CNA){
+                let cnaRatio = all_nowValue_of_data_dict[params.type][right_id][dict.CNARATIO]
+                if (!isNaN(cnaRatio)){
+                    let copy_num = parseInt(cnaRatio)
+                    if (copy_num < 2){
+                        genes_inImmune = sample_dict[right_sampleSn]['CNA_loss_genes_inImmune']
+                        cna_type = 'loss'
+                    }else if (copy_num > 2){
+                        genes_inImmune = sample_dict[right_sampleSn]['CNA_gain_genes_inImmune']
+                        cna_type = 'gain'
+                    }
+                }
+            }else if (params.type === dict.FUSION){
+                genes_inImmune = sample_dict[right_sampleSn]['fusion_genes_inImmune']
+            }
+
             let genes_inImmune_list = genes_inImmune? genes_inImmune.split(';') : []
             console.log('__handleContextMenu genes_inImmune_list', genes_inImmune_list)
 
             if(sheetDisplayConfigDict[params.type][dict.CONNECT_IMMUNE] &&
                     genes_inImmune_list.indexOf(geneName) !== -1){
-                // 先决条件右键为当前id，数据没有关联immune, 此条数据状态为free
+                // 先决条件右键为当前id，数据immueId为“”空字符串, 此条数据状态为free
                 let immuneId = all_preValue_of_data_dict[params.type][right_id][dict.IMMUNEID]
 
                 let connect_immune_menuItem = new remote.MenuItem({
@@ -3878,6 +3908,7 @@
                         openSureMessage(dict.IMMUNE_CONNECT, dict.ADD, {
                             sheet: params.type,
                             id: right_id,
+                            cna_type
                         })
                     }
                 })
@@ -4441,6 +4472,7 @@
     }
 
     async function handle_changeSheet_findIdData(sheet, id, event){
+        console.log('handle_changeSheet_findIdData sheet id', sheet, id)
         event.stopPropagation()
         // 更换页
         await handleSelectSubmenu(sheet, false)
@@ -4483,12 +4515,13 @@
             }
         }
     }
-    async function __handle_add_dataConnectImmune(sheet, id){
+    async function __handle_add_dataConnectImmune(sheet, id, cna_type){
         loadingShow = true
 
         let form = new FormData()
         form.append('sheet', sheet)
         form.append('id', id)
+        form.append('cna_type', cna_type)
         form.append('token', userInfo.getToken())
 
         let modified_immune = null
@@ -4553,6 +4586,7 @@
     }
 
     function handle_dataConnectImmune_Delete(sheet, id, immune_id, event){
+        console.log('handle_dataConnectImmune_Delete sheet id immune_id', sheet, id, immune_id,)
         event.stopPropagation()
         let status = all_status_of_data_dict[dict.IMMUNE][immune_id]
         // 只有free状态，才能在immune表中进行删除
@@ -5455,6 +5489,14 @@
         color: red;
         text-decoration: line-through;
     }
+    .contentRight .rightDataTable th.connectSheet,
+    .contentRight .rightDataTable td.connectSheet{
+        min-width: 149px!important;
+    }
+    .contentRight .rightDataTable th.connectSheet .inside,
+    .contentRight .rightDataTable td.connectSheet .inside{
+        width: 149px!important;
+    }
     .contentRight .rightDataTable .lineData .immuneConnectTable{
         border-collapse: collapse;
         border: none;
@@ -5469,10 +5511,10 @@
         background: #69ca60;
     }
     .contentRight .rightDataTable .lineData .immuneConnectTable .sheet{
-        width: 45px;
+        width: 61px;
     }
     .contentRight .rightDataTable .lineData .immuneConnectTable .id{
-        width: 55px;
+        width: 63px;
     }
     .contentRight .rightDataTable .lineData .immuneConnectTable .delete{
         width: 25px;

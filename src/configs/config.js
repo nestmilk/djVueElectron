@@ -499,6 +499,7 @@ export const sheetDisplayConfigList = [
         need_all_check: true,
         igv_control: true,
         need_copy: true,
+        connect_immune: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -672,6 +673,14 @@ export const sheetDisplayConfigList = [
                 modify: true,
                 defaultDisplay: true,
                 selectDisplay: true
+            }, {
+                title: "immuneId",
+                type: "text",
+                translate: "免疫ID",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: true,
+                redirect: 'immune'
             },
         ],
     },
@@ -2129,10 +2138,13 @@ export const common_subFilter_selections_dict = {
             value: 'target',
             content: '存在关联(靶向)'
         }, {
+            value: 'hereditary',
+            content: '存在关联(遗传)'
+        }, {
             value: 'fusion',
             content: '存在关联(融合)'
         }, {
-            value: 'CNA',
+            value: 'cna',
             content: '存在关联(CNA)'
         }
     ]
