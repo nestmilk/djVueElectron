@@ -907,7 +907,7 @@
         GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune',
         TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', IMMUNE_ID: 'immune_id', _GENENAME: '_geneName', ADD: 'add',
         CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune', CNA: 'CNA', FUSION: 'fusion', MUTANT: 'mutant',
-        MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio'
+        MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio',
     }
     // 获取路径中的：值
     export let params = {}
@@ -3108,7 +3108,7 @@
                         case dict.TMB: case dict.TNB:
                             __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, dict.MODIFY_IMMUNE_NUM)
                             break
-                        case dict.TARGET: case dict.FUSION: case dict.CNA:
+                        case dict.TARGET: case dict.HEREDITARY: case dict.FUSION: case dict.CNA:
                             // 判断是删除，还是取消删除
                             let type = all_submit_params_dict[params.type][id][dict.DELETE]?dict.DELETE:dict.ADD
                             __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, type)
