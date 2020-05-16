@@ -3895,15 +3895,16 @@
 
             let genes_inImmune_list = genes_inImmune? genes_inImmune.split(';') : []
             console.log('__handleContextMenu genes_inImmune_list', genes_inImmune_list)
+            let right_nowValue_delete = all_nowValue_of_data_dict[params.type][right_id][dict.DELETE]
 
             if(sheetDisplayConfigDict[params.type][dict.CONNECT_IMMUNE] &&
                     genes_inImmune_list.indexOf(geneName) !== -1){
-                // 先决条件右键为当前id，数据immueId为“”空字符串, 此条数据状态为free
+                // 先决条件右键为当前id，数据immueId为“”空字符串, 此条数据状态为free, 此条数据nowValue为非删除
                 let immuneId = all_preValue_of_data_dict[params.type][right_id][dict.IMMUNEID]
 
                 let connect_immune_menuItem = new remote.MenuItem({
                     label: '关联免疫表',
-                    enabled: id === right_id && immuneId === '' && right_status === dict.FREE,
+                    enabled: id === right_id && immuneId === '' && right_status === dict.FREE && !right_nowValue_delete,
                     click: ()=>{
                         openSureMessage(dict.IMMUNE_CONNECT, dict.ADD, {
                             sheet: params.type,
