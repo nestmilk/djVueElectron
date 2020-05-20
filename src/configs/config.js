@@ -264,6 +264,12 @@ export const sheetDisplayConfigList = [
                 value: 'benign',
                 content: '良性'
             }, {
+                value: 'likely_benign',
+                content: '疑似良性'
+            }, {
+                value: 'cancel_false_positive',
+                content: '取消假阳性'
+            }, {
                 value: 'other',
                 content: '其它'
             }
@@ -514,6 +520,12 @@ export const sheetDisplayConfigList = [
                 value: 'benign',
                 content: '良性'
             }, {
+                value: 'likely_benign',
+                content: '疑似良性'
+            }, {
+                value: 'cancel_false_positive',
+                content: '取消假阳性'
+            }, {
                 value: 'other',
                 content: '其它'
             }
@@ -704,6 +716,12 @@ export const sheetDisplayConfigList = [
             }, {
                 value: 'benign',
                 content: '良性'
+            }, {
+                value: 'likely_benign',
+                content: '疑似良性'
+            }, {
+                value: 'cancel_false_positive',
+                content: '取消假阳性'
             }, {
                 value: 'other',
                 content: '其它'

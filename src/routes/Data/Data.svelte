@@ -908,7 +908,8 @@
         TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', IMMUNE_ID: 'immune_id', _GENENAME: '_geneName', ADD: 'add',
         CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune', CNA: 'CNA', FUSION: 'fusion', MUTANT: 'mutant',
         MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio', MODIFIED_MUTANTS: 'modified_mutants', MODIFIED_IMMUNES: 'modified_immunes',
-        BEFORE_NOT_DONE: 'before_not_done',
+        BEFORE_DONE: 'before_done', FALSE_POSITIVE: 'false_positive', CANCEL_FALSE_POSITIVE: 'cancel_false_positive',
+        CONNECT: 'connect', CANCEL_CONNECT: 'cancel_connect',
     }
     // 获取路径中的：值
     export let params = {}
@@ -3094,6 +3095,9 @@
             let success = false
             let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
             let log_id = all_submit_logs_dict[params.type][id]
+            let reason_type = logs_together_dict[log_id][dict.VALUE]
+            let instance_delete = all_submit_params_dict[params.type][id].hasOwnProperty(dict.DELETE)?
+                    -1:JSON.parse(JSON.stringify(all_submit_params_dict[params.type][id][dict.DELETE]))
 
             // 收集回传的immune关联结果
             let modified_immune_dict = {}
@@ -3112,7 +3116,6 @@
                 modified_mutants = response.data[dict.MODIFIED_MUTANTS]
                 console.log('submitAffirmedData modified_immune_dict modified_mutants', modified_immune_dict, modified_mutants)
 
-
                 success = true
                 success_num++
                 if(success_ids_dict.hasOwnProperty(log_id)){
@@ -3121,57 +3124,96 @@
                     success_ids_dict[log_id] = [id]
                 }
 
-                // 处理回传的immune关联, 不然params会删除，要在这之前__change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord
+
+                // A) 处理回传的immune关联
                 if(modified_immune_dict && Object.keys(modified_immune_dict).length>0){
                     console.log('submitAffirmedData 开始处理modified_immune_dict', modified_immune_dict)
                     for (let immune_id in modified_immune_dict){
-                        let modified_immune = modified_immune_dict[immune_id]
-                        switch (params.type){
-                            case dict.TMB: case dict.TNB:
-                                __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, dict.MODIFY_IMMUNE_NUM)
-                                break
-                            case dict.TARGET: case dict.HEREDITARY: case dict.FUSION: case dict.CNA:
-                                // 判断是删除，还是取消删除
-                                let type = all_submit_params_dict[params.type][id][dict.DELETE]?dict.DELETE:dict.ADD
-                                __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, type)
-                                break
-                            default:
-                                break
+                        let modified_immune = modified_immune_dict[immune_id][dict.DATA]
+                        if (modified_immune_dict[immune_id].hasOwnProperty(dict.CONNECT)){
+                            let type = dict.ADD
+                            for (let item of modified_immune_dict[immune_id][dict.CONNECT]) {
+                                let sheet = item[dict.SHEET]
+                                let id = item[dict.ID]
+                                __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet, type)
+                            }
                         }
+
+                        if (modified_immune_dict[immune_id].hasOwnProperty(dict.CANCEL_CONNECT)){
+                            let type = dict.DELETE
+                            for (let item of modified_immune_dict[immune_id][dict.CANCEL_CONNECT]) {
+                                let sheet = item[dict.SHEET]
+                                let id = item[dict.ID]
+                                __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet, type)
+                            }
+                        }
+
                     }
                 }
 
-                // 如果有突变需要更新
+                // B）如果有突变需要更新,
+                // 目前需要处理额情况 1. 突变设为假阳性， 2. 突变取消假阳性
                 if(modified_mutants && modified_mutants.length>0){
                     for (let mutant of modified_mutants){
                         let sheet = mutant['type']
                         let id = mutant['id']
                         let sample_id = mutant['sampleId']
-                        console.log('submitAffirmedData sheet mutant', sheet, mutant)
+                        console.log('submitAffirmedData sheet mutant reason_type', sheet, mutant, reason_type)
 
-                        if (all_status_of_data_dict[sheet].hasOwnProperty(id)){
-                            // 如果当前已有数据
-                            let status = all_status_of_data_dict[sheet][id]
-                            // console.log("submitAffirmedData status", status)
+                        if (reason_type === dict.FALSE_POSITIVE){
+                            // 处理 1. 突变设为假阳性
+                            if (all_status_of_data_dict[sheet].hasOwnProperty(id)){
+                                // 如果当前已有数据
+                                let status = all_status_of_data_dict[sheet][id]
+                                // console.log("submitAffirmedData status", status)
 
-                            // 1）移动sample或sheet中统计数字
-                            if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status) !== -1){
-                                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.S_ADATA, sheet)
-                            }else if (status === dict.FREE){
-                                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA, sheet)
+                                // 1）移动sample或sheet中统计数字
+                                if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status) !== -1){
+                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.S_ADATA, sheet)
+                                }else if (status === dict.FREE){
+                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA, sheet)
+                                }
+
+                                // 2） 删除params和log相关，就算开始已经提交，后续就算循环到也不会上传了
+                                __delete_oneData_params_logRelated(sheet, id)
+                            }else{
+                                // 1） 正常下载时候必然为free，然后跳过为done, 修改sample和sheet的count统计
+                                let before_done = mutant[dict.BEFORE_DONE]
+                                if(!before_done && mutant[dict.DONE]){
+                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA, sheet)
+                                }
                             }
 
-                            // 2） 删除params和log相关，就算开始已经提交，后续就算循环到也不会上传了
-                            __delete_oneData_params_logRelated(sheet, id)
-                        }else{
-                            // 1） 正常下载时候必然为free，然后跳过为done, 修改sample和sheet的count统计
-                            let before_not_done = mutant[dict.BEFORE_NOT_DONE]
-                            if(before_not_done && mutant[dict.DONE]){
-                                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA, sheet)
+                            // 3) 不能放前面，之前status需要用于count的迁移，下载或更新status和nowValue，preValue
+                            __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([mutant], sheet, true)
+                        }else if (reason_type === dict.CANCEL_FALSE_POSITIVE){
+                            // 处理 2. 突变取消假阳性
+                            if (all_status_of_data_dict[sheet].hasOwnProperty(id)){
+                                // 如果当前已有数据
+                                let status = all_status_of_data_dict[sheet][id]
+                                // console.log("submitAffirmedData status", status)
+
+                                // 1）移动sample或sheet中统计数字
+                                if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status) !== -1){
+                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA, sheet)
+                                }else if (status === dict.DONE){
+                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA, sheet)
+                                }
+
+                                // 2） 删除params和log相关，就算开始已经提交，后续就算循环到也不会上传了
+                                __delete_oneData_params_logRelated(sheet, id)
+                            }else{
+                                // 1） 正常下载时候必然为free，然后跳过为done, 修改sample和sheet的count统计
+                                let before_done = mutant[dict.BEFORE_DONE]
+                                if(before_done && !mutant[dict.DONE]){
+                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA, sheet)
+                                }
                             }
+
+                            // 3) 不能放前面，之前status需要用于count的迁移，下载或更新status和nowValue，preValue
+                            __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([mutant], sheet, true)
                         }
-                        // 3) 下载或更新status和nowValue，preValue
-                        __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([mutant], sheet, true)
+
                     }
 
                     // 提示关联删除信息
@@ -4552,13 +4594,14 @@
         await __getPageData()
     }
 
-    function __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet=null, type){
+    function __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet=null, type=null){
         // 判断是否获取到修改的immune_id数据, 理论上成功添加，必然返回
         if (immune_id){
-            // 1) 当前表，更新本地此条 data数据的, 此时data状态必然是free
+            // 1) 当前表，更新本地此条 data数据的
             // 如果是修改免疫中数字，如tmb tnb，不需要修改数据条目
+            // 理论上，只要修改dict.IMMUNEID即可，数据库与本地差异检测仅config中的title+delete+done
             let default_sheet = sheet?sheet:params.type
-            if (type !== dict.MODIFY_IMMUNE_NUM){
+            if ([dict.TMB, dict.TNB].indexOf(default_sheet) === -1){
                 if(all_status_of_data_dict[default_sheet].hasOwnProperty(id)){
                     if (type === dict.ADD) {
                         __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(default_sheet, id, {
@@ -4574,8 +4617,6 @@
                     }
                 }
             }
-
-
             // 2) immune表中，如果已经下载此条data对应的 immune数据，则使用modified_immune进行更新
             // 因为testResult，effect为可修改项，需要替换状态
             // 判断是否需要修改immune，如果之前immune已经关联数据将获取不到modified_immune
