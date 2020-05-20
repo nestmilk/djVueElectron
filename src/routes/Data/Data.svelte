@@ -907,7 +907,8 @@
         GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune',
         TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', IMMUNE_ID: 'immune_id', _GENENAME: '_geneName', ADD: 'add',
         CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune', CNA: 'CNA', FUSION: 'fusion', MUTANT: 'mutant',
-        MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio',
+        MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio', MODIFIED_MUTANTS: 'modified_mutants', MODIFIED_IMMUNES: 'modified_immunes',
+        BEFORE_NOT_DONE: 'before_not_done',
     }
     // 获取路径中的：值
     export let params = {}
@@ -2345,14 +2346,19 @@
                 failed_ids.push(id)
             })
 
-            let time = getTime()
-            all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'撤销成功。':'撤销失败！'}`]
+            // let time = getTime()
+            // all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'撤销成功。':'撤销失败！'}`]
+            let message = `${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'撤销成功。':'撤销失败！'}`
+            __append_timePlused_uploadMessage(message)
         }
 
         // a. 消息提示整体情况
-        let time = getTime()
+        // let time = getTime()
         let left_message = fail_num?`，失败${fail_num}条`:'。'
-        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 撤销成功${success_num}条${left_message}`]
+        // all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 撤销成功${success_num}条${left_message}`]
+        let message = `撤销成功${success_num}条${left_message}`
+        __append_timePlused_uploadMessage(message)
+
         // b. 保险起见
         selected_ids_forCancelDone = []
         __set_page_inAllSearchParamsDict(1)
@@ -3027,6 +3033,10 @@
         result[item[dict.SHEET]] = []
         return result
     },{})))
+    function __append_timePlused_uploadMessage(message){
+        let time = getTime()
+        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${message}`]
+    }
 
 
     async function submitAffirmedData(){
@@ -3051,14 +3061,18 @@
                 fail_logs.push(log_id)
             })
 
-            let time = getTime()
-            all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 日志(${log_id.split('-')[0]}...)${success?'已上传。':'上传失败！'}`]
+            // let time = getTime()
+            // all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 日志(${log_id.split('-')[0]}...)${success?'已上传。':'上传失败！'}`]
+            let message = `日志(${log_id.split('-')[0]}...)${success?'已上传。':'上传失败！'}`
+            __append_timePlused_uploadMessage(message)
         }
 
         console.log("submitAffirmedData success_logs fail_logs", success_logs, fail_logs)
 
-        let time = getTime()
-        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 日志上传${success_logs.length}条，失败${fail_logs.length}条`]
+        // let time = getTime()
+        // all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 日志上传${success_logs.length}条，失败${fail_logs.length}条`]
+        let message = `日志上传${success_logs.length}条，失败${fail_logs.length}条`
+        __append_timePlused_uploadMessage(message)
         if(fail_logs.length>0) {
             // 如果有日志提交失败就停止后续数据的更新提交
             errors = '日志上传失败，取消后续提交！'
@@ -3082,17 +3096,22 @@
             let log_id = all_submit_logs_dict[params.type][id]
 
             // 收集回传的immune关联结果
-            let immune_id = null
-            let modified_immune = null
+            let modified_immune_dict = {}
+            let modified_mutants = null
+
             await api[`update${name}`](id,
                     {
                         log_id,
                         ...all_submit_params_dict[params.type][id]
                     }
             ).then(response=>{
-                immune_id = response.data[dict.IMMUNE_ID]
-                modified_immune = response.data[dict.MODIFIED_IMMUNE]
-                console.log('submitAffirmedData immune_id modified_immune', immune_id, modified_immune)
+                console.log('submitAffirmedData data', response.data)
+
+                // data可能返回为null， 必然是后端出错了
+                modified_immune_dict = response.data[dict.MODIFIED_IMMUNES]
+                modified_mutants = response.data[dict.MODIFIED_MUTANTS]
+                console.log('submitAffirmedData modified_immune_dict modified_mutants', modified_immune_dict, modified_mutants)
+
 
                 success = true
                 success_num++
@@ -3103,19 +3122,62 @@
                 }
 
                 // 处理回传的immune关联, 不然params会删除，要在这之前__change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord
-                if(immune_id){
-                    switch (params.type){
-                        case dict.TMB: case dict.TNB:
-                            __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, dict.MODIFY_IMMUNE_NUM)
-                            break
-                        case dict.TARGET: case dict.HEREDITARY: case dict.FUSION: case dict.CNA:
-                            // 判断是删除，还是取消删除
-                            let type = all_submit_params_dict[params.type][id][dict.DELETE]?dict.DELETE:dict.ADD
-                            __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, type)
-                            break
-                        default:
-                            break
+                if(modified_immune_dict && Object.keys(modified_immune_dict).length>0){
+                    console.log('submitAffirmedData 开始处理modified_immune_dict', modified_immune_dict)
+                    for (let immune_id in modified_immune_dict){
+                        let modified_immune = modified_immune_dict[immune_id]
+                        switch (params.type){
+                            case dict.TMB: case dict.TNB:
+                                __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, dict.MODIFY_IMMUNE_NUM)
+                                break
+                            case dict.TARGET: case dict.HEREDITARY: case dict.FUSION: case dict.CNA:
+                                // 判断是删除，还是取消删除
+                                let type = all_submit_params_dict[params.type][id][dict.DELETE]?dict.DELETE:dict.ADD
+                                __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, null, type)
+                                break
+                            default:
+                                break
+                        }
                     }
+                }
+
+                // 如果有突变需要更新
+                if(modified_mutants && modified_mutants.length>0){
+                    for (let mutant of modified_mutants){
+                        let sheet = mutant['type']
+                        let id = mutant['id']
+                        let sample_id = mutant['sampleId']
+                        console.log('submitAffirmedData sheet mutant', sheet, mutant)
+
+                        if (all_status_of_data_dict[sheet].hasOwnProperty(id)){
+                            // 如果当前已有数据
+                            let status = all_status_of_data_dict[sheet][id]
+                            // console.log("submitAffirmedData status", status)
+
+                            // 1）移动sample或sheet中统计数字
+                            if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status) !== -1){
+                                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.S_ADATA, sheet)
+                            }else if (status === dict.FREE){
+                                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA, sheet)
+                            }
+
+                            // 2） 删除params和log相关，就算开始已经提交，后续就算循环到也不会上传了
+                            __delete_oneData_params_logRelated(sheet, id)
+                        }else{
+                            // 1） 正常下载时候必然为free，然后跳过为done, 修改sample和sheet的count统计
+                            let before_not_done = mutant[dict.BEFORE_NOT_DONE]
+                            if(before_not_done && mutant[dict.DONE]){
+                                __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA, sheet)
+                            }
+                        }
+                        // 3) 下载或更新status和nowValue，preValue
+                        __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([mutant], sheet, true)
+                    }
+
+                    // 提示关联删除信息
+                    let modified_mutant_typeIds = modified_mutants.map(item=>item[dict.TYPE] + " " + item[dict.ID])
+                    let message = `本页${id}相关的${modified_mutant_typeIds.join(', ')}已被处理`
+                    __append_timePlused_uploadMessage(message)
                 }
 
                 // 1) 更新相关参数
@@ -3130,9 +3192,11 @@
                 console.log(`submitAffirmedData update${name}`, error)
             })
 
-            let time = getTime()
-            all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'提交成功。':'提交失败！'}`]
+            // let time = getTime()
+            // all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'提交成功。':'提交失败！'}`]
 
+            let message = `${all_preValue_of_data_dict[params.type][id][dict.SAMPLESN]} ${id} ${success?'提交成功。':'提交失败！'}`
+            __append_timePlused_uploadMessage(message)
         }
         // console.log("submitAffirmedData success_ids fail_ids", success_ids_dict)
 
@@ -3170,9 +3234,12 @@
 
 
         // a. 消息提示整体情况
-        time = getTime()
+        // time = getTime()
         let left_message = fail_num?`，失败${fail_num}条`:'。'
-        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 提交成功${success_num}条${left_message}`]
+        // all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 提交成功${success_num}条${left_message}`]
+        message = `提交成功${success_num}条${left_message}`
+        __append_timePlused_uploadMessage(message)
+
         // b. seletect_ids清空
         __reset_selectedIds_inAllSelectedDataIdsDict()
         // // c. 如果当前affrim工作状态需要更新previousLogs 替换 __getPageData()中F)一致
@@ -4489,6 +4556,7 @@
         // 判断是否获取到修改的immune_id数据, 理论上成功添加，必然返回
         if (immune_id){
             // 1) 当前表，更新本地此条 data数据的, 此时data状态必然是free
+            // 如果是修改免疫中数字，如tmb tnb，不需要修改数据条目
             let default_sheet = sheet?sheet:params.type
             if (type !== dict.MODIFY_IMMUNE_NUM){
                 if(all_status_of_data_dict[default_sheet].hasOwnProperty(id)){
