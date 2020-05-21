@@ -909,7 +909,8 @@
         CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune', CNA: 'CNA', FUSION: 'fusion', MUTANT: 'mutant',
         MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio', MODIFIED_MUTANTS: 'modified_mutants', MODIFIED_IMMUNES: 'modified_immunes',
         BEFORE_DONE: 'before_done', FALSE_POSITIVE: 'false_positive', CANCEL_FALSE_POSITIVE: 'cancel_false_positive',
-        CONNECT: 'connect', CANCEL_CONNECT: 'cancel_connect',
+        CONNECT: 'connect', CANCEL_CONNECT: 'cancel_connect', CNA_LOSS: 'CNA_loss', CNA_GAIN: 'CNA_gain',
+        MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune',
     }
     // 获取路径中的：值
     export let params = {}
@@ -3128,7 +3129,8 @@
                 // A) 处理回传的immune关联
                 if(modified_immune_dict && Object.keys(modified_immune_dict).length>0){
                     console.log('submitAffirmedData 开始处理modified_immune_dict', modified_immune_dict)
-                    for (let immune_id in modified_immune_dict){
+                    for (let str_immune_id in modified_immune_dict){
+                        let immune_id = parseInt(str_immune_id)
                         let modified_immune = modified_immune_dict[immune_id][dict.DATA]
                         if (modified_immune_dict[immune_id].hasOwnProperty(dict.CONNECT)){
                             let type = dict.ADD
@@ -3985,17 +3987,17 @@
             let genes_inImmune = null
             let cna_type = null
             if (params.type === dict.TARGET || params.type === dict.HEREDITARY){
-                genes_inImmune = sample_dict[right_sampleSn]['mutant_genes_inImmune']
+                genes_inImmune = sample_dict[right_sampleSn][dict.MUTANT_GENES_INIMMUNE]
             }else if (params.type === dict.CNA){
                 let cnaRatio = all_nowValue_of_data_dict[params.type][right_id][dict.CNARATIO]
                 if (!isNaN(cnaRatio)){
                     let copy_num = parseInt(cnaRatio)
                     if (copy_num < 2){
                         genes_inImmune = sample_dict[right_sampleSn]['CNA_loss_genes_inImmune']
-                        cna_type = 'loss'
+                        cna_type = dict.CNA_LOSS
                     }else if (copy_num > 2){
                         genes_inImmune = sample_dict[right_sampleSn]['CNA_gain_genes_inImmune']
-                        cna_type = 'gain'
+                        cna_type = dict.CNA_GAIN
                     }
                 }
             }else if (params.type === dict.FUSION){
@@ -4595,6 +4597,7 @@
     }
 
     function __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet=null, type=null){
+        console.log('__modify_localData_relatedImmune... id immune_id modified_immune sheet type', id, immune_id, modified_immune, sheet, type)
         // 判断是否获取到修改的immune_id数据, 理论上成功添加，必然返回
         if (immune_id){
             // 1) 当前表，更新本地此条 data数据的

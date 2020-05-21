@@ -2153,6 +2153,12 @@ export const common_subFilter_selections_dict = {
             value: 'all',
             content: '存在关联(全部)'
         }, {
+            value: 'TMB_TNB_MSI',
+            content: '存在关联(TMB\TNB\MSI)'
+        },  {
+            value: 'except_TMB_TNB_MSI',
+            content: '存在关联(除开TMB\TNB\MSI)'
+        }, {
             value: 'target',
             content: '存在关联(靶向)'
         }, {
