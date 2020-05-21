@@ -2335,6 +2335,7 @@
                         done: false
                     }
             ).then(response=>{
+                console.log('__handleCancelSelectedIdsDone response.data', response.data)
                 success = true
                 success_num++
                 // 1) 更新相关参数
@@ -3097,8 +3098,6 @@
             let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
             let log_id = all_submit_logs_dict[params.type][id]
             let reason_type = logs_together_dict[log_id][dict.VALUE]
-            let instance_delete = all_submit_params_dict[params.type][id].hasOwnProperty(dict.DELETE)?
-                    -1:JSON.parse(JSON.stringify(all_submit_params_dict[params.type][id][dict.DELETE]))
 
             // 收集回传的immune关联结果
             let modified_immune_dict = {}
