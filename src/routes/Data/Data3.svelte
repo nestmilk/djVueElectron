@@ -758,7 +758,7 @@
                                                             {#if (params.type===dict.SAMPLEINFOINPANAL && field===dict.SAMPLESN) ||
                                                                 (field===dict.SAMPLESN && openSampleInfo)}
                                                                 <div class="upIconWrapper">
-                                                                    <div class="upIcon
+                                                                    <div class="icon
                                                                             {all_nowValue_of_data_dict[params.type][line_data.id]?
                                                                                 (sampleTypeConfigDict.hasOwnProperty(sample_dict[all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.TYPE])?
                                                                                     sampleTypeConfigDict[sample_dict[all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.TYPE]][dict.ICON]:''):''}
@@ -766,7 +766,9 @@
                                                                     ></div>
                                                                 </div>
                                                                 <div class="downIconWrapper">
-                                                                    <div class="downIcon {line_data[dict.FALSE_MUTANT_RECORD]?'icon-eye-plus':''}"
+                                                                    <div class="icon
+                                                                                {line_data[dict.FALSE_MUTANT_RECORD]?'icon-star-full':''}
+                                                                               "
                                                                     >
                                                                     </div>
                                                                 </div>
@@ -5683,26 +5685,26 @@
         left: 3px;
         height: 12px;
     }
-    .contentRight .rightDataTable .lineData td .inside.sampleSn .upIconWrapper .upIcon{
+    .contentRight .rightDataTable .lineData td .inside.sampleSn .upIconWrapper .icon{
         height: 12px;
         width: 12px;
         font-size: 12px;
         margin-right: 5px;
         float: left;
     }
-    .contentRight .rightDataTable .lineData td .inside.sampleSn .downIconWrapper{
+    .contentRight .rightDataTable .lineData td .inside.sampleSn .downIconWrapper {
         position: absolute;
-        right: 3px;
+        left: 3px;
         bottom: 1px;
         height: 12px;
-        width: 116px;
     }
-    .contentRight .rightDataTable .lineData td .inside.sampleSn .downIconWrapper .downIcon{
+    .contentRight .rightDataTable .lineData td .inside.sampleSn .downIconWrapper .icon{
         height: 12px;
         width: 12px;
         font-size: 12px;
         margin-left: 5px;
         float: right;
+        color: red!important;
     }
 
     .contentRight .rightDataTable .lineData td .inside.tmbDelete{
