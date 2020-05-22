@@ -102,3 +102,5 @@ export const changeSampleType = form => {return axios.post(`${host()}/changesamp
 export const deleteDataConnectImmune = form => {return axios.post(`${host()}/deletedataconnectimmune/`, form)}
 // 添加数据连接的免疫实例
 export const addDataConnectImmune = form => {return axios.post(`${host()}/adddataconnectimmune/`, form)}
+// 获取历史假突变
+export const listFalseMutantRecord = params => {return axios.get(`${host()}/falsemutantrecord/`, {params: params})}

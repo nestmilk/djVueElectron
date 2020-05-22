@@ -326,6 +326,12 @@
                                         行号
                                     </th>
                                 {/if}
+                                <!--显示历史假突变-->
+                                {#if sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEMUTANT] && openHistoryFalseMutant}
+                                    <th class="affirmed">
+                                        历史假突变
+                                    </th>
+                                {/if}
                                 <!--针对概览页，选择 已经全部提交的样本条目-->
                                 {#if params.type===dict.SAMPLEINFOINPANAL}
                                     <th class="affirmed short hoverGreen"
@@ -494,6 +500,12 @@
                                     {#if openLineNum}
                                         <td class="affirmed short">
                                             {index+1}
+                                        </td>
+                                    {/if}
+                                    <!--显示历史假突变-->
+                                    {#if sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEMUTANT] && openHistoryFalseMutant}
+                                        <td class="affirmed">
+                                            历史假突变
                                         </td>
                                     {/if}
                                     <!--针对概览页，选择 已经全部提交的样本条目-->
@@ -910,7 +922,7 @@
         MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio', MODIFIED_MUTANTS: 'modified_mutants', MODIFIED_IMMUNES: 'modified_immunes',
         BEFORE_DONE: 'before_done', FALSE_POSITIVE: 'false_positive', CANCEL_FALSE_POSITIVE: 'cancel_false_positive',
         CONNECT: 'connect', CANCEL_CONNECT: 'cancel_connect', CNA_LOSS: 'CNA_loss', CNA_GAIN: 'CNA_gain',
-        MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune',
+        MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune', SHOW_HISTORYFALSEMUTANT: 'show_historyFalseMutant',
     }
     // 获取路径中的：值
     export let params = {}
@@ -4320,6 +4332,8 @@
     let openLineNum = settingsStore.get("ifShowLineNum")
     // 是否打开样本信息图标，目前为sample type
     let openSampleInfo = settingsStore.get("ifShowSampleInfo")
+    // 是否打开历史假阳性提示列
+    let openHistoryFalseMutant = settingsStore.get('ifShowHistoryFalseMutant')
 
     // 删除某条记录的1. params, 2. log_id，3. 日志详情中的ids剔除或整个删除
     function __delete_oneData_params_logRelated(sheet, str_id){
@@ -4736,10 +4750,14 @@
         ipcRenderer.on('toggle-sample-info', ()=>{
             openSampleInfo = !openSampleInfo
         })
+        ipcRenderer.on('toggle-history-false-mutant', ()=>{
+            openHistoryFalseMutant = !openHistoryFalseMutant
+        })
         ipcRenderer.on('load-single-excel', (event, filePath)=>{
             // console.log('<=== onmount load-single-excel', filePath)
             __handleLoadAddedData(filePath)
         })
+
 
 
         document.addEventListener('contextmenu', __handleContextMenu)

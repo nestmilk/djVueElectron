@@ -172,6 +172,10 @@ app.on('ready', ()=>{
         mainWindow.webContents.send('toggle-sample-info')
     })
 
+    ipcMain.on('set-ifShowHistoryFalseMutant-toggle', ()=>{
+        mainWindow.webContents.send('toggle-history-false-mutant')
+    })
+
     ipcMain.on('open-single-excel', async ()=> {
         dialog.showOpenDialog({
             properties: ['openFile'],
