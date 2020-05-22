@@ -99,12 +99,12 @@ let template = [
                             ipcMain.emit('set-ifShowSampleInfo-toggle')
                         }
                     }, {
-                        label: '显示历史假突变提示',
+                        label: '显示历史假阳性突变提示',
                         type: 'checkbox',
-                        checked: settingsStore.get('ifShowHistoryFalseMutant'),
+                        checked: settingsStore.get('ifShowHistoryFalsePositiveMutant'),
                         click: () => {
-                            settingsStore.set('ifShowHistoryFalseMutant', !settingsStore.get('ifShowHistoryFalseMutant'))
-                            ipcMain.emit('set-ifShowHistoryFalseMutant-toggle')
+                            settingsStore.set('ifShowHistoryFalsePositiveMutant', !settingsStore.get('ifShowHistoryFalsePositiveMutant'))
+                            ipcMain.emit('set-ifShowHistoryFalsePositiveMutant-toggle')
                         }
                     }
                 ]

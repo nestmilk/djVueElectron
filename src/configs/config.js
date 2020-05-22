@@ -250,7 +250,7 @@ export const sheetDisplayConfigList = [
         igv_control: true,
         need_copy: true,
         connect_immune: true,
-        show_historyFalseMutant: true,
+        show_historyFalsePositiveMutant: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -507,7 +507,7 @@ export const sheetDisplayConfigList = [
         igv_control: true,
         need_copy: true,
         connect_immune: true,
-        show_historyFalseMutant: true,
+        show_historyFalsePositiveMutant: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -705,7 +705,7 @@ export const sheetDisplayConfigList = [
         submenu_translate: 'TMB',
         need_all_check: true,
         igv_control: true,
-        show_historyFalseMutant: true,
+        show_historyFalsePositiveMutant: true,
         reason_type: [
             {
                 value: 'nothing',

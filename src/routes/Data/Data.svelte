@@ -327,9 +327,9 @@
                                     </th>
                                 {/if}
                                 <!--显示历史假突变-->
-                                {#if sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEMUTANT] && openHistoryFalseMutant}
+                                {#if sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEPOSITIVEMUTANT] && openHistoryFalsePositiveMutant}
                                     <th class="affirmed">
-                                        历史假突变
+                                        历史假阳性突变
                                     </th>
                                 {/if}
                                 <!--针对概览页，选择 已经全部提交的样本条目-->
@@ -503,9 +503,14 @@
                                         </td>
                                     {/if}
                                     <!--显示历史假突变-->
-                                    {#if sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEMUTANT] && openHistoryFalseMutant}
-                                        <td class="affirmed">
-                                            历史假突变
+                                    {#if sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEPOSITIVEMUTANT] && openHistoryFalsePositiveMutant}
+                                        <td class="affirmed"
+                                            title="{currentPage_falseMutantRecord_dict[dict.FALSE_POSITIVE].hasOwnProperty(line_data[dict.CHRPOSSTARTPOSENDREFALT])
+                                                    ?'Panal的id为'+currentPage_falseMutantRecord_dict[dict.FALSE_POSITIVE][line_data[dict.CHRPOSSTARTPOSENDREFALT]][dict.PANALIDS].join(' '):''}
+                                        "
+                                        >
+                                            {currentPage_falseMutantRecord_dict[dict.FALSE_POSITIVE].hasOwnProperty(line_data[dict.CHRPOSSTARTPOSENDREFALT])
+                                                    ?currentPage_falseMutantRecord_dict[dict.FALSE_POSITIVE][line_data[dict.CHRPOSSTARTPOSENDREFALT]][dict.COUNT]:''}
                                         </td>
                                     {/if}
                                     <!--针对概览页，选择 已经全部提交的样本条目-->
@@ -748,15 +753,23 @@
                                                                     {field===dict.SAMPLESN?dict.SAMPLESN:''}
                                                                 "
                                                         >
+                                                            <!--针对sampleSn列，信息概览页必显示样本类型图标，其它页面通过openSampleInfo控制
+                                                            -->
                                                             {#if (params.type===dict.SAMPLEINFOINPANAL && field===dict.SAMPLESN) ||
                                                                 (field===dict.SAMPLESN && openSampleInfo)}
-                                                                <div class="iconWrapper">
+                                                                <div class="upIconWrapper">
                                                                     <div class="icon
                                                                             {all_nowValue_of_data_dict[params.type][line_data.id]?
                                                                                 (sampleTypeConfigDict.hasOwnProperty(sample_dict[all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.TYPE])?
                                                                                     sampleTypeConfigDict[sample_dict[all_nowValue_of_data_dict[params.type][line_data.id][field]][dict.TYPE]][dict.ICON]:''):''}
                                                                             "
                                                                     ></div>
+                                                                </div>
+                                                                <div class="downIconWrapper">
+                                                                    <div class="icon
+                                                                        {line_data[dict.FALSE_MUTANT_RECORD]?'icon-star-full':''}"
+                                                                    >
+                                                                    </div>
                                                                 </div>
                                                             {/if}
 
@@ -884,7 +897,7 @@
         PARAM: 'param', SEARCH: 'search', DATA: 'data', COPY: 'copy',
         ID: 'id', SAMPLE: 'sample', SAMPLESN: 'sampleSn',  TITLE_LIST: 'title_list',
         PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEID: 'sampleId', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
-        TITLE: 'title', TRANSLATE: 'translate',
+        TITLE: 'title', TRANSLATE: 'translate', PANAL_ID: 'panal_id', PANALIDS: 'panalIds',
         TYPE: 'type', CONTENT: 'content', VALUE: 'value', STATUS: 'status',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll',
         ALLDATA: 'allData', S_ADATA: "subAndAffData", US_ADATA: 'unsubAndAffData', US_UADATA: 'unsubAndUnaffData',
@@ -892,7 +905,7 @@
         SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
         TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB", tmb: "tmb", TNB: 'TNB',
         MODIFY: 'modify', IFEQUAL: 'ifEqual',
-        DELETE: "delete", FREQ: 'freq',
+        DELETE: "delete", FREQ: 'freq', COUNT: 'count',
         NOWDISPLAY: 'nowDisplay', DEFAULTDISPLAY: 'defaultDisplay', SELECTDISPLAY: 'selectDisplay',
         FIELD_MOUSE_ENTER: 'field_mouse_enter',
         FREE: 'free', CHECKED: 'checked', DELETED: 'deleted', EDITED: 'edited',
@@ -922,7 +935,8 @@
         MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio', MODIFIED_MUTANTS: 'modified_mutants', MODIFIED_IMMUNES: 'modified_immunes',
         BEFORE_DONE: 'before_done', FALSE_POSITIVE: 'false_positive', CANCEL_FALSE_POSITIVE: 'cancel_false_positive',
         CONNECT: 'connect', CANCEL_CONNECT: 'cancel_connect', CNA_LOSS: 'CNA_loss', CNA_GAIN: 'CNA_gain',
-        MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune', SHOW_HISTORYFALSEMUTANT: 'show_historyFalseMutant',
+        MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune', SHOW_HISTORYFALSEPOSITIVEMUTANT: 'show_historyFalsePositiveMutant',
+        MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
     }
     // 获取路径中的：值
     export let params = {}
@@ -2512,6 +2526,11 @@
         // 查看日志，取消提交的工作状态 依赖于F)
         // 概览依赖于E)的nowValue判断count和submitCout相同
         __update_allIds_availSelect_inPageIdAvailSelectDict()
+
+        // G) 如果当前需要查看历史假突变，需要更新之前的历史假突变
+        if(sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEPOSITIVEMUTANT] && openHistoryFalsePositiveMutant){
+            await __update_currentPageHistroyFalseMutantDict(dict.FALSE_POSITIVE)
+        }
     }
 
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
@@ -4333,7 +4352,63 @@
     // 是否打开样本信息图标，目前为sample type
     let openSampleInfo = settingsStore.get("ifShowSampleInfo")
     // 是否打开历史假阳性提示列
-    let openHistoryFalseMutant = settingsStore.get('ifShowHistoryFalseMutant')
+    let openHistoryFalsePositiveMutant = settingsStore.get('ifShowHistoryFalsePositiveMutant')
+
+    // 仅存放当前页历史假突变，每次换页都重置、更新
+    let currentPage_falseMutantRecord_dict = {
+        [dict.FALSE_POSITIVE]: {}
+    }
+    let ori_currentPage_falseMutantRecord_dict = JSON.parse(JSON.stringify(currentPage_falseMutantRecord_dict))
+    async function __update_currentPageHistroyFalseMutantDict(false_mutant_type){
+        loadingShow = true
+
+        //先重置当前页的假阳性突变字典
+        currentPage_falseMutantRecord_dict = JSON.parse(JSON.stringify(ori_currentPage_falseMutantRecord_dict))
+
+        let ids = page_data.map(data=>data[dict.ID])
+        let falseMutantRecord_list = null
+        if (ids.length>0){
+            let mutantIds_type = JSON.stringify({
+                ids: ids.join(','),
+                type: false_mutant_type
+            })
+            await api.listFalseMutantRecord({
+                mutantIds_type
+            }).then(response=>{
+                console.log("__update_currentPagehistroyFalseMutantDict response.data", response.data)
+                falseMutantRecord_list = response.data
+            }).catch(error=>{
+                console.log("__update_currentPagehistroyFalseMutantDict error", error)
+                errors = error
+            })
+        }
+
+        if (falseMutantRecord_list && falseMutantRecord_list.length>0){
+            for (let record of falseMutantRecord_list){
+                let mutants = record[dict.MUTANTS]
+                // 按一个panal算一次突变出现次数
+                let count = 0
+                let panalIds = []
+                for (let mutant of mutants){
+                    let panal_id = mutant[dict.PANAL_ID]
+                    if (panalIds.indexOf(panal_id) === -1){
+                        panalIds.push(panal_id)
+                        count++
+                    }
+                }
+                // console.log('__update_currentPageHistroyFalseMutantDict mutants panalIds', mutants, panalIds)
+
+                let chrPosstartPosendRefAlt =  record[dict.CHRPOSSTARTPOSENDREFALT]
+                currentPage_falseMutantRecord_dict[dict.FALSE_POSITIVE][chrPosstartPosendRefAlt] = {
+                    count,
+                    panalIds
+                }
+            }
+        }
+
+        loadingShow = false
+    }
+
 
     // 删除某条记录的1. params, 2. log_id，3. 日志详情中的ids剔除或整个删除
     function __delete_oneData_params_logRelated(sheet, str_id){
@@ -4750,8 +4825,8 @@
         ipcRenderer.on('toggle-sample-info', ()=>{
             openSampleInfo = !openSampleInfo
         })
-        ipcRenderer.on('toggle-history-false-mutant', ()=>{
-            openHistoryFalseMutant = !openHistoryFalseMutant
+        ipcRenderer.on('toggle-history-false-positive-mutant', ()=>{
+            openHistoryFalsePositiveMutant = !openHistoryFalsePositiveMutant
         })
         ipcRenderer.on('load-single-excel', (event, filePath)=>{
             // console.log('<=== onmount load-single-excel', filePath)
@@ -4859,6 +4934,7 @@
         // console.log(submenu_group_list, submenu_total_page, submenu_page)
         console.log(sample_list, sample_dict)
         // console.log(genes_connectImmune_dict)
+        console.log(currentPage_falseMutantRecord_dict)
     }
 
 </script>
@@ -5602,19 +5678,34 @@
 
         position: relative;
     }
-    .contentRight .rightDataTable .lineData td .inside.sampleSn .iconWrapper{
+    .contentRight .rightDataTable .lineData td .inside.sampleSn .upIconWrapper{
         position: absolute;
         top: 1px;
         left: 3px;
         height: 12px;
     }
-    .contentRight .rightDataTable .lineData td .inside.sampleSn .iconWrapper .icon{
+    .contentRight .rightDataTable .lineData td .inside.sampleSn .upIconWrapper .icon{
         height: 12px;
         width: 12px;
         font-size: 12px;
         margin-right: 5px;
         float: left;
     }
+    .contentRight .rightDataTable .lineData td .inside.sampleSn .downIconWrapper {
+        position: absolute;
+        left: 3px;
+        bottom: 1px;
+        height: 12px;
+    }
+    .contentRight .rightDataTable .lineData td .inside.sampleSn .downIconWrapper .icon{
+        height: 12px;
+        width: 12px;
+        font-size: 12px;
+        margin-left: 5px;
+        float: right;
+        color: red!important;
+    }
+
     .contentRight .rightDataTable .lineData td .inside.tmbDelete{
         color: red;
         text-decoration: line-through;
