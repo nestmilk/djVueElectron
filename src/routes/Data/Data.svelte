@@ -652,30 +652,37 @@
                                             {#if all_titleListItem_dict[params.type][field][dict.IMMUNE_CONNECT]}
                                                 <!--显示免疫表中与target, fusion, CNA的关联-->
                                                 <td class="connectSheet">
-                                                    {#if line_data[dict.TYPE] && line_data.hasOwnProperty(`${line_data[dict.TYPE].split('_')[0]}s`)
-                                                        && line_data[`${line_data[dict.TYPE].split('_')[0]}s`].length > 0}
+                                                    {#if line_data.hasOwnProperty(dict.TYPE) &&
+                                                        [dict.TMB, dict.TNB, dict.MSI].indexOf(line_data[dict.TYPE]) === -1 &&
+                                                        line_data[dict.TYPE].split(';').some(type=>
+                                                            line_data.hasOwnProperty(`${type.split('_')[0]}s`) &&
+                                                            [`${type.split('_')[0]}s`].length>0
+                                                        )
+                                                    }
                                                         <table class="immuneConnectTable">
-                                                            {#each line_data[`${line_data[dict.TYPE].split('_')[0]}s`] as instance}
-                                                                <tr title="{line_data[dict.TYPE]===dict.MUTANT?instance[dict.HGVS]:''}"
-                                                                    on:click={(e)=>handle_changeSheet_findIdData(
-                                                                                line_data[dict.TYPE]===dict.MUTANT?instance[dict.TYPE]:line_data[dict.TYPE].split('_')[0],
+                                                            {#each line_data[dict.TYPE].split(';') as type}
+                                                                {#each line_data[`${type.split('_')[0]}s`] as instance}
+                                                                    <tr title="{type===dict.MUTANT?instance[dict.HGVS]:''}"
+                                                                        on:click={(e)=>handle_changeSheet_findIdData(
+                                                                                type===dict.MUTANT?instance[dict.TYPE]:type.split('_')[0],
                                                                                 instance[dict.ID],
                                                                                 e)}
-                                                                >
-                                                                    <td class="sheet">
-                                                                        {line_data[dict.TYPE]===dict.MUTANT?instance[dict.TYPE]:""}
-                                                                        {line_data[dict.TYPE].includes(dict.CNA)?dict.CNA:""}
-                                                                        {line_data[dict.TYPE]===dict.FUSION?dict.FUSION:""}
-                                                                    </td>
-                                                                    <td class="id">{instance[dict.ID]}</td>
-                                                                    <td class="delete icon-cross"
-                                                                        on:click={(e)=>handle_dataConnectImmune_Delete(
-                                                                                    line_data[dict.TYPE]===dict.MUTANT?instance[dict.TYPE]:line_data[dict.TYPE].split('_')[0],
+                                                                    >
+                                                                        <td class="sheet">
+                                                                            {type===dict.MUTANT?instance[dict.TYPE]:""}
+                                                                            {type.includes(dict.CNA)?dict.CNA:""}
+                                                                            {type===dict.FUSION?dict.FUSION:""}
+                                                                        </td>
+                                                                        <td class="id">{instance[dict.ID]}</td>
+                                                                        <td class="delete icon-cross"
+                                                                            on:click={(e)=>handle_dataConnectImmune_Delete(
+                                                                                    type===dict.MUTANT?instance[dict.TYPE]:type.split('_')[0],
                                                                                     instance[dict.ID],
                                                                                     line_data[dict.ID],
                                                                                     e)}
-                                                                    ></td>
-                                                                </tr>
+                                                                        ></td>
+                                                                    </tr>
+                                                                {/each}
                                                             {/each}
                                                         </table>
                                                     {:else}
@@ -902,7 +909,7 @@
         ALLDATA: 'allData', S_ADATA: "subAndAffData", US_ADATA: 'unsubAndAffData', US_UADATA: 'unsubAndUnaffData',
         DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene',
         SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
-        TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB", tmb: "tmb", TNB: 'TNB',
+        TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB", tmb: "tmb", TNB: 'TNB', MSI: 'MSI',
         MODIFY: 'modify', IFEQUAL: 'ifEqual',
         DELETE: "delete", FREQ: 'freq', COUNT: 'count',
         NOWDISPLAY: 'nowDisplay', DEFAULTDISPLAY: 'defaultDisplay', SELECTDISPLAY: 'selectDisplay',
