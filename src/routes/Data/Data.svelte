@@ -656,13 +656,15 @@
                                                         [dict.TMB, dict.TNB, dict.MSI].indexOf(line_data[dict.TYPE]) === -1 &&
                                                         line_data[dict.TYPE].split(';').some(type=>
                                                             line_data.hasOwnProperty(`${type.split('_')[0]}s`) &&
-                                                            [`${type.split('_')[0]}s`].length>0
+                                                            line_data[`${type.split('_')[0]}s`].length>0
                                                         )
                                                     }
                                                         <table class="immuneConnectTable">
                                                             {#each line_data[dict.TYPE].split(';') as type}
                                                                 {#each line_data[`${type.split('_')[0]}s`] as instance}
-                                                                    <tr title="{type===dict.MUTANT?instance[dict.HGVS]:''}"
+                                                                    <tr title="{type===dict.MUTANT?instance[dict.HGVS]:''}
+                                                                               {type.split('_')[0]===dict.CNA?instance[dict.CNARATIO]:''}
+                                                                              "
                                                                         on:click={(e)=>handle_changeSheet_findIdData(
                                                                                 type===dict.MUTANT?instance[dict.TYPE]:type.split('_')[0],
                                                                                 instance[dict.ID],
@@ -4475,8 +4477,11 @@
     // 根据sample更新全局的sample_dict，添加sample_list
     function __update_sampleList_sampleDict_byOneSample(sample){
         let sampleSn = sample[dict.SAMPLESN]
-        // sample_dict没有这个sampleSn，则在sample_list中添加
+
         if (sample_dict.hasOwnProperty(sampleSn)){
+            // 更新sample_dict
+            sample_dict[sampleSn] = sample
+        }else{
             // 添加sample_dict
             sample_dict[sampleSn] = sample
             sample_list.push({
@@ -4484,9 +4489,6 @@
                 sampleSn,
                 type: sample[dict.TYPE]
             })
-        }else{
-            // 更新sample_dict
-            sample_dict[sampleSn] = sample
         }
 
     }
@@ -4529,24 +4531,21 @@
         })
 
         if (data){
-            // 1) 更新sample_list，sampleSn_dict
+            // 1) 1a.更新sample_list，sampleSn_dict
             let added_sample_dict = data.samples
             console.log('handleAddDataSubmit added_sampleSn_dict', added_sample_dict)
             for (let sampleSn in added_sample_dict){
                 let sample = added_sample_dict[sampleSn]
                 __update_sampleList_sampleDict_byOneSample(sample)
             }
-            // 样本设为全选
+            // 1b.样本设为全选
             selected_sampleId_list = JSON.parse(JSON.stringify(sample_list.map(sample=>sample[dict.ID])))
-            //更新所有页sampleIds查询参数
+            // 1c.更新所有页sampleIds查询参数
             sheetDisplayConfigList.forEach(item=>{
                 let sheet = item[dict.SHEET]
                 all_search_params_dict[sheet][dict.SAMPLEIDS] = selected_sampleId_list.join(',')
             })
-            // console.log('handleAddDataSubmit', sample_list, sampleSn_dict)
-
-            // 2) 更新all_sample_record_dict， all_sheet_record_dict
-            // 为新的sample进行初始化
+            // 1d.为新的sample进行ll_sample_record_dict初始化
             for (let sampleSn in added_sample_dict){
                 let id = sample_dict[sampleSn][dict.ID]
                 for (let sheet in all_sample_record_dict){
@@ -4559,7 +4558,7 @@
                 }
             }
 
-            // 3）为新增的数据信息，更新记录
+            // 2）为新增数据个数，更新sample，sheet统计记录
             let info = data.info
             // console.log('handleAddDataSubmit info', info)
             for (let sheet in info){
@@ -4595,10 +4594,9 @@
                 }
             }
 
-            // 4)更新subFilter_selections_dict中exonicfuncRefgenes
+            // 3)更新subFilter_selections_dict中exonicfuncRefgenes
             let exonicfuncRefgenes = data.exonicfuncRefgenes
             // console.log('handleAddDataSubmit exonicfuncRefgenes', exonicfuncRefgenes)
-
             for (let sheet in exonicfuncRefgenes){
                 let values = exonicfuncRefgenes[sheet]
                 // 就算values没有，也要添加默认项
@@ -4613,10 +4611,9 @@
                 subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
             }
 
-            //5) 更新preValue，nowValue，TMB和sampleInfo中数据可能被更新而非仅仅是自动添加,
+            //4) 更新preValue，nowValue，TMB和sampleInfo中数据可能被更新而非仅仅是自动添加,
             let updatedData = data.updatedData
-            // console.log('handleAddDataSubmit updatedData', updatedData)
-
+            console.log('handleAddDataSubmit updatedData', updatedData)
             for (let updated_data of updatedData){
                 let sheet = updated_data[dict.SHEET]
                 let id = updated_data[dict.ID]
