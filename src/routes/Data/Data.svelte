@@ -3134,17 +3134,18 @@
             let success = false
             let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
             let log_id = all_submit_logs_dict[params.type][id]
-            let reason_type = logs_together_dict[log_id][dict.VALUE]
+            //免疫回传中使用
+            let reason_type = logs_together_dict.hasOwnProperty(log_id)?logs_together_dict[log_id][dict.VALUE]:null
 
             // 收集回传的immune关联结果
             let modified_immune_dict = {}
             let modified_mutants = null
 
             await api[`update${name}`](id,
-                    {
-                        log_id,
-                        ...all_submit_params_dict[params.type][id]
-                    }
+                {
+                    log_id,
+                    ...all_submit_params_dict[params.type][id]
+                }
             ).then(response=>{
                 console.log('submitAffirmedData data', response.data)
 
@@ -4471,6 +4472,24 @@
     }
     // 追加数据相关参数
     let addDataShow = false
+    // 根据sample更新全局的sample_dict，添加sample_list
+    function __update_sampleList_sampleDict_byOneSample(sample){
+        let sampleSn = sample[dict.SAMPLESN]
+        // sample_dict没有这个sampleSn，则在sample_list中添加
+        if (sample_dict.hasOwnProperty(sampleSn)){
+            // 添加sample_dict
+            sample_dict[sampleSn] = sample
+            sample_list.push({
+                id: sample[dict.ID],
+                sampleSn,
+                type: sample[dict.TYPE]
+            })
+        }else{
+            // 更新sample_dict
+            sample_dict[sampleSn] = sample
+        }
+
+    }
     async function handleAddDataSubmit(e){
         // console.log('handleAddDataSubmit', e.detail.data, added_data_dict[dict.SHEET_INFO_LIST])
 
@@ -4515,12 +4534,7 @@
             console.log('handleAddDataSubmit added_sampleSn_dict', added_sample_dict)
             for (let sampleSn in added_sample_dict){
                 let sample = added_sample_dict[sampleSn]
-                sample_list.push({
-                    id: sample[dict.ID],
-                    sampleSn,
-                    type: sample[dict.TYPE]
-                })
-                sample_dict[sampleSn] = sample
+                __update_sampleList_sampleDict_byOneSample(sample)
             }
             // 样本设为全选
             selected_sampleId_list = JSON.parse(JSON.stringify(sample_list.map(sample=>sample[dict.ID])))
@@ -4607,7 +4621,7 @@
                 let sheet = updated_data[dict.SHEET]
                 let id = updated_data[dict.ID]
                 let data = updated_data[dict.DATA]
-
+                // 内部针对sampleInfo更新了全局的sample_dict
                 __substitute_oneData_byModifiedData_changeStatusDoneorFree(sheet, id, data)
             }
 
