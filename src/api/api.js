@@ -89,9 +89,7 @@ export const listSampleInfo = params => {return axios.get(`${host()}/samples/`, 
 
 
 //复制一条数据
-export const copyData = (sheet, data_id, log_id, token) => {return axios.get(`${host()}/copy/${sheet}/${data_id}/${log_id}/${token}/`)}
-
-
+export const copyData = form => {return axios.post(`${host()}/copydata/`, form)}
 // 创建excel
 export const createExcel = params => {return axios.post(`${host()}/excels/`, params)}
 // 追加数据
@@ -104,3 +102,5 @@ export const deleteDataConnectImmune = form => {return axios.post(`${host()}/del
 export const addDataConnectImmune = form => {return axios.post(`${host()}/adddataconnectimmune/`, form)}
 // 获取历史假突变
 export const listFalseMutantRecord = params => {return axios.get(`${host()}/falsemutantrecord/`, {params: params})}
+// 取消假阳性
+export const cancelDeleteFalseMutant = form => {return axios.post(`${host()}/canceldeletefalsemutant/`, form)}

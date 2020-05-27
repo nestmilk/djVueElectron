@@ -16,6 +16,7 @@ export const dict_translate = {
     change: '更改',
     immune_connect: '免疫关联',
     add: '添加',
+    false_positive: '假阳性'
 }
 
 

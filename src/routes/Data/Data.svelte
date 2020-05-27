@@ -978,12 +978,14 @@
         let modified_immune = null
         let sample_id = all_now_sample_id[params.type]
         let success = false
-        await api.copyData(
-                params.type,
-                all_now_data_id[params.type],
-                uuidv4(),
-                userInfo.getToken()
-        ).then(response=>{
+
+        let form = new FormData()
+        form.append('sheet', params.type)
+        form.append('data_id', all_now_data_id[params.type])
+        form.append('log_id', uuidv4())
+        form.append('token', userInfo.getToken())
+
+        await api.copyData(form).then(response=>{
             success = true
 
             // 利用返回id更换now_id
@@ -1252,6 +1254,24 @@
         loadingShow = false
     }
 
+    async function __handleCancelFalseMutant(){
+        loadingShow = true
+
+        let mutant_id = all_now_data_id[params.type]
+        console.log('__handle_cancelFalseMutant  mutant_id', mutant_id)
+        let form = new FormData()
+        form.append('mutant_id', mutant_id)
+        form.append('token', userInfo.getToken())
+        form.append('log_id', uuidv4())
+        await api.cancelDeleteFalseMutant(form).then(response=>{
+            console.log('__handle_cancelFalseMutant response.data', response.data)
+        }).catch(error=>{
+            console.log('__handle_cancelFalseMutant error', error)
+        })
+
+        loadingShow = false
+    }
+
 
     let sureEvent
     let sureOperation
@@ -1370,6 +1390,10 @@
                     default:
                         break
                 }
+                break
+            case dict.FALSE_POSITIVE:
+                console.log('handleSureReply cancel False Positive')
+                await __handleCancelFalseMutant()
                 break
             default:
                 break
@@ -1516,16 +1540,20 @@
                 // console.log("__check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict 查看提交过往记录")
                 return all_previousLog_list_dict[params.type][id] && all_previousLog_list_dict[params.type][id].length!==0
             case dict.CANCEL_SUBMIT_DONE:
+                // 先判断当前表是否关联假突变记录, 并且已经有了假突变
+                if (sheetDisplayConfigDict[params.type][dict.FALSE_MUTANT_RECORD]){
+                    let false_mutant_record = all_nowValue_of_data_dict[params.type][id][dict.FALSE_MUTANT_RECORD]
+                    if (false_mutant_record){
+                        return false
+                    }
+                }
+
                 let status_cancel_sinSub_done = all_status_of_data_dict[params.type][id]
                 if(status_cancel_sinSub_done === dict.DONE &&
                         all_previousLog_list_dict[params.type].hasOwnProperty(id) &&
                         all_previousLog_list_dict[params.type][id].length>0
                 ){
                     return true
-                    // let logs_cancel_sinSub_done = JSON.parse(JSON.stringify(all_previousLog_list_dict[params.type][id]))
-                    // let latest_ids = logs_cancel_sinSub_done.sort((a, b)=>b.id-a.id)[0][dict.IDS]
-                    // // console.log("__check_availSelect_of_oneData_alreadyInsideA...", latest_ids)
-                    // return latest_ids.length===1
                 }else{
                     return false
                 }
@@ -3168,9 +3196,11 @@
                 // A) 处理回传的immune关联
                 if(modified_immune_dict && Object.keys(modified_immune_dict).length>0){
                     console.log('submitAffirmedData 开始处理modified_immune_dict', modified_immune_dict)
+                    // 因为不止一处用到免疫的连接，所以统一使用connect，cancel_connect
                     for (let str_immune_id in modified_immune_dict){
                         let immune_id = parseInt(str_immune_id)
                         let modified_immune = modified_immune_dict[immune_id][dict.DATA]
+                        // 处理连接免疫
                         if (modified_immune_dict[immune_id].hasOwnProperty(dict.CONNECT)){
                             let type = dict.ADD
                             for (let item of modified_immune_dict[immune_id][dict.CONNECT]) {
@@ -3179,7 +3209,7 @@
                                 __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet, type)
                             }
                         }
-
+                        // 处理取消连接免疫（todo 可能用不到，取消假阳性独立处理了）
                         if (modified_immune_dict[immune_id].hasOwnProperty(dict.CANCEL_CONNECT)){
                             let type = dict.DELETE
                             for (let item of modified_immune_dict[immune_id][dict.CANCEL_CONNECT]) {
@@ -3195,66 +3225,82 @@
                 // B）如果有突变需要更新,
                 // 目前需要处理额情况 1. 突变设为假阳性， 2. 突变取消假阳性
                 if(modified_mutants && modified_mutants.length>0){
+                    // 重新定义当前处理的数据id
+                    let current_id = parseInt(str_id)
                     for (let mutant of modified_mutants){
                         let sheet = mutant['type']
                         let id = mutant['id']
                         let sample_id = mutant['sampleId']
-                        console.log('submitAffirmedData sheet mutant reason_type', sheet, mutant, reason_type)
+                        // console.log('submitAffirmedData sheet mutant reason_type', sheet, mutant, reason_type)
+                        switch (reason_type) {
+                                // 处理 1. 突变设为假阳性
+                            case dict.FALSE_POSITIVE:
+                                // 处理非当前id的其它关联的mutant的id
+                                if (id!==current_id){
+                                    if (all_status_of_data_dict[sheet].hasOwnProperty(id)) {
+                                        // 如果当前已有数据
+                                        let status = all_status_of_data_dict[sheet][id]
+                                        // console.log("submitAffirmedData status", status)
 
-                        if (reason_type === dict.FALSE_POSITIVE){
-                            // 处理 1. 突变设为假阳性
-                            if (all_status_of_data_dict[sheet].hasOwnProperty(id)){
-                                // 如果当前已有数据
-                                let status = all_status_of_data_dict[sheet][id]
-                                // console.log("submitAffirmedData status", status)
+                                        // 1）移动sample或sheet中统计数字
+                                        if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status) !== -1) {
+                                            __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.S_ADATA, sheet)
+                                        } else if (status === dict.FREE) {
+                                            __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA, sheet)
+                                        }
 
-                                // 1）移动sample或sheet中统计数字
-                                if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status) !== -1){
-                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.S_ADATA, sheet)
-                                }else if (status === dict.FREE){
-                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA, sheet)
+                                        // 2） 删除params和log相关，就算开始已经提交，后续就算循环到也不会上传了
+                                        __delete_oneData_params_logRelated(sheet, id)
+                                    } else {
+                                        // 1） 正常下载时候必然为free，然后跳过为done, 修改sample和sheet的count统计
+                                        let before_done = mutant[dict.BEFORE_DONE]
+                                        if (!before_done && mutant[dict.DONE]) {
+                                            __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA, sheet)
+                                        }
+                                    }
+
+                                    // 3) 不能放前面，之前status需要用于count的迁移，下载或更新status和nowValue，preValue
+                                    __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([mutant], sheet, true)
+                                }else{
+                                    // 当前提交的mutant，更新（主要是false_mutant_record）
+                                    __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(sheet, id, mutant)
                                 }
+                                break
 
-                                // 2） 删除params和log相关，就算开始已经提交，后续就算循环到也不会上传了
-                                __delete_oneData_params_logRelated(sheet, id)
-                            }else{
-                                // 1） 正常下载时候必然为free，然后跳过为done, 修改sample和sheet的count统计
-                                let before_done = mutant[dict.BEFORE_DONE]
-                                if(!before_done && mutant[dict.DONE]){
-                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.S_ADATA, sheet)
+                            // 处理 2. 突变取消假阳性 （todo 可能用不到，取消假阳性独立处理了）
+                            case dict.CANCEL_FALSE_POSITIVE:
+                                if (id!==current_id){
+                                    if (all_status_of_data_dict[sheet].hasOwnProperty(id)) {
+                                        // 如果当前已有数据
+                                        let status = all_status_of_data_dict[sheet][id]
+                                        // console.log("submitAffirmedData status", status)
+
+                                        // 1）移动sample或sheet中统计数字
+                                        if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status) !== -1) {
+                                            __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA, sheet)
+                                        } else if (status === dict.DONE) {
+                                            __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA, sheet)
+                                        }
+
+                                        // 2） 删除params和log相关，就算开始已经提交，后续就算循环到也不会上传了
+                                        __delete_oneData_params_logRelated(sheet, id)
+                                    } else {
+                                        // 1） 正常下载时候必然为free，然后跳过为done, 修改sample和sheet的count统计
+                                        let before_done = mutant[dict.BEFORE_DONE]
+                                        if (before_done && !mutant[dict.DONE]) {
+                                            __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA, sheet)
+                                        }
+                                    }
+
+                                    // 3) 不能放前面，之前status需要用于count的迁移，下载或更新status和nowValue，preValue
+                                    __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([mutant], sheet, true)
+                                }else{
+                                    __update_oneData_multipleNowValueandPreValue_withoutChangeStatus(sheet, id, mutant)
                                 }
-                            }
-
-                            // 3) 不能放前面，之前status需要用于count的迁移，下载或更新status和nowValue，preValue
-                            __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([mutant], sheet, true)
-                        }else if (reason_type === dict.CANCEL_FALSE_POSITIVE){
-                            // 处理 2. 突变取消假阳性
-                            if (all_status_of_data_dict[sheet].hasOwnProperty(id)){
-                                // 如果当前已有数据
-                                let status = all_status_of_data_dict[sheet][id]
-                                // console.log("submitAffirmedData status", status)
-
-                                // 1）移动sample或sheet中统计数字
-                                if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status) !== -1){
-                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA, sheet)
-                                }else if (status === dict.DONE){
-                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA, sheet)
-                                }
-
-                                // 2） 删除params和log相关，就算开始已经提交，后续就算循环到也不会上传了
-                                __delete_oneData_params_logRelated(sheet, id)
-                            }else{
-                                // 1） 正常下载时候必然为free，然后跳过为done, 修改sample和sheet的count统计
-                                let before_done = mutant[dict.BEFORE_DONE]
-                                if(before_done && !mutant[dict.DONE]){
-                                    __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA, sheet)
-                                }
-                            }
-
-                            // 3) 不能放前面，之前status需要用于count的迁移，下载或更新status和nowValue，preValue
-                            __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([mutant], sheet, true)
+                                break
+                            default:
+                                break
                         }
-
                     }
 
                     // 提示关联删除信息
@@ -4014,7 +4060,27 @@
                                 handleCancelSubmitDone(id)
                             }
                         })
-                        menu.append(cancel_submit_done_MenuItem)
+
+                        let sin_cancelFalseMutant_MenuItem = new remote.MenuItem({
+                            label: '取消假阳性',
+                            enabled: id===right_id,
+                            click: ()=>{
+                                openSureMessage(dict.FALSE_POSITIVE, dict.CANCEL)
+                            }
+                        })
+                        // 判断当前页是否需要false_mutant_record, 当前选中数据有false_mutant_record项，非空
+                        if(sheetDisplayConfigDict[params.type][dict.FALSE_MUTANT_RECORD]){
+                            let false_mutant_record = all_nowValue_of_data_dict[params.type][id][dict.FALSE_MUTANT_RECORD]
+                            // 如果存在假突变记录，使用"取消假阳性"按钮，否则为正常"撤销提交"按钮
+                            if (false_mutant_record){
+                                menu.append(sin_cancelFalseMutant_MenuItem)
+                            }else{
+                                menu.append(cancel_submit_done_MenuItem)
+                            }
+                        }else{
+                            menu.append(cancel_submit_done_MenuItem)
+                        }
+
                         break
                     default:
                         break
@@ -4044,7 +4110,7 @@
             }
 
             let genes_inImmune_list = genes_inImmune? genes_inImmune.split(';') : []
-            console.log('__handleContextMenu genes_inImmune_list', genes_inImmune_list)
+            // console.log('__handleContextMenu genes_inImmune_list', genes_inImmune_list)
             let right_nowValue_delete = all_nowValue_of_data_dict[params.type][right_id][dict.DELETE]
 
             if(sheetDisplayConfigDict[params.type][dict.CONNECT_IMMUNE] &&
@@ -4611,7 +4677,7 @@
                 subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
             }
 
-            //4) 更新preValue，nowValue，TMB和sampleInfo中数据可能被更新而非仅仅是自动添加,
+            //4) todo 添加追加样本 "1)" 后再执行此处，追加的sampleInfo也可能被后续更新，更新preValue，nowValue
             let updatedData = data.updatedData
             console.log('handleAddDataSubmit updatedData', updatedData)
             for (let updated_data of updatedData){
@@ -4702,7 +4768,7 @@
     }
 
     function __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet=null, type=null){
-        console.log('__modify_localData_relatedImmune... id immune_id modified_immune sheet type', id, immune_id, modified_immune, sheet, type)
+        // console.log('__modify_localData_relatedImmune... id immune_id modified_immune sheet type', id, immune_id, modified_immune, sheet, type)
         // 判断是否获取到修改的immune_id数据, 理论上成功添加，必然返回
         if (immune_id){
             // 1) 当前表，更新本地此条 data数据的
@@ -4925,7 +4991,7 @@
         // console.log(sample_list, sampleSn_dict)
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict, all_sheet_record_dict)
-        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
@@ -4934,7 +5000,7 @@
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_status_of_data_dict)
-        // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])

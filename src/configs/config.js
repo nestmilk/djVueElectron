@@ -251,6 +251,7 @@ export const sheetDisplayConfigList = [
         need_copy: true,
         connect_immune: true,
         show_historyFalsePositiveMutant: true,
+        false_mutant_record: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -267,9 +268,6 @@ export const sheetDisplayConfigList = [
             }, {
                 value: 'likely_benign',
                 content: '疑似良性'
-            }, {
-                value: 'cancel_false_positive',
-                content: '取消假阳性'
             }, {
                 value: 'other',
                 content: '其它'
@@ -508,6 +506,7 @@ export const sheetDisplayConfigList = [
         need_copy: true,
         connect_immune: true,
         show_historyFalsePositiveMutant: true,
+        false_mutant_record: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -524,9 +523,6 @@ export const sheetDisplayConfigList = [
             }, {
                 value: 'likely_benign',
                 content: '疑似良性'
-            }, {
-                value: 'cancel_false_positive',
-                content: '取消假阳性'
             }, {
                 value: 'other',
                 content: '其它'
@@ -706,6 +702,7 @@ export const sheetDisplayConfigList = [
         need_all_check: true,
         igv_control: true,
         show_historyFalsePositiveMutant: true,
+        false_mutant_record: true,
         reason_type: [
             {
                 value: 'nothing',
@@ -722,9 +719,6 @@ export const sheetDisplayConfigList = [
             }, {
                 value: 'likely_benign',
                 content: '疑似良性'
-            }, {
-                value: 'cancel_false_positive',
-                content: '取消假阳性'
             }, {
                 value: 'other',
                 content: '其它'
