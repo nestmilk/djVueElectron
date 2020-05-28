@@ -660,6 +660,7 @@
                                                         )
                                                     }
                                                         <table class="immuneConnectTable">
+                                                            <!--使用行号所以是最新的数据结果-->
                                                             {#each line_data[dict.TYPE].split(';') as type}
                                                                 {#each line_data[`${type.split('_')[0]}s`] as instance}
                                                                     <tr title="{type===dict.MUTANT?instance[dict.HGVS]:''}
@@ -974,17 +975,18 @@
     async function __handleCopyData(){
         loadingShow = true
 
-        let copy_data_id
-        let modified_immune = null
         let sample_id = all_now_sample_id[params.type]
-        let success = false
+        let data_id = all_now_data_id[params.type]
 
         let form = new FormData()
         form.append('sheet', params.type)
-        form.append('data_id', all_now_data_id[params.type])
+        form.append('data_id', data_id)
         form.append('log_id', uuidv4())
         form.append('token', userInfo.getToken())
 
+        let success = false
+        let copy_data_id = null
+        let modified_immune = null
         await api.copyData(form).then(response=>{
             success = true
 
@@ -993,6 +995,7 @@
             modified_immune = response.data[dict.MODIFIED_IMMUNE]
             console.log("__handleCopyData copy_data_id modified_immune", copy_data_id, modified_immune)
 
+            // 更改当all_now_data_id中数据id和all_now_sample_id中样本id
             __change_dataIds_and_sampleIds(copy_data_id, sample_id)
         }).catch(error=>{
             console.log('__handleCopyData copyData', error)
@@ -1000,26 +1003,36 @@
         })
 
         // 获取当前搜索参数下，复制后的所有数据，从而找出copy数据所在页码
-        let all_data
-        // 如果存在ids筛选，则加入copy数据的id
-        let ids_param = all_search_params_dict[params.type][dict.IDS]
-        let ids = ids_param?`${ids_param},${copy_data_id}`:null
+        let all_data = null
         if(success){
-            // 修改sample和sheet record中的总数
+            // 1）如果存在ids筛选，则加入copy数据的id
+            let ids_param = all_search_params_dict[params.type][dict.IDS]
+            if (ids_param){
+                let id_list = ids_param.split(',')
+                id_list.push(copy_data_id)
+                let ids = id_list.join(',')
+                // 2）更新搜索参数中的ids
+                all_search_params_dict[params.type][dict.IDS] = ids
+                console.log('__handleCopyData ids_param copy_data_id id_list ids', ids_param, copy_data_id, id_list, ids)
+            }
+
+
+            // 3）修改sample和sheet record中的总数
             __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, null, dict.US_UADATA)
 
-            // 计算页内数据总数，作为page_size
+            // 计算页内 数据总数，作为page_size
             let count = Object.keys(all_sheet_record_dict[params.type]).reduce((count, count_name)=>{
                 return count + all_sheet_record_dict[params.type][count_name]
             }, 0)
 
             let name = params.type
             name = name.slice(0, 1).toUpperCase() + name.slice(1)
+            let all_data = null
+            // 临时覆盖 page 和page_size
             await api[`list${name}`]({
                 ...all_search_params_dict[params.type],
                 page: 1,
                 page_size: count,
-                ids
             }).then(response=>{
                 // console.log("__handleCopyData list...", response.data)
                 all_data = response.data.results
@@ -1027,27 +1040,28 @@
                 console.log("__handleCopyData list...", error)
                 errors = error
             })
+
+            let copy_data_page = null
+            if(all_data){
+                let index = findIndexByFieldValue(all_data, dict.ID, copy_data_id)
+                let page_size = all_search_params_dict[params.type][dict.PAGE_SIZE]
+                copy_data_page = Math.ceil((index+1)/page_size)
+                console.log("__handleCopyData all_data, index, page_size, copy_data_page", all_data, index, page_size, copy_data_page)
+            }
+
+            // 4) 更新all_search_params_dict中page, ids
+            if (copy_data_page){
+                all_search_params_dict[params.type][dict.PAGE] = copy_data_page
+            }
+
+            // 5) 如果有modified_immune，还需要修改immune页对应sheet行
+            if(modified_immune && all_status_of_data_dict[dict.IMMUNE].hasOwnProperty(modified_immune[dict.ID])){
+                let immune_id = modified_immune[dict.ID]
+                __substitute_oneData_byModifiedData_changeStatusDoneorFree(dict.IMMUNE, immune_id, modified_immune)
+            }
+
+            await __getPageData()
         }
-
-        let copy_data_page
-        if(all_data){
-            let index = findIndexByFieldValue(all_data, dict.ID, copy_data_id)
-            let page_size = all_search_params_dict[params.type][dict.PAGE_SIZE]
-            copy_data_page = Math.ceil((index+1)/page_size)
-            console.log("__handleCopyData", all_data, index, page_size, copy_data_page)
-        }
-
-        // 更新all_search_params_dict中page, ids
-        all_search_params_dict[params.type][dict.PAGE] = copy_data_page
-        all_search_params_dict[params.type][dict.IDS] = ids
-
-        // 如果是TMB或TNB拷贝，还需要修改immune页对应sheet行
-        if(modified_immune && all_status_of_data_dict[dict.IMMUNE].hasOwnProperty(modified_immune[dict.ID])){
-            let immune_id = modified_immune[dict.ID]
-            __substitute_oneData_byModifiedData_changeStatusDoneorFree(dict.IMMUNE, immune_id, modified_immune)
-        }
-
-        await __getPageData()
 
         loadingShow = false
     }
