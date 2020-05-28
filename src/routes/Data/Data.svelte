@@ -1277,11 +1277,64 @@
         form.append('mutant_id', mutant_id)
         form.append('token', userInfo.getToken())
         form.append('log_id', uuidv4())
+
+        let success = false
+        let modified_immune_dict = {}
+        let modified_mutants = []
         await api.cancelDeleteFalseMutant(form).then(response=>{
             console.log('__handle_cancelFalseMutant response.data', response.data)
+            success = true
+            modified_immune_dict = response.data[dict.MODIFIED_IMMUNES]
+            modified_mutants = response.data[dict.MODIFIED_MUTANTS]
         }).catch(error=>{
             console.log('__handle_cancelFalseMutant error', error)
         })
+
+        if (success){
+            for (let mutant of modified_mutants){
+                let id = mutant[dict.ID]
+                let sample_id = mutant[dict.SAMPLEID]
+                let sheet = mutant[dict.TYPE]
+                if (all_status_of_data_dict[sheet].hasOwnProperty(id)){
+                    let status = all_status_of_data_dict[sheet][id]
+                    // 1）移动sample或sheet中统计数字
+                    if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status) !== -1) {
+                        __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_ADATA, dict.US_UADATA, sheet)
+                    } else if (status === dict.DONE) {
+                        __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA, sheet)
+                    }
+
+                    // 2） 删除params和log相关，就算开始已经提交，后续就算循环到也不会上传了
+                    __delete_oneData_params_logRelated(sheet, id)
+
+                }else{
+                    // 1） 正常下载时候必然为free，如果之前为done，就要修改sample和sheet的count统计
+                    let before_done = mutant[dict.BEFORE_DONE]
+                    if (before_done && !mutant[dict.DONE]) {
+                        __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.S_ADATA, dict.US_UADATA, sheet)
+                    }
+                }
+
+                // 3) 不能放前面，之前status需要用于count的迁移，下载或更新status和nowValue，preValue
+                __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict([mutant], sheet, true)
+            }
+
+            for (let str_immune_id in modified_immune_dict){
+                let immune_id = parseInt(str_immune_id)
+                let modified_immune = modified_immune_dict[immune_id][dict.DATA]
+                // 处理连接免疫
+                if (modified_immune_dict[immune_id].hasOwnProperty(dict.CONNECT)){
+                    let type = dict.ADD
+                    for (let item of modified_immune_dict[immune_id][dict.CONNECT]) {
+                        let sheet = item[dict.SHEET]
+                        let id = item[dict.ID]
+                        __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet, type)
+                    }
+                }
+            }
+
+            await __getPageData()
+        }
 
         loadingShow = false
     }
@@ -3214,7 +3267,7 @@
                     for (let str_immune_id in modified_immune_dict){
                         let immune_id = parseInt(str_immune_id)
                         let modified_immune = modified_immune_dict[immune_id][dict.DATA]
-                        // 处理连接免疫
+                        // 处理连接免疫（todo 可能用不到，取消假阳性独立处理了）
                         if (modified_immune_dict[immune_id].hasOwnProperty(dict.CONNECT)){
                             let type = dict.ADD
                             for (let item of modified_immune_dict[immune_id][dict.CONNECT]) {
@@ -3223,7 +3276,7 @@
                                 __modify_localData_relatedImmune_afterToggleDataConnectImmune(id, immune_id, modified_immune, sheet, type)
                             }
                         }
-                        // 处理取消连接免疫（todo 可能用不到，取消假阳性独立处理了）
+                        // 处理取消连接免疫
                         if (modified_immune_dict[immune_id].hasOwnProperty(dict.CANCEL_CONNECT)){
                             let type = dict.DELETE
                             for (let item of modified_immune_dict[immune_id][dict.CANCEL_CONNECT]) {
