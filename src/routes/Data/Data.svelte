@@ -328,8 +328,18 @@
                                 {/if}
                                 <!--显示历史假突变-->
                                 {#if sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEPOSITIVEMUTANT] && openHistoryFalsePositiveMutant}
-                                    <th class="affirmed">
-                                        历史假阳性突变
+                                    <th class="falseMutant">
+                                        <select value={all_subFilter_indexes_dict[params.type][dict.FALSEMUTANT][0]}
+                                                on:change={(e)=>handleChangeFilter(e, dict.FALSEMUTANT)}
+                                                class="inside"
+                                                bind:this={falseMutant}
+                                        >
+                                            {#each subFilter_selections_dict[dict.FALSEMUTANT] as selection, index}
+                                                <option value={index}>
+                                                    {selection[dict.CONTENT]}
+                                                </option>
+                                            {/each}
+                                        </select>
                                     </th>
                                 {/if}
                                 <!--针对概览页，选择 已经全部提交的样本条目-->
@@ -946,6 +956,7 @@
         CONNECT: 'connect', CANCEL_CONNECT: 'cancel_connect', CNA_LOSS: 'CNA_loss', CNA_GAIN: 'CNA_gain',
         MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune', SHOW_HISTORYFALSEPOSITIVEMUTANT: 'show_historyFalsePositiveMutant',
         MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
+        FALSEMUTANT: 'falseMutant',
     }
     // 获取路径中的：值
     export let params = {}
@@ -2689,6 +2700,7 @@
     let logsEditFilter
     let exonicfuncRefgene
     let connectSheet
+    let falseMutant
     let pre_params_type
     // submenu选择
     async function handleSelectSubmenu(type, get_page_data=true){
@@ -4136,7 +4148,7 @@
                             }
                         })
                         // 判断当前页是否需要false_mutant_record, 当前选中数据有false_mutant_record项，非空
-                        if(sheetDisplayConfigDict[params.type][dict.FALSE_MUTANT_RECORD]){
+                        if(sheetDisplayConfigDict[params.type][dict.FALSE_MUTANT_RECORD] && id){
                             let false_mutant_record = all_nowValue_of_data_dict[params.type][id][dict.FALSE_MUTANT_RECORD]
                             // 如果存在假突变记录，使用"取消假阳性"按钮，否则为正常"撤销提交"按钮
                             if (false_mutant_record){
@@ -5808,7 +5820,8 @@
         color: white;
     }
     .contentRight .rightDataTable .lineTitle .exonicfuncRefgene .inside,
-    .contentRight .rightDataTable .lineTitle .connectSheet .inside{
+    .contentRight .rightDataTable .lineTitle .connectSheet .inside,
+    .contentRight .rightDataTable .lineTitle .falseMutant .inside{
         padding: 0;
         margin: 0;
         width: 119px;

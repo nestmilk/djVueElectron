@@ -244,7 +244,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "target",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant'],
         submenu_translate: '靶向',
         need_all_check: true,
         igv_control: true,
@@ -499,7 +499,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "hereditary",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant'],
         submenu_translate: '遗传',
         need_all_check: true,
         igv_control: true,
@@ -697,7 +697,7 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "TMB",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant'],
         submenu_translate: 'TMB',
         need_all_check: true,
         igv_control: true,
@@ -2055,7 +2055,8 @@ export const common_filter_subFilters_dict = {
     logsEdit:['logsEdit',],
     ordering: ['sample__id', 'chr', 'posStart', 'posEnd'],
     exonicfuncRefgene: ['initial_exonicfuncRefgene',],
-    connectSheet: ['connectSheet']
+    connectSheet: ['connectSheet'],
+    falseMutant: ['falseMutant'],
 }
 
 
@@ -2168,7 +2169,16 @@ export const common_subFilter_selections_dict = {
             value: 'cna',
             content: '存在关联(CNA)'
         }
-    ]
+    ],
+    falseMutant: [
+        {
+            value: null,
+            content: '历史假突变提示'
+        }, {
+            value: true,
+            content: '历史假突变(存在)'
+        },
+    ],
 }
 
 export const affirmSelectionConfig = [
