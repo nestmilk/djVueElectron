@@ -16,7 +16,9 @@ export const dict_translate = {
     change: '更改',
     immune_connect: '免疫关联',
     add: '添加',
-    false_positive: '假阳性'
+    false_positive: '假阳性',
+    selectedSamples_check_affirm: '选中样本的无修改审核',
+    delete_affirm: '删除后审核'
 }
 
 

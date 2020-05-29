@@ -953,7 +953,7 @@
         DELETED_IDS: "deleted_ids", LEFT_IDS: "left_ids", ADDED_IDS: "added_ids", PREVALUE_NOWVALUE_UPDATE: 'preValue_nowValue_update',
         LOG_DETAILS: "log_details", SUBJECT_ID: 'subject_id', SUBJECT_FIELD_NAME: "subject_field_name",
         NEW_VALUE: 'new_value', OLD_VALUE: 'old_value', PREVIOUS_LOG_UPDATE: "previous_log_update",
-        EDITOR: 'editor', ADD_TIME: "add_time", CHECK: 'check', SUBMIT: 'submit',
+        EDITOR: 'editor', ADD_TIME: "add_time", SELECTEDSAMPLES_CHECK_AFFIRM: 'selectedSamples_check_affirm', SUBMIT: 'submit',
         BAM: 'bam', BAI: 'bai', PATH: 'path', IGV_CONTROL: 'igv_control', NEED_COPY: 'need_copy', NEED_CHECK: 'need_check',
         FREE_UNMODIFIED: 'free_unmodified', NEED_ALL_CHECK: 'need_all_check',
         MUL_AFF_IDS: "multiple_affirmed_ids", UA_US_IDS: "unaffirmed_unsubmited_ids", A_US_IDS: "affirmed_unsubmited_ids",
@@ -970,7 +970,7 @@
         CONNECT: 'connect', CANCEL_CONNECT: 'cancel_connect', CNA_LOSS: 'CNA_loss', CNA_GAIN: 'CNA_gain',
         MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune', SHOW_HISTORYFALSEPOSITIVEMUTANT: 'show_historyFalsePositiveMutant',
         MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
-        FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput',
+        FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput', DELETE_AFFIRM: 'delete_affirm'
     }
     // 获取路径中的：值
     export let params = {}
@@ -981,6 +981,11 @@
     let sureShow = false
     // 控制修改原因页面的显示
     let reasonShow = false
+    function openReasonShow(value, desc){
+        preValue = value
+        preDesc = desc
+        reasonShow = true
+    }
     // 控制singleAffirm显示
     let singleAffirmSelectionShow = false
     // 控制multipleAffirm显示
@@ -1213,7 +1218,81 @@
         loadingShow = false
     }
 
-    async function __affirmCheck_selectedSampleIds_beFreeandUnmodified_data(){
+    async function __get_currentFilterParamss_allData(){
+        let name = params.type
+        name = name.slice(0, 1).toUpperCase() + name.slice(1)
+        let success = false
+        let all_data = null
+        //临时覆盖page和page_size即可获取所有数据
+        await api[`list${name}`]({
+            ...all_search_params_dict[params.type],
+            page: null,
+            page_size: null
+        }).then(response=>{
+            if(response.data.length !== data_count){
+                remote.dialog.showMessageBox({
+                    type: 'info',
+                    title: '数据数量不一致',
+                    message: `数据库现有数据${response.data.count}条，本地数据量显示${data_count}条。`
+                })
+            }else{
+                success = true
+                all_data = response.data
+            }
+        }).catch(error=>{
+            console.log('__get_currentFilterParamss_allData', error)
+            errors = error
+        })
+
+        return all_data
+    }
+    async function __differentTypeAffirm_beFreeandUnmodified_data(type){
+        // 当前没有数据，则返回
+        if (!data_count) return
+
+        loadingShow = true
+
+        let all_data = null
+        await __get_currentFilterParamss_allData().then(result=>{
+            console.log('__deleteAffirm_beFreeandUnmodified_data', result)
+            all_data = result
+        })
+        if (all_data){
+            // A) 检查数据库中done状态为false, 本地如果有下载则unmodified，为0则取消后续操作，返回
+            let ids = []
+            for (let data of all_data){
+                let id = data[dict.ID]
+                let done = data[dict.DONE]
+                let unmodified = true
+                if (all_status_of_data_dict[params.type].hasOwnProperty(id)){
+                    let unequal_values = __check_unequalValues_ofModifiyFields(id)
+                    if (Object.keys(unequal_values).length !==0){
+                        unmodified = false
+                    }
+                }
+                if(!done && unmodified){
+                    ids.push(id)
+                }
+            }
+            if (ids.length===0){
+                return
+            }else{
+                // 选择提交原因
+                openReasonShow(null, null)
+
+                // B) 更新所有数据的status，nowValue, preValue
+                __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(all_data)
+
+                __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord()
+            }
+
+
+
+        }
+
+        loadingShow = false
+    }
+    async function __checkAffirm_selectedSampleIds_beFreeandUnmodified_data(){
         loadingShow = true
         let panalId = params[dict.PANALID]
         let sampleIds = selected_sampleId_list.join(',')
@@ -1431,10 +1510,16 @@
                 break
             case dict.FREE_UNMODIFIED:
                 switch (sureOperation){
-                    case dict.CHECK:
+                    case dict.SELECTEDSAMPLES_CHECK_AFFIRM:
                         // console.log('handleSureReply 未审核未修改 确认审核')
                         if(reply){
-                            await __affirmCheck_selectedSampleIds_beFreeandUnmodified_data()
+                            await __checkAffirm_selectedSampleIds_beFreeandUnmodified_data()
+                        }
+                        break
+                    case dict.DELETE_AFFIRM:
+                        if(reply){
+                            console.log('handleSureReply 批量 删除 审核')
+                            await __differentTypeAffirm_beFreeandUnmodified_data(dict.DELETE)
                         }
                         break
                     default:
@@ -1484,8 +1569,10 @@
                 }
                 break
             case dict.FALSE_POSITIVE:
-                console.log('handleSureReply cancel False Positive')
-                await __handleCancelFalseMutant()
+                console.log('handleSureReply cancel False Positive reply', reply)
+                if(reply){
+                    await __handleCancelFalseMutant()
+                }
                 break
             default:
                 break
@@ -2302,9 +2389,7 @@
                 return
             }else{
                 // 显示修改原因填写页面, 逻辑跳转handleAddReasonSure处理
-                preValue = null
-                preDesc = null
-                reasonShow = true
+                openReasonShow(null, null)
             }
 
         }else if([dict.CHECKED, dict.DELETED, dict.EDITED].indexOf(status) !== -1){
@@ -2318,9 +2403,7 @@
     function handleEditSinAffReason(id){
         let log_id = all_submit_logs_dict[params.type][id]
         let log_detail = logs_together_dict[log_id]
-        preValue = log_detail[dict.VALUE]
-        preDesc = log_detail[dict.DESC]
-        reasonShow = true
+        openReasonShow(log_detail[dict.VALUE], log_detail[dict.DESC])
     }
 
     // 无重复列表，
@@ -2354,9 +2437,7 @@
     function __handleMulAffirm(){
         // 只有此页有选中id才进行处理，显示原因填写表
         if(all_selected_dataIds_dict[params.type].length > 0){
-            preValue = null
-            preDesc = null
-            reasonShow = true
+            openReasonShow(null, null)
         }
     }
     // 批量审核中，处理多选的恢复
@@ -3967,10 +4048,25 @@
                     enabled: count!==0,
                     click: ()=>{
                         // console.log('全部审核')
-                        openSureMessage(dict.FREE_UNMODIFIED, dict.CHECK)
+                        openSureMessage(dict.FREE_UNMODIFIED, dict.SELECTEDSAMPLES_CHECK_AFFIRM)
                     }
                 })
                 menu.append(recoverMenuItem)
+
+
+                // 未审核未修改数据的批量处理
+                let unmodified_free_multipleHandle_menuItem = new remote.MenuItem({
+                    label: '未修改未审核数据的批处理',
+                    submenu: [
+                        {
+                            label: '批量删除后审核打勾',
+                            click: ()=>{
+                                openSureMessage(dict.FREE_UNMODIFIED, dict.DELETE_AFFIRM)
+                            }
+                        }
+                    ]
+                })
+                menu.append(unmodified_free_multipleHandle_menuItem)
 
                 menu.popup({window: remote.getCurrentWindow()})
             }
@@ -4199,9 +4295,9 @@
                             label: "增减条目",
                             enabled: locked_logId && !ifEqual?true:false,
                             click: ()=>{
-                                preValue = logs_together_dict[locked_logId][dict.VALUE]
-                                preDesc = logs_together_dict[locked_logId][dict.DESC]
-                                reasonShow = true
+                                let value = logs_together_dict[locked_logId][dict.VALUE]
+                                let desc = logs_together_dict[locked_logId][dict.DESC]
+                                openReasonShow(value, desc)
                             }
                         })
                         menu.append(adjust_mulAff_items_menuItem)
@@ -5194,7 +5290,8 @@
         // console.log(sample_list, sample_dict)
         // console.log(genes_connectImmune_dict)
         // console.log(currentPage_falseMutantRecord_dict)
-        console.log(freqLowInput, freqHighInput, freqLowInput?freqLowInput.value:'', freqHighInput?freqHighInput.value:'')
+        // console.log(freqLowInput, freqHighInput, freqLowInput?freqLowInput.value:'', freqHighInput?freqHighInput.value:'')
+        console.log(data_count)
     }
 
 </script>

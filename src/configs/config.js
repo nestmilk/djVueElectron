@@ -270,6 +270,9 @@ export const sheetDisplayConfigList = [
                 value: 'likely_benign',
                 content: '疑似良性'
             }, {
+                value: 'unknown_meaning',
+                content: '意义未明'
+            }, {
                 value: 'other',
                 content: '其它'
             }
@@ -526,6 +529,9 @@ export const sheetDisplayConfigList = [
                 value: 'likely_benign',
                 content: '疑似良性'
             }, {
+                value: 'unknown_meaning',
+                content: '意义未明'
+            }, {
                 value: 'other',
                 content: '其它'
             }
@@ -722,6 +728,9 @@ export const sheetDisplayConfigList = [
             }, {
                 value: 'likely_benign',
                 content: '疑似良性'
+            }, {
+                value: 'unknown_meaning',
+                content: '意义未明'
             }, {
                 value: 'other',
                 content: '其它'
