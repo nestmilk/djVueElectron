@@ -2175,9 +2175,12 @@ export const common_subFilter_selections_dict = {
             value: null,
             content: '历史假突变提示'
         }, {
-            value: true,
+            value: 'history',
             content: '历史假突变(存在)'
-        },
+        }, {
+            value: 'now',
+            content: '当前假突变(存在)'
+        }
     ],
 }
 
