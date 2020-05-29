@@ -244,7 +244,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "target",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering',
+            "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant', 'freqRange'],
         submenu_translate: '靶向',
         need_all_check: true,
         igv_control: true,
@@ -499,7 +500,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "hereditary",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering',
+            "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant', 'freqRange'],
         submenu_translate: '遗传',
         need_all_check: true,
         igv_control: true,
@@ -697,7 +699,8 @@ export const sheetDisplayConfigList = [
 
     {
         sheet: "TMB",
-        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering', "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant'],
+        filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering',
+            "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant', 'freqRange'],
         submenu_translate: 'TMB',
         need_all_check: true,
         igv_control: true,

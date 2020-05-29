@@ -255,7 +255,7 @@
                         <div class="clearBnWrapper">
                             <button class="icon-undo2"
                                     title="清空所有过滤条件"
-                                    on:click={handleClear_queryIDS_queryGenes}
+                                    on:click={handleClear_queryIDS_queryGenes_freqRange}
                             ></button>
                         </div>
                     </div>
@@ -422,10 +422,10 @@
                                                 <th class="{field}">{all_titleListItem_dict[params.type][field][dict.TRANSLATE]}</th>
                                             {/if}
                                         {:else if field===dict.POSSTART &&
-                                        sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) &&
+                                        sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) !== -1 &&
                                         !sheetDisplayConfigDict[params.type].ifSimpleOrdering
                                         }
-                                            {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) > -1}
+                                            {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) !== -1}
                                                 <th class="posStart hoverGreen" on:click={()=>handleToggleFilter(dict.POSSTART)}>
                                                     {@html subFilter_selections_dict[dict.POSSTART][all_subFilter_indexes_dict[params.type][dict.ORDERING][2]][dict.CONTENT]}
                                                 </th>
@@ -433,18 +433,30 @@
                                                 <th class="{field}">{all_titleListItem_dict[params.type][field][dict.TRANSLATE]}</th>
                                             {/if}
                                         {:else if field===dict.POSEND &&
-                                            sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) &&
+                                            sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) !== -1 &&
                                             !sheetDisplayConfigDict[params.type].ifSimpleOrdering
                                         }
-                                            {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) > -1}
+                                            {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.ORDERING) !== -1}
                                                 <th class="posEnd hoverGreen" on:click={()=>handleToggleFilter(dict.POSEND)}>
                                                     {@html subFilter_selections_dict[dict.POSEND][all_subFilter_indexes_dict[params.type][dict.ORDERING][3]][dict.CONTENT]}
                                                 </th>
                                             {:else}
                                                 <th class="{field}">{all_titleListItem_dict[params.type][field][dict.TRANSLATE]}</th>
                                             {/if}
+                                        {:else if field===dict.FREQ &&
+                                            sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.FREQRANGE) !== -1
+                                        }
+                                            <th class="freqRange">
+                                                频率
+                                                ( <input type="number" step="0.001" min="0" max="1"
+                                                         bind:this={freqLowInput}
+                                                         on:keydown={(e)=>handleFreqRangeKeydown(e, dict.FREQLOWINPUT)}/> -
+                                                <input type="number" step="0.001" min="0" max="1"
+                                                         bind:this={freqHighInput}
+                                                         on:keydown={(e)=>handleFreqRangeKeydown(e, dict.FREQHIGHINPUT)}/> )
+                                            </th>
                                         {:else if field===dict.EXONICFUNCREFGENE &&
-                                            sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.EXONICFUNCREFGENE) > -1
+                                            sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.EXONICFUNCREFGENE) !== -1
                                         }
                                         <!-- on:change="{(e) => change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(e.target.value)}"-->
                                             <th class="exonicfuncRefgene" >
@@ -728,7 +740,8 @@
                                                     <td class="{field} containInput
                                                         {all_nowValue_of_data_dict[params.type][line_data.id]?
                                                             (all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]?'unequal':''):''}
-                                                      "
+                                                        {field===dict.FREQ && sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.FREQRANGE) !== -1?dict.FREQRANGE:''}
+                                                        "
                                                         title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
                                                         on:mouseenter={()=>handleMutantTDMouseenter(field, line_data.id)}
                                                         on:mouseleave={()=>handleMutantTDMouseleave(field, line_data.id)}
@@ -762,6 +775,7 @@
                                                             {params.type===dict.SAMPLEINFOINPANAL && field.includes('SubmitCount') &&
                                                                 all_nowValue_of_data_dict[params.type][line_data.id] &&
                                                                 all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_nowValue_of_data_dict[params.type][line_data.id][field.replace('Submit', '')]?'unequal':''}
+                                                            {field===dict.FREQ && sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.FREQRANGE) !== -1?dict.FREQRANGE:''}
                                                             "
                                                         title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
                                                     >
@@ -923,7 +937,7 @@
         DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene',
         SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
         TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB", tmb: "tmb", TNB: 'TNB', MSI: 'MSI',
-        MODIFY: 'modify', IFEQUAL: 'ifEqual',
+        MODIFY: 'modify', IFEQUAL: 'ifEqual', FREQRANGE: "freqRange",
         DELETE: "delete", FREQ: 'freq', COUNT: 'count',
         NOWDISPLAY: 'nowDisplay', DEFAULTDISPLAY: 'defaultDisplay', SELECTDISPLAY: 'selectDisplay',
         FIELD_MOUSE_ENTER: 'field_mouse_enter',
@@ -956,7 +970,7 @@
         CONNECT: 'connect', CANCEL_CONNECT: 'cancel_connect', CNA_LOSS: 'CNA_loss', CNA_GAIN: 'CNA_gain',
         MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune', SHOW_HISTORYFALSEPOSITIVEMUTANT: 'show_historyFalsePositiveMutant',
         MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
-        FALSEMUTANT: 'falseMutant',
+        FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput',
     }
     // 获取路径中的：值
     export let params = {}
@@ -2702,6 +2716,68 @@
     let connectSheet
     let falseMutant
     let pre_params_type
+    let freqLowInput
+    let freqHighInput
+
+    function __validate_lowFreqandHighFreq_modifyFreqrangeInAllSearchParamsDict(lowLimit, highLimit){
+        if (lowLimit<0){
+            errors = '频率下限为0，请修改后enter'
+            return false
+        }
+        if (highLimit>1){
+            errors = '频率上限为1，请修改后enter'
+            return false
+        }
+        if (lowLimit>highLimit){
+            errors = '频率下限应该小于等于频率上限，请修改后enter'
+            return false
+        }
+        let pre_freqRange = all_search_params_dict[params.type][dict.FREQRANGE]
+        let now_freqRange = lowLimit+','+highLimit
+        if (pre_freqRange !== now_freqRange){
+            __set_page_inAllSearchParamsDict(1)
+            __set_param_freqRange_inAllSearchParamsDict(now_freqRange)
+        }
+        errors = ''
+        return true
+    }
+
+    async function handleFreqRangeKeydown(e, type){
+        // tab键就是9，回车是13
+        if (e.which === 9) {
+            e.preventDefault()
+
+            if (type === dict.FREQLOWINPUT){
+                freqHighInput.focus()
+            }else if (type === dict.FREQHIGHINPUT){
+                freqLowInput.focus()
+            }
+            return
+        }
+
+        if (e.which === 13){
+            loadingShow = true
+            let lowValue = freqLowInput.value
+            let highValue = freqHighInput.value
+            if (lowValue === '' && highValue === ''){
+                __set_page_inAllSearchParamsDict(1)
+                __set_param_freqRange_inAllSearchParamsDict(null)
+            }else if (lowValue !== '' && highValue !== ''){
+                let lowLimit = parseFloat(lowValue)
+                let highLimit =parseFloat(highValue)
+                __validate_lowFreqandHighFreq_modifyFreqrangeInAllSearchParamsDict(lowLimit, highLimit)
+            }else{
+                let lowLimit = lowValue!==''?parseFloat(lowValue):0
+                let highLimit = highValue!==''?parseFloat(highValue):1
+                __validate_lowFreqandHighFreq_modifyFreqrangeInAllSearchParamsDict(lowLimit, highLimit)
+            }
+            // console.log('handleFreqRangeKeydown freqRange', all_search_params_dict[params.type][dict.FREQRANGE])
+            await __getPageData()
+
+            loadingShow = false
+        }
+    }
+
     // submenu选择
     async function handleSelectSubmenu(type, get_page_data=true){
         if (type===params.type) return
@@ -2915,11 +2991,14 @@
     function __set_param_geneNames_inAllSearchParamsDict(genes){
         all_search_params_dict[params.type][dict.GENENAMES] = genes && genes.length>0?genes.join(','):null
     }
+    function __set_param_freqRange_inAllSearchParamsDict(freqRange){
+        all_search_params_dict[params.type][dict.FREQRANGE] = freqRange
+    }
     // 重置页面搜索参数，如果给ids列表，就用ids列表更新搜索参数ids
     //"page_size", 没有改动！！！  "panalId",没有改动，"search",没有改动，
     //"sampleIds",使用全部样本， "page", 设为1  （"done", "logsEdit", 'ordering', "exonicfuncRefgene",）全部设为默认0号选项，
     // 'ids'，设为选定或null
-    function __reset_params_byIds_exceptPageSize_inAllSearchParamsDict(ids=null, genes=null){
+    function __reset_params_byIds_exceptPageSize_inAllSearchParamsDict(ids=null, genes=null, freqRange=null){
         // 重置所有特殊过滤的坐标, 以及params, 包括exonicfuncRefene，done，logEdits，ordering
         __reset_indexes_inAllSubFilterIndexesDict_params_inAllSearchParamsDict()
         // 重置sampleIds，全选所有样本，其中包含params
@@ -2930,6 +3009,8 @@
         __set_param_ids_inAllSearchParamsDict(ids)
         // 设置过滤geneNames
         __set_param_geneNames_inAllSearchParamsDict(genes)
+        // 设置过滤freqRange
+        __set_param_freqRange_inAllSearchParamsDict(freqRange)
     }
 
     let query_genes = ''
@@ -3044,9 +3125,13 @@
         await __getPageData()
     }
 
-    async function handleClear_queryIDS_queryGenes(){
+    async function handleClear_queryIDS_queryGenes_freqRange(){
         query_ids = ''
         query_genes = ''
+        if (freqLowInput && freqHighInput){
+            freqLowInput.value = ''
+            freqHighInput.value = ''
+        }
 
         __reset_params_byIds_exceptPageSize_inAllSearchParamsDict()
 
@@ -5044,6 +5129,18 @@
         if(connectSheet && sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.CONNECTSHEET)!==-1){
             connectSheet.value = all_subFilter_indexes_dict[params.type][dict.CONNECTSHEET][0]
         }
+        if(freqLowInput && freqHighInput){
+            // console.log('__update_filter_dom_value params.type', params.type)
+            let freqRangeValue = all_search_params_dict[params.type][dict.FREQRANGE]
+            if (freqRangeValue){
+                let limits = freqRangeValue.split(',')
+                freqLowInput.value = limits[0]
+                freqHighInput.value = limits[1]
+            }else{
+                freqLowInput.value = ''
+                freqHighInput.value = ''
+            }
+        }
     }
     afterUpdate(()=>{
         // console.log('afterUpdate', pre_params_type, params.type, doneFilter)
@@ -5052,7 +5149,7 @@
             uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
         }
 
-        //手动更新公用过滤的dom的value值,done,delete,logsEdit
+        //手动更新公用过滤的dom的value值,done,delete,logsEdit,exonicfuncRefgene,connectSheet
         if(params.type!==pre_params_type){
             __update_filter_dom_value()
             pre_params_type = params.type
@@ -5070,7 +5167,7 @@
         // console.log(sample_list, sampleSn_dict)
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict, all_sheet_record_dict)
-        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
@@ -5079,7 +5176,7 @@
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_status_of_data_dict)
-        console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
@@ -5094,9 +5191,10 @@
         // console.log(field_needCheck_inSampleInfoinPanal)
         // console.log(sheet_needAllCheck_list)
         // console.log(submenu_group_list, submenu_total_page, submenu_page)
-        console.log(sample_list, sample_dict)
+        // console.log(sample_list, sample_dict)
         // console.log(genes_connectImmune_dict)
-        console.log(currentPage_falseMutantRecord_dict)
+        // console.log(currentPage_falseMutantRecord_dict)
+        console.log(freqLowInput, freqHighInput, freqLowInput?freqLowInput.value:'', freqHighInput?freqHighInput.value:'')
     }
 
 </script>
@@ -5739,6 +5837,22 @@
         border-right: 1px solid #cccccc;
         border-bottom: 1px solid #cccccc;
         min-width: 120px;
+    }
+    .contentRight .rightDataTable .lineTitle .freqRange,
+    .contentRight .rightDataTable .lineData .freqRange{
+        min-width: 160px!important;
+    }
+    .contentRight .rightDataTable .lineTitle .freqRange input{
+        width: 50px;
+        height: 30px;
+        margin: 0;
+        padding: 0;
+    }
+    .contentRight .rightDataTable .lineData .freqRange .inside{
+        width: 159px!important;
+    }
+    .contentRight .rightDataTable .lineData .freqRange .dataInput{
+        width: 155px!important;
     }
 
     .contentRight .rightDataTable .lineData .icon-cross.undeleted{
