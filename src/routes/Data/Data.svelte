@@ -970,7 +970,8 @@
         CONNECT: 'connect', CANCEL_CONNECT: 'cancel_connect', CNA_LOSS: 'CNA_loss', CNA_GAIN: 'CNA_gain',
         MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune', SHOW_HISTORYFALSEPOSITIVEMUTANT: 'show_historyFalsePositiveMutant',
         MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
-        FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput', DELETE_AFFIRM: 'delete_affirm'
+        FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput', DELETE_AFFIRM: 'delete_affirm',
+        CHECK_AFFIRM: 'check_affirm', CHECK: 'check',
     }
     // 获取路径中的：值
     export let params = {}
@@ -1254,19 +1255,20 @@
 
         let all_data = null
         await __get_currentFilterParamss_allData().then(result=>{
-            console.log('__deleteAffirm_beFreeandUnmodified_data', result)
             all_data = result
+            console.log('__differentTypeAffirm_beFreeandUnmodified_data all_data', all_data)
         })
         if (all_data){
-            // A) 检查数据库中done状态为false, 本地如果有下载则unmodified，为0则取消后续操作，返回
+            // A) 检查数据库中done状态为false, 本地如果有下载则需要status为free，并且unmodified，
             let ids = []
             for (let data of all_data){
                 let id = data[dict.ID]
                 let done = data[dict.DONE]
                 let unmodified = true
                 if (all_status_of_data_dict[params.type].hasOwnProperty(id)){
+                    let status = all_status_of_data_dict[params.type][id]
                     let unequal_values = __check_unequalValues_ofModifiyFields(id)
-                    if (Object.keys(unequal_values).length !==0){
+                    if (status !== dict.FREE || Object.keys(unequal_values).length !== 0){
                         unmodified = false
                     }
                 }
@@ -1274,19 +1276,43 @@
                     ids.push(id)
                 }
             }
+            console.log('__differentTypeAffirm_beFreeandUnmodified_data ids', ids)
+
+            // B) 更新所有数据的status，nowValue, preValue
+            __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(all_data)
+
+            // 如果没有需要操作的数据，则返回
             if (ids.length===0){
                 return
             }else{
-                // 选择提交原因
-                openReasonShow(null, null)
-
-                // B) 更新所有数据的status，nowValue, preValue
-                __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(all_data)
-
-                __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord()
+                switch (type){
+                    case dict.DELETE:
+                        // C) 切换审核状态为多项审核
+                        changeAffirmWorkingStatus(dict.MULTIPLE_AFFIRM)
+                        // D) 需要先删除的
+                        if (type==dict.DELETE){
+                            for (let id of ids){
+                                changeValue_In_AllNowvalueOfDataDict(null, id, dict.DELETE)
+                            }
+                        }
+                        // E) 勾选这些删除数据，（简化为 设置多选的数据id)
+                        all_selected_dataIds_dict[params.type] = ids
+                        // F) 打开提交原因
+                        openReasonShow(null, null)
+                        break
+                    case dict.CHECK:
+                        // C) 切换审核状态为单项审核
+                        changeAffirmWorkingStatus(dict.SIN_CANCEL_OR_AFFIRM)
+                        // D) 勾选这些删除数据
+                        for (let id of ids){
+                            let sample_id = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
+                            handleSinAffirm_or_Cancel(id, sample_id)
+                        }
+                        break
+                    default:
+                        break
+                }
             }
-
-
 
         }
 
@@ -1520,6 +1546,12 @@
                         if(reply){
                             console.log('handleSureReply 批量 删除 审核')
                             await __differentTypeAffirm_beFreeandUnmodified_data(dict.DELETE)
+                        }
+                        break
+                    case dict.CHECK_AFFIRM:
+                        if(reply){
+                            console.log('handleSureReply 批量 确认审核')
+                            await __differentTypeAffirm_beFreeandUnmodified_data(dict.CHECK)
                         }
                         break
                     default:
@@ -2419,6 +2451,7 @@
         }
     }
     function handleMulAffirm_lineTDClick(id){
+        console.log('handleMulAffirm_lineTDClick id',id)
         // 处理多选问题
         all_selected_dataIds_dict[params.type] = __handleMultipleSelect(all_selected_dataIds_dict[params.type], id)
 
@@ -3646,7 +3679,8 @@
     function handleAddReasonSure(e){
         // todo 需要根据目前审核工作状态进行区分
         reasonShow = false
-        // console.log(e.detail.value, e.detail.desc)
+        console.log("handleAddReasonSure value desc", e.detail.value, e.detail.desc)
+
         let reason = {
             value: e.detail.value,
             desc: e.detail.desc
@@ -3655,8 +3689,11 @@
         let id = all_now_data_id[params.type]
         let sample_id = all_now_sample_id[params.type]
 
+        let affirmWorkingStatus = all_affirmWorkingStatus_of_sheet_dict[params.type]
+        let selectedDataIds = all_selected_dataIds_dict[params.type]
+
         // 根据不同审核状态，分别处理
-        switch (all_affirmWorkingStatus_of_sheet_dict[params.type]) {
+        switch (affirmWorkingStatus) {
             case dict.SIN_CANCEL_OR_AFFIRM:
                 // 涉及原因，肯定有不等项了，先获取不等项的值
                 let unequal_values = __check_unequalValues_ofModifiyFields(id)
@@ -3676,12 +3713,12 @@
                 log_detail[dict.DESC] = reason[dict.DESC]
                 break
             case dict.MUL_AFFIRM:
-                let sampleIds_dict = __getSampleIdsDict_by_dataIdsList(all_selected_dataIds_dict[params.type])
+                let sampleIds_dict = __getSampleIdsDict_by_dataIdsList(selectedDataIds)
                 let log_id_mulAffirm = uuidv4()
                 logs_together_dict[log_id_mulAffirm] = JSON.parse(JSON.stringify(reason))
-                logs_together_dict[log_id_mulAffirm][dict.IDS] = JSON.parse(JSON.stringify(all_selected_dataIds_dict[params.type]))
+                logs_together_dict[log_id_mulAffirm][dict.IDS] = JSON.parse(JSON.stringify(selectedDataIds))
 
-                for (let id of all_selected_dataIds_dict[params.type]) {
+                for (let id of selectedDataIds) {
                     let sample_id = sampleIds_dict[id]
                     // 涉及原因，肯定有不等项了，先获取不等项的值
                     let unequal_values = __check_unequalValues_ofModifiyFields(id)
@@ -3701,7 +3738,7 @@
                 break
             case dict.EDIT_MULAFF_REASON:
                 // 仅仅需要更新本条数据的log详情
-                let first_id_editMulAffReason =  all_selected_dataIds_dict[params.type][0]
+                let first_id_editMulAffReason =  selectedDataIds[0]
                 let log_id_editMulAffReason = all_submit_logs_dict[params.type][first_id_editMulAffReason]
                 let log_detail_editMulAffReason = logs_together_dict[log_id_editMulAffReason]
                 log_detail_editMulAffReason[dict.VALUE] = reason[dict.VALUE]
@@ -4056,12 +4093,17 @@
 
                 // 未审核未修改数据的批量处理
                 let unmodified_free_multipleHandle_menuItem = new remote.MenuItem({
-                    label: '未修改未审核数据的批处理',
+                    label: '当前过滤条件下-未修改未审核数据的批处理',
                     submenu: [
                         {
-                            label: '批量删除后审核打勾',
+                            label: '删除后-批量审核',
                             click: ()=>{
                                 openSureMessage(dict.FREE_UNMODIFIED, dict.DELETE_AFFIRM)
+                            }
+                        }, {
+                            label: '无修改-单项审核',
+                            click: ()=>{
+                                openSureMessage(dict.FREE_UNMODIFIED, dict.CHECK_AFFIRM)
                             }
                         }
                     ]
@@ -5263,7 +5305,7 @@
         // console.log(sample_list, sampleSn_dict)
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict, all_sheet_record_dict)
-        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
@@ -5272,13 +5314,13 @@
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_status_of_data_dict)
-        // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
-        // console.log(page_id_modifyField_mouseEnter_dicts, page_id_availableSelect_dict, page_id_availableEdit_dict)
+        console.log(page_id_modifyField_mouseEnter_dicts, page_id_availableSelect_dict, page_id_availableEdit_dict)
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
         // console.log(all_previousLog_list_dict)
         // console.log(now_input_field && now_input_id, !panal_unable_handle, now_params_type === params.type, page_id_availableEdit_dict[now_input_id], page_data.some(data=>data.id===now_input_id))

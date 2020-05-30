@@ -18,7 +18,8 @@ export const dict_translate = {
     add: '添加',
     false_positive: '假阳性',
     selectedSamples_check_affirm: '选中样本的无修改审核',
-    delete_affirm: '删除后审核'
+    delete_affirm: '删除后审核',
+    check_affirm: '确认审核',
 }
 
 
