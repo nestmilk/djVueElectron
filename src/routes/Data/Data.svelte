@@ -2834,26 +2834,31 @@
     let freqHighInput
 
     function __validate_lowFreqandHighFreq_modifyFreqrangeInAllSearchParamsDict(lowLimit, highLimit){
+        let error_message = null
+        let need_getPageData = false
         if (lowLimit<0){
-            errors = '频率下限为0，请修改后enter'
-            return false
+            error_message = '频率下限为0，请修改后enter'
         }
         if (highLimit>1){
-            errors = '频率上限为1，请修改后enter'
-            return false
+            error_message = '频率上限为1，请修改后enter'
         }
         if (lowLimit>highLimit){
-            errors = '频率下限应该小于等于频率上限，请修改后enter'
-            return false
+            error_message = '频率下限应该小于等于频率上限，请修改后enter'
         }
-        let pre_freqRange = all_search_params_dict[params.type][dict.FREQRANGE]
-        let now_freqRange = lowLimit+','+highLimit
-        if (pre_freqRange !== now_freqRange){
-            __set_page_inAllSearchParamsDict(1)
-            __set_param_freqRange_inAllSearchParamsDict(now_freqRange)
+
+        if (error_message){
+            remote.dialog.showErrorBox('频率范围', error_message)
+        }else{
+            let pre_freqRange = all_search_params_dict[params.type][dict.FREQRANGE]
+            let now_freqRange = lowLimit+','+highLimit
+            if (pre_freqRange !== now_freqRange){
+                __set_page_inAllSearchParamsDict(1)
+                __set_param_freqRange_inAllSearchParamsDict(now_freqRange)
+                need_getPageData = true
+            }
         }
-        errors = ''
-        return true
+
+        return need_getPageData
     }
 
     async function handleFreqRangeKeydown(e, type){
@@ -2873,20 +2878,28 @@
             loadingShow = true
             let lowValue = freqLowInput.value
             let highValue = freqHighInput.value
+            let need_getPageData = false
             if (lowValue === '' && highValue === ''){
-                __set_page_inAllSearchParamsDict(1)
-                __set_param_freqRange_inAllSearchParamsDict(null)
+                let pre_freqRange = all_search_params_dict[params.type][dict.FREQRANGE]
+                if (pre_freqRange !== null){
+                    __set_page_inAllSearchParamsDict(1)
+                    __set_param_freqRange_inAllSearchParamsDict(null)
+                    need_getPageData = true
+                }
             }else if (lowValue !== '' && highValue !== ''){
                 let lowLimit = parseFloat(lowValue)
                 let highLimit =parseFloat(highValue)
-                __validate_lowFreqandHighFreq_modifyFreqrangeInAllSearchParamsDict(lowLimit, highLimit)
+                need_getPageData = __validate_lowFreqandHighFreq_modifyFreqrangeInAllSearchParamsDict(lowLimit, highLimit)
             }else{
                 let lowLimit = lowValue!==''?parseFloat(lowValue):0
                 let highLimit = highValue!==''?parseFloat(highValue):1
-                __validate_lowFreqandHighFreq_modifyFreqrangeInAllSearchParamsDict(lowLimit, highLimit)
+                need_getPageData = __validate_lowFreqandHighFreq_modifyFreqrangeInAllSearchParamsDict(lowLimit, highLimit)
             }
             // console.log('handleFreqRangeKeydown freqRange', all_search_params_dict[params.type][dict.FREQRANGE])
-            await __getPageData()
+
+            if (need_getPageData){
+                await __getPageData()
+            }
 
             loadingShow = false
         }
