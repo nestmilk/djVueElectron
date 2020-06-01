@@ -1281,10 +1281,8 @@
             // B) 更新所有数据的status，nowValue, preValue
             __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(all_data)
 
-            // 如果没有需要操作的数据，则返回
-            if (ids.length===0){
-                return
-            }else{
+            // C) 如果ids有内容，则按类型操作
+            if (ids.length !== 0) {
                 switch (type){
                     case dict.DELETE:
                         // C) 切换审核状态为多项审核
