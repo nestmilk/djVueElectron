@@ -989,7 +989,7 @@
         TYPE: 'type', CONTENT: 'content', VALUE: 'value', STATUS: 'status',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll',
         ALLDATA: 'allData', S_ADATA: "subAndAffData", US_ADATA: 'unsubAndAffData', US_UADATA: 'unsubAndUnaffData',
-        DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene',
+        DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene', EXONICFUNCREFGENES: "exonicfuncRefgenes",
         SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
         TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB", tmb: "tmb", TNB: 'TNB', MSI: 'MSI',
         MODIFY: 'modify', IFEQUAL: 'ifEqual', FREQRANGE: "freqRange",
@@ -1983,9 +1983,9 @@
         // 如果之前工作状态是检查过往日志记录，需要确定logEdits的subfilter坐标是不是0，如果不是需要切换回去0
         if (pre_affirm_status===dict.CHECK_SINSUB_LOGS &&
                 all_subFilter_indexes_dict[params.type][dict.LOGSEDIT][0]!==0){
-            __reset_indexes_inAllSubFilterIndexesDict_params_inAllSearchParamsDict([dict.LOGSEDIT])
+            __reset_indexes_inAllSubFilterIndexesDict____params_inAllSearchParamsDict([dict.LOGSEDIT])
 
-            __set_page_inAllSearchParamsDict(1)
+            __set_param_page_inAllSearchParamsDict(1)
             await __getPageData()
         }
 
@@ -2695,7 +2695,7 @@
 
         // b. 保险起见
         selected_ids_forCancelDone = []
-        __set_page_inAllSearchParamsDict(1)
+        __set_param_page_inAllSearchParamsDict(1)
         await __getPageData()
 
         // 提示失败的ids
@@ -2915,7 +2915,7 @@
             let pre_freqRange = all_search_params_dict[params.type][dict.FREQRANGE]
             let now_freqRange = lowLimit+','+highLimit
             if (pre_freqRange !== now_freqRange){
-                __set_page_inAllSearchParamsDict(1)
+                __set_param_page_inAllSearchParamsDict(1)
                 __set_param_freqRange_inAllSearchParamsDict(now_freqRange)
                 need_getPageData = true
             }
@@ -2945,7 +2945,7 @@
             if (lowValue === '' && highValue === ''){
                 let pre_freqRange = all_search_params_dict[params.type][dict.FREQRANGE]
                 if (pre_freqRange !== null){
-                    __set_page_inAllSearchParamsDict(1)
+                    __set_param_page_inAllSearchParamsDict(1)
                     __set_param_freqRange_inAllSearchParamsDict(null)
                     need_getPageData = true
                 }
@@ -3069,7 +3069,7 @@
     //         this.now_id = (this.now_id + 1)%this.selections_len
     //     }
     // }
-    function __set_all_specfic_Params_inAllSearchParamsDict() {
+    function __set_all_specficParams_inAllSearchParamsDict__byIndexesInAllSubfilterIndexDict() {
         // console.log("<=== __set_all_specfic_Params...")
         // sheet为页面
         for(let sheet in all_subFilter_indexes_dict){
@@ -3130,10 +3130,10 @@
 
 
         // 其中包含，页面切换回第一页
-        __set_all_specfic_Params_inAllSearchParamsDict()
+        __set_all_specficParams_inAllSearchParamsDict__byIndexesInAllSubfilterIndexDict()
 
         // 增加筛选页面数量可能会伸缩，页面设置为1比较保险
-        __set_page_inAllSearchParamsDict(1)
+        __set_param_page_inAllSearchParamsDict(1)
         await __getPageData()
 
         loadingShow = false
@@ -3151,17 +3151,18 @@
 
         all_subFilter_indexes_dict[params.type][found_filter_name][found_subFilter_index] = index
 
-        __set_all_specfic_Params_inAllSearchParamsDict()
+        __set_all_specficParams_inAllSearchParamsDict__byIndexesInAllSubfilterIndexDict()
 
-        __set_page_inAllSearchParamsDict(1)
+        __set_param_page_inAllSearchParamsDict(1)
         await __getPageData()
 
         loadingShow = false
     }
 
-    // 重置all_subFilter_indexes_dict中所有坐标为0, 默认done， logsEdit, Ordering, exonicFuncrefgene
-    function __reset_indexes_inAllSubFilterIndexesDict_params_inAllSearchParamsDict(filter_list=null){
-        let subFilter_indexes = all_subFilter_indexes_dict[params.type]
+    // 重置all_subFilter_indexes_dict中所有坐标为0, 默认done, logsEdit, Ordering, exonicFuncrefgene, falseMutant
+    function __reset_indexes_inAllSubFilterIndexesDict____params_inAllSearchParamsDict(filter_list=null, sheet=null){
+        let modify_sheet = sheet?sheet:params.type
+        let subFilter_indexes = all_subFilter_indexes_dict[modify_sheet]
         let filters = Object.keys(subFilter_indexes)
         if(filter_list && filter_list.length>0){
             filters = filter_list
@@ -3173,7 +3174,7 @@
 
         all_subFilter_indexes_dict = all_subFilter_indexes_dict
 
-        __set_all_specfic_Params_inAllSearchParamsDict()
+        __set_all_specficParams_inAllSearchParamsDict__byIndexesInAllSubfilterIndexDict()
     }
     function __set_param_ids_inAllSearchParamsDict(ids){
         all_search_params_dict[params.type][dict.IDS] = ids && ids.length>0?ids.join(','):null
@@ -3189,12 +3190,12 @@
     //"sampleIds",使用全部样本， "page", 设为1  （"done", "logsEdit", 'ordering', "exonicfuncRefgene",）全部设为默认0号选项，
     // 'ids'，设为选定或null
     function __reset_params_byIds_exceptPageSize_inAllSearchParamsDict(ids=null, genes=null, freqRange=null){
-        // 重置所有特殊过滤的坐标, 以及params, 包括exonicfuncRefene，done，logEdits，ordering
-        __reset_indexes_inAllSubFilterIndexesDict_params_inAllSearchParamsDict()
+        // 重置所有特殊过滤的坐标, 以及params, 包括exonicfuncRefene，done，logEdits，ordering, falseMutant
+        __reset_indexes_inAllSubFilterIndexesDict____params_inAllSearchParamsDict()
         // 重置sampleIds，全选所有样本，其中包含params
         handleToggleAllSample(null, true)
         // 页面Page切换回第1页，其中含params
-        __set_page_inAllSearchParamsDict(1)
+        __set_param_page_inAllSearchParamsDict(1)
         // 设置过滤ids，在params中
         __set_param_ids_inAllSearchParamsDict(ids)
         // 设置过滤geneNames
@@ -3348,7 +3349,7 @@
     // 当前总页数
     let total_page_nums
 
-    function __set_page_inAllSearchParamsDict(page){
+    function __set_param_page_inAllSearchParamsDict(page){
         all_search_params_dict[params.type][dict.PAGE] = page
     }
     async function handleChangePageSize(event){
@@ -3359,7 +3360,7 @@
             // 当前sheet的totalPageNums更新，data_num固定，但是当前页page_size生了变化！
             __updateTotalPageNums()
             // 当前sheet的nowPageNum设置为1，返回第一页
-            __set_page_inAllSearchParamsDict(1)
+            __set_param_page_inAllSearchParamsDict(1)
 
             await __getPageData()
         }
@@ -3367,7 +3368,7 @@
     async function handleChangePage(event){
         console.log("handleChangePage", event.detail.page)
 
-        __set_page_inAllSearchParamsDict(event.detail.page)
+        __set_param_page_inAllSearchParamsDict(event.detail.page)
 
         await __getPageData()
     }
@@ -3524,7 +3525,7 @@
             // 收集回传的immune关联结果
             let modified_immune_dict = {}
             let modified_mutants = null
-
+            let exonicfuncRefgenes_dict = null
             await api[`update${name}`](id,
                 {
                     log_id,
@@ -3536,7 +3537,8 @@
                 // data可能返回为null， 必然是后端出错了
                 modified_immune_dict = response.data[dict.MODIFIED_IMMUNES]
                 modified_mutants = response.data[dict.MODIFIED_MUTANTS]
-                console.log('submitAffirmedData modified_immune_dict modified_mutants', modified_immune_dict, modified_mutants)
+                exonicfuncRefgenes_dict = response.data[dict.EXONICFUNCREFGENES]
+                console.log('submitAffirmedData modified_immune_dict modified_mutants exonicfuncRefgenes_dict', modified_immune_dict, modified_mutants, exonicfuncRefgenes_dict)
 
                 success = true
                 success_num++
@@ -3663,6 +3665,17 @@
                     __append_timePlused_uploadMessage(message)
                 }
 
+                // C) 处理exonicfuncRefgenes选项更新
+                if (exonicfuncRefgenes_dict){
+                    for (let sheet in exonicfuncRefgenes_dict){
+                        let values = exonicfuncRefgenes_dict[sheet]
+                        // 1）更新页面中的exonicfuncRefgene选项内容
+                        __update_exonicfuncRefgene_inSubFilterSelectionsDict(values, sheet)
+                        // 2）重置exonicfuncRefgene筛选项为null
+                        __reset_indexes_inAllSubFilterIndexesDict____params_inAllSearchParamsDict([dict.EXONICFUNCREFGENE], sheet)
+                    }
+                }
+
                 // 1) 更新相关参数
                 __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sampleId, dict.DONE)
                 // // 2) 更新页面的availableSelect 替换 __getPageData()中G)全部整体更新
@@ -3717,9 +3730,7 @@
 
 
         // a. 消息提示整体情况
-        // time = getTime()
         let left_message = fail_num?`，失败${fail_num}条`:'。'
-        // all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} 提交成功${success_num}条${left_message}`]
         message = `提交成功${success_num}条${left_message}`
         __append_timePlused_uploadMessage(message)
 
@@ -3730,7 +3741,7 @@
         //     await __update_Ids_and_relatedIds_PreviousLogs()
         // }
 
-        __set_page_inAllSearchParamsDict(1)
+        __set_param_page_inAllSearchParamsDict(1)
         await __getPageData()
 
         // todo 针对污染数据发出提醒 todo 之后需要改为自动取消提交
@@ -3887,6 +3898,21 @@
         __handleUpdateIgvShow()
     }
 
+    function __update_exonicfuncRefgene_inSubFilterSelectionsDict(values, sheet){
+        console.log('__update_exonicfuncRefgene_inSubFilterSelectionsDict values sheet', values, sheet)
+        // 就算values没有，也要添加默认项
+        let new_selections = []
+        if(values){
+            let value_list = values.split(';')
+            value_list.forEach(value=>new_selections.push({
+                value: value,
+                content: value
+            }))
+        }
+
+        subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
+    }
+
     // 加载初始化
     function __setSampleList_and_AllSampleRecordDict__allSpecificFilters(data){
         //1） 更新sample_list
@@ -3938,23 +3964,12 @@
 
             let values = data[`${sheet.toLowerCase()}_exonicfuncRefgenes`]
 
-            // 就算values没有，也要添加默认项
-            let new_selections = []
-            if(values){
-                let value_list = values.split(';')
-                value_list.forEach(value=>new_selections.push({
-                    value: value,
-                    content: value
-                }))
-            }
-
-            subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
-
+            __update_exonicfuncRefgene_inSubFilterSelectionsDict(values, sheet)
         }
 
 
         // 顺便更新所有的页面搜索参数初始化
-        __set_all_specfic_Params_inAllSearchParamsDict()
+        __set_all_specficParams_inAllSearchParamsDict__byIndexesInAllSubfilterIndexDict()
     }
 
 
@@ -3976,7 +3991,7 @@
         }
 
         // 切换回第一页
-        __set_page_inAllSearchParamsDict(1)
+        __set_param_page_inAllSearchParamsDict(1)
 
         if(!force){
             await __getPageData()
@@ -4004,7 +4019,7 @@
         }
 
         // 切换回第一页
-        __set_page_inAllSearchParamsDict(1)
+        __set_param_page_inAllSearchParamsDict(1)
 
         await __getPageData()
 
@@ -5043,16 +5058,7 @@
             // console.log('handleAddDataSubmit exonicfuncRefgenes', exonicfuncRefgenes)
             for (let sheet in exonicfuncRefgenes){
                 let values = exonicfuncRefgenes[sheet]
-                // 就算values没有，也要添加默认项
-                let new_selections = []
-                if(values){
-                    let value_list = values.split(';')
-                    value_list.forEach(value=>new_selections.push({
-                        value: value,
-                        content: value
-                    }))
-                }
-                subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
+                __update_exonicfuncRefgene_inSubFilterSelectionsDict(values, sheet)
             }
 
             //4) todo 添加追加样本 "1)" 后再执行此处，追加的sampleInfo也可能被后续更新，更新preValue，nowValue

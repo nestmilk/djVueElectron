@@ -51,6 +51,8 @@ const lineDataModify_selection_dict = {
     ]
 }
 
+//filter:
+// 不用动的page_size, panalId, search
 export const sheetDisplayConfigList = [
     {
         sheet: "sampleInfoInPanal",
