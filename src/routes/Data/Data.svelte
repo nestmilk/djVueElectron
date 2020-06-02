@@ -726,6 +726,60 @@
                                                             all_nowValue_of_data_dict[params.type][line_data.id][field]:''}
                                                     </div>
                                                 </td>
+                                            {:else if all_titleListItem_dict[params.type][field][dict.MODIFY] &&
+                                                all_titleListItem_dict[params.type][field][dict.SELECTIONS]}
+                                                <!--针对需要修改，且是通过select方式的列 -->
+                                                {#if page_id_availableEdit_dict[line_data.id] ||
+                                                    (all_nowValue_of_data_dict[params.type][line_data.id] &&
+                                                        all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field])
+                                                }
+                                                    <td class="{field} containSelect
+                                                                {all_nowValue_of_data_dict[params.type][line_data.id] &&
+                                                                    all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]?
+                                                                    'unequal':''}
+                                                                "
+                                                        title="实时数据：{line_data[field]}"
+                                                        on:mouseenter={()=>handleMutantTDMouseenter(field, line_data.id)}
+                                                        on:mouseleave={()=>handleMutantTDMouseleave(field, line_data.id)}
+                                                    >
+                                                        <select value={all_nowValue_of_data_dict[params.type][line_data.id][field].replace(' ', '_')}
+                                                                class="dataSelect"
+                                                                on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data[dict.ID], field)}
+                                                                disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
+                                                                    page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
+                                                        >
+                                                            {#each all_titleListItem_dict[params.type][field][dict.SELECTIONS] as selection}
+                                                                <option value={selection[dict.VALUE]}>
+                                                                    {selection[dict.CONTENT]}
+                                                                </option>
+                                                            {/each}
+                                                        </select>
+
+                                                        {#if all_nowValue_of_data_dict[params.type][line_data.id] &&
+                                                            all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]}
+                                                            <div class="upBesideInput icon-warning"></div>
+                                                            <!--__getPageData 此时获取到新的page_data 开始更新界面
+                                                                但是page_id_modifyField_mouseEnter_dicts还是旧的那页的，会找不到数据id-->
+                                                            <div class="downBesideInput icon-undo2
+                                                                            {page_id_modifyField_mouseEnter_dicts[line_data.id] &&
+                                                                                page_id_modifyField_mouseEnter_dicts[line_data.id][field] &&
+                                                                                page_id_availableEdit_dict[line_data.id]?'show':''
+                                                                            }
+                                                                        "
+                                                                 on:click={()=>recover_nowValue_byIDs_fields([line_data.id],[field])}
+                                                            ></div>
+                                                        {/if}
+                                                    </td>
+                                                {:else}
+                                                    <td class="{field} contentTD"
+                                                        title="实时数据：{line_data[field]}"
+                                                    >
+                                                        <div class="inside">
+                                                            {all_nowValue_of_data_dict[params.type][line_data.id]?
+                                                                all_nowValue_of_data_dict[params.type][line_data.id][field]:''}
+                                                        </div>
+                                                    </td>
+                                                {/if}
                                             {:else}
                                                 <!--
                                                     1.首先该filed的config设定为可编辑modify
@@ -739,7 +793,8 @@
                                                 }
                                                     <td class="{field} containInput
                                                         {all_nowValue_of_data_dict[params.type][line_data.id]?
-                                                            (all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]?'unequal':''):''}
+                                                            (all_nowValue_of_data_dict[params.type][line_data.id][field]!==all_preValue_of_data_dict[params.type][line_data.id][field]?
+                                                            'unequal':''):''}
                                                         {field===dict.FREQ && sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.FREQRANGE) !== -1?dict.FREQRANGE:''}
                                                         "
                                                         title="{field==='sampleSn'?`样本ID：${line_data[dict.SAMPLEID]}, 数据ID：${line_data[dict.ID]}`:`实时数据：${line_data[field]}`}"
@@ -811,7 +866,7 @@
                                                         </div>
                                                     </td>
                                                 {/if}<!--普通标题栏，区分编辑input还是普通div显示-->
-                                            {/if}<!--处理特殊标题栏-->
+                                            {/if} <!--处理特殊标题栏-->
                                         {/if}<!--处理当前标题栏是否显示-->
 
                                     {/each}
@@ -971,7 +1026,7 @@
         MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune', SHOW_HISTORYFALSEPOSITIVEMUTANT: 'show_historyFalsePositiveMutant',
         MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
         FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput', DELETE_AFFIRM: 'delete_affirm',
-        CHECK_AFFIRM: 'check_affirm', CHECK: 'check',
+        CHECK_AFFIRM: 'check_affirm', CHECK: 'check', SELECT: 'select', SELECTIONS: 'selections',
     }
     // 获取路径中的：值
     export let params = {}
@@ -2174,6 +2229,7 @@
             }
         })
     }
+
     function changeValue_In_AllNowvalueOfDataDict(e, id, field, force=false){
         // 只能状态为free或者人为forece为true，才能修改nowValue
         if (all_status_of_data_dict[params.type][id]===dict.FREE || force) {
@@ -2185,7 +2241,7 @@
             }else{
                 // 操作前先将delete置换为false
                 all_nowValue_of_data_dict[params.type][id][dict.DELETE] = false
-                //// 接着修改title的值
+                // 接着修改title的值
                 if ([dict.POSSTART, dict.POSEND].indexOf(field) > -1){
                     all_nowValue_of_data_dict[params.type][id][field] = parseInt(e.target.value)
                 }else if (field === dict.FREQ){
@@ -2196,6 +2252,15 @@
                         all_nowValue_of_data_dict[params.type][id][field] = eValue
                     }else{
                         remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
+                    }
+                }else if (field===dict.EXONICFUNCREFGENE && all_titleListItem_dict[params.type][field][dict.SELECTIONS]){
+                    // 针对exonicfuncRefgene，通过select进行修改的
+                    let new_value = e.target.value
+                    let pre_value = all_preValue_of_data_dict[params.type][id][field]
+                    if (new_value !== pre_value.replace(' ', '_')){
+                        all_nowValue_of_data_dict[params.type][id][field] = new_value
+                    }else{
+                        all_nowValue_of_data_dict[params.type][id][field] = pre_value
                     }
                 }else{
                     all_nowValue_of_data_dict[params.type][id][field] = e.target.value
@@ -6004,7 +6069,9 @@
     .contentRight .rightDataTable .lineData .freqRange .dataInput{
         width: 155px!important;
     }
-
+    .contentRight .rightDataTable .lineData .freqRange.unequal .dataInput{
+        width: 138px!important;
+    }
     .contentRight .rightDataTable .lineData .icon-cross.undeleted{
         color: #cccccc;
     }
@@ -6047,10 +6114,12 @@
 
 
     /*和单元格恢复相关*/
-    .contentRight .rightDataTable .lineData .containInput{
+    .contentRight .rightDataTable .lineData .containInput,
+    .contentRight .rightDataTable .lineData .containSelect{
         position: relative;
     }
-    .contentRight .rightDataTable .lineData .containInput .dataInput{
+    .contentRight .rightDataTable .lineData .containInput .dataInput,
+    .contentRight .rightDataTable .lineData .containSelect .dataSelect{
         position: absolute;
         left: 2px;
         top: 5px;
@@ -6059,23 +6128,32 @@
         font-weight: bold;
         background: #eaffad;
     }
-    .contentRight .rightDataTable .lineData .containInput.unequal .dataInput{
+    .contentRight .rightDataTable .lineData .containSelect .dataSelect{
+        height: 26px;
+        padding: 0;
+        margin: 0;
+    }
+    .contentRight .rightDataTable .lineData .containInput.unequal .dataInput,
+    .contentRight .rightDataTable .lineData .containSelect.unequal .dataSelect{
         width: 98px;
     }
-    .contentRight .rightDataTable .lineData .containInput .upBesideInput{
+    .contentRight .rightDataTable .lineData .containInput .upBesideInput,
+    .contentRight .rightDataTable .lineData .containSelect .upBesideInput{
         position: absolute;
         top: 2px;
         right: 2px;
         font-size: 14px;
     }
-    .contentRight .rightDataTable .lineData .containInput .downBesideInput{
+    .contentRight .rightDataTable .lineData .containInput .downBesideInput,
+    .contentRight .rightDataTable .lineData .containSelect .downBesideInput{
         position: absolute;
         top: 17px;
         right: 2px;
         font-size: 14px;
         display: none;
     }
-    .contentRight .rightDataTable .lineData .containInput .downBesideInput.show{
+    .contentRight .rightDataTable .lineData .containInput .downBesideInput.show,
+    .contentRight .rightDataTable .lineData .containSelect .downBesideInput.show{
         display: block;
     }
 

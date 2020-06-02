@@ -9,6 +9,48 @@
 // query_params作用，1，标题栏利用此处关联，
 export const common_filters = ["page","page_size","sampleIds","panalId","search",]
 
+const lineDataModify_selection_dict = {
+    exonicfuncRefgene: [
+        {
+            value: 'frameshift_insertion',
+            content: 'frameshift insertion'
+        }, {
+            value: 'nonframeshift_insertion',
+            content: 'nonframeshift insertion'
+        }, {
+            value: 'frameshift_deletion',
+            content: 'frameshift deletion'
+        }, {
+            value: 'nonframeshift_deletion',
+            content: 'nonframeshift deletion'
+        }, {
+            value: 'frameshift_substitution',
+            content: 'frameshift substitution'
+        }, {
+            value: 'nonframeshift_substitution',
+            content: 'nonframeshift substitution'
+        }, {
+            value: 'nonsynonymous_SNV',
+            content: 'nonsynonymous SNV'
+        }, {
+            value: 'synonymous_SNV',
+            content: 'synonymous SNV'
+        }, {
+            value: 'stopgain',
+            content: 'stopgain'
+        }, {
+            value: 'stoploss',
+            content: 'stoploss'
+        }, {
+            value: 'unknown',
+            content: 'unknown'
+        }, {
+            value: '.',
+            content: '.'
+        }
+    ]
+}
+
 export const sheetDisplayConfigList = [
     {
         sheet: "sampleInfoInPanal",
@@ -333,7 +375,9 @@ export const sheetDisplayConfigList = [
                 title: "exonicfuncRefgene",
                 type: "text",
                 translate: "突变方式",
-                modify: false,
+                modify: true,
+                selections: lineDataModify_selection_dict["exonicfuncRefgene"],
+                // equal_modify: 'blank_to_underline',
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
