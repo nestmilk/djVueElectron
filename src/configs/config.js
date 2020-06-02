@@ -638,7 +638,8 @@ export const sheetDisplayConfigList = [
                 title: "exonicfuncRefgene",
                 type: "text",
                 translate: "突变方式",
-                modify: false,
+                modify: true,
+                selections: lineDataModify_selection_dict["exonicfuncRefgene"],
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
@@ -838,7 +839,8 @@ export const sheetDisplayConfigList = [
                 title: "exonicfuncRefgene",
                 type: "text",
                 translate: "突变方式",
-                modify: false,
+                modify: true,
+                selections: lineDataModify_selection_dict["exonicfuncRefgene"],
                 defaultDisplay: true,
                 selectDisplay: false
             },

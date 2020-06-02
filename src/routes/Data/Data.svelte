@@ -742,7 +742,8 @@
                                                         on:mouseenter={()=>handleMutantTDMouseenter(field, line_data.id)}
                                                         on:mouseleave={()=>handleMutantTDMouseleave(field, line_data.id)}
                                                     >
-                                                        <select value={all_nowValue_of_data_dict[params.type][line_data.id][field].replace(' ', '_')}
+                                                        <select value={all_nowValue_of_data_dict[params.type][line_data.id]?
+                                                                            all_nowValue_of_data_dict[params.type][line_data.id][field].replace(' ', '_'):''}
                                                                 class="dataSelect"
                                                                 on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data[dict.ID], field)}
                                                                 disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
@@ -5348,6 +5349,9 @@
         }
         if(connectSheet && sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.CONNECTSHEET)!==-1){
             connectSheet.value = all_subFilter_indexes_dict[params.type][dict.CONNECTSHEET][0]
+        }
+        if(falseMutant){
+            falseMutant.value = all_subFilter_indexes_dict[params.type][dict.FALSEMUTANT][0]
         }
         if(freqLowInput && freqHighInput){
             // console.log('__update_filter_dom_value params.type', params.type)
