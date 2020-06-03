@@ -4161,12 +4161,16 @@
     }, {})))
     // 重置突变筛选组中，所有筛选项的param值为null
     function __reset_filterGroup_inAllSearchParamsDict(){
-        for (let filter_name of filterGroup_names_dict[params.type]){
-            all_search_params_dict[params.type][filter_name] = null
+        if(filterGroup_names_dict.hasOwnProperty(params.type)){
+            for (let filter_name of filterGroup_names_dict[params.type]){
+                all_search_params_dict[params.type][filter_name] = null
+            }
         }
     }
     function __set_index_inFilterGroupCheckedIndexDict(index){
-        filterGroup_checkedIndex_dict[params.type] = index
+        if(filterGroup_checkedIndex_dict.hasOwnProperty(params.type)){
+            filterGroup_checkedIndex_dict[params.type] = index
+        }
     }
     async function handleFilterGroupClick(item, index){
         console.log('handleFilterGroupClick item index params.type', item, index, params.type)
