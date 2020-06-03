@@ -4186,6 +4186,7 @@
             }
         }
 
+        __set_param_page_inAllSearchParamsDict(1)
         await __getPageData()
 
         loadingShow = false
