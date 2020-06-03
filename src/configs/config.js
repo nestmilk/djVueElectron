@@ -289,7 +289,8 @@ export const sheetDisplayConfigList = [
     {
         sheet: "target",
         filters: ["page", "page_size", "sampleIds", "panalId", "search", "done", 'delete', "logsEdit", 'ordering',
-            "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant', 'freqRange'],
+            "exonicfuncRefgene", 'ids', 'geneNames', 'falseMutant', 'freqRange',
+            'AA_change_contain', 'drugLevel_contain', 'cancerType_contain', 'drugs_contain', 'clinsig_list_contain', 'geneVar_contain'],
         submenu_translate: '靶向',
         need_all_check: true,
         igv_control: true,
@@ -297,6 +298,31 @@ export const sheetDisplayConfigList = [
         connect_immune: true,
         show_historyFalsePositiveMutant: true,
         false_mutant_record: true,
+        filter_group: [
+            {
+                title: 'cancerType:本次检测到的变异对临床用药的指导意义暂不明确',
+                params: {
+                    cancerType_contain: '本次检测到的变异对临床用药的指导意义暂不明确'
+                }
+            }, {
+                title: 'drugLevel:PMKB或文献; drugs:有文献报道',
+                params: {
+                    drugLevel_contain: 'PMKB或文献',
+                    drugs_contain: '有文献报道'
+                }
+            }, {
+                title: 'AA_change:Oncogenic Mutations; clinsig:Uncertain_significance,Conflicting_interpretations_of_pathogenicity,not_provided,.',
+                params: {
+                    AA_change_contain: 'Oncogenic Mutations',
+                    clinsig_list_contain: 'Uncertain_significance,Conflicting_interpretations_of_pathogenicity,not_provided,.'
+                }
+            }, {
+                title: 'geneVar:这个HGVS命名本身有问题，看看是否只有4个分号存在',
+                params: {
+                    geneVar_contain: '这个HGVS命名本身有问题，看看是否只有4个分号存在'
+                }
+            }
+        ],
         reason_type: [
             {
                 value: 'nothing',

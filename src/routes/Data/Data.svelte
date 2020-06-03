@@ -988,7 +988,7 @@
         PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEID: 'sampleId', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
         TITLE: 'title', TRANSLATE: 'translate', PANAL_ID: 'panal_id', PANALIDS: 'panalIds',
         TYPE: 'type', CONTENT: 'content', VALUE: 'value', STATUS: 'status',
-        TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll',
+        TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll', PARAMS: 'params',
         ALLDATA: 'allData', S_ADATA: "subAndAffData", US_ADATA: 'unsubAndAffData', US_UADATA: 'unsubAndUnaffData',
         DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene', EXONICFUNCREFGENES: "exonicfuncRefgenes",
         SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
@@ -1027,7 +1027,7 @@
         MUTANT_GENES_INIMMUNE:'mutant_genes_inImmune', SHOW_HISTORYFALSEPOSITIVEMUTANT: 'show_historyFalsePositiveMutant',
         MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
         FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput', DELETE_AFFIRM: 'delete_affirm',
-        CHECK_AFFIRM: 'check_affirm', CHECK: 'check', SELECT: 'select', SELECTIONS: 'selections',
+        CHECK_AFFIRM: 'check_affirm', CHECK: 'check', SELECT: 'select', SELECTIONS: 'selections', FILTER_GROUP: 'filter_group',
     }
     // 获取路径中的：值
     export let params = {}
@@ -3011,7 +3011,8 @@
             }
         }
 
-        // 若果是表是ifSimpleOrdering，需要将ordering的内容更正为['sample__id']
+        // 若果是表是ifSimpleOrdering，需要将ordering的内容替换为单项['sample__id'],
+        // 其它复杂的ordering内容['sample__id', 'chr', 'posStart', 'posEnd']
         if (specific_found && result[sheet].hasOwnProperty(dict.ORDERING) &&
                 sheetDisplayConfigDict[sheet].ifSimpleOrdering) {
             result[sheet][dict.ORDERING] = [dict.SAMPLEID2UNDERLINE]
@@ -3142,7 +3143,10 @@
     // 改变filter
     async function handleChangeFilter(event, subFilter){
         loadingShow = true
+
         let index = event.target.value
+        // console.log('handleChangeFilter index', index)
+
         let result = __find_filterName_subFilterIndex(subFilter)
 
         let found_filter_name = result[0]
@@ -3203,6 +3207,10 @@
         __set_param_geneNames_inAllSearchParamsDict(genes)
         // 设置过滤freqRange
         __set_param_freqRange_inAllSearchParamsDict(freqRange)
+        // 设置filterGroup中过滤项为null
+        __reset_filterGroup_inAllSearchParamsDict()
+        // 当前选中的filterGroup的index为null
+        __set_index_inFilterGroupCheckedIndexDict(null)
     }
 
     let query_genes = ''
@@ -3329,21 +3337,6 @@
 
         await __getPageData()
     }
-
-    // 用于绑定exonicfuncRefgene标题筛选框, 一个页面只能绑定一次
-    // let exonicfuncRefgeneSelection
-    // async function change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict(index){
-    //     console.log("change_exonicfuncRefgene_index_in_AllSubFilterIndexesDict", index)
-    //     all_subFilter_indexes_dict[params.type][dict.EXONICFUNCREFGENE][0] = index
-    //
-    //     // 因为exonicFuncRefGene筛选项变化，页面先设置为1
-    //     all_search_params_dict[params.type][dict.PAGE] = 1
-    //     // 其中包含，页面切换回第一页
-    //     __set_all_specfic_Params_in_AllSearchParamsDict()
-    //
-    //     await __getPageData()
-    // }
-
 
     // 当前页面数据的总条数 todo 需要手动更新
     let data_count
@@ -4057,19 +4050,6 @@
         }
     }
 
-    // function __reset_exonicfuncRefgeneSelection_and_preParamsExonicFuncRefgeneIndex(){
-    //     if (exonicfuncRefgeneSelection){
-    //         // 筛选框重置
-    //         exonicfuncRefgeneSelection.value = 0
-    //
-    //         // 之前页面的筛选坐标重置
-    //         all_subFilter_indexes_dict[pre_params_type][dict.EXONICFUNCREFGENE][0] = 0
-    //
-    //         // 修改param的exonicFuncrefgene的值，偷懒把特殊的筛选项params重置了
-    //         __set_all_specfic_Params_in_AllSearchParamsDict()
-    //     }
-    // }
-
 
     // 动态更新当前页面信息, 这种做法 todo getpagedata 刷新页面一次，又会通过这个再刷新一次页面
     // $: if (pre_params_type !== params.type) {
@@ -4155,6 +4135,75 @@
         })
     }
 
+    // 页面 筛选组 打钩选中的 index字典
+    let filterGroup_checkedIndex_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        let sheet = item[dict.SHEET]
+        if (item.hasOwnProperty(dict.FILTER_GROUP)){
+            result[sheet] = null
+        }
+        return result
+    }, {})))
+    // 筛选组内，筛选小项的名称
+    let filterGroup_names_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        let sheet = item[dict.SHEET]
+        if (item.hasOwnProperty(dict.FILTER_GROUP)){
+            let filters = []
+            for (let group of item[dict.FILTER_GROUP]){
+                for (let filter in group[dict.PARAMS]){
+                    if (filters.indexOf(filter)===-1){
+                        filters.push(filter)
+                    }
+                }
+            }
+            result[sheet] = filters
+        }
+        return result
+    }, {})))
+    // 重置突变筛选组中，所有筛选项的param值为null
+    function __reset_filterGroup_inAllSearchParamsDict(){
+        for (let filter_name of filterGroup_names_dict[params.type]){
+            all_search_params_dict[params.type][filter_name] = null
+        }
+    }
+    function __set_index_inFilterGroupCheckedIndexDict(index){
+        filterGroup_checkedIndex_dict[params.type] = index
+    }
+    async function handleFilterGroupClick(item, index){
+        console.log('handleFilterGroupClick item index params.type', item, index, params.type)
+        loadingShow = true
+
+        let current_checked_index = filterGroup_checkedIndex_dict[params.type]
+        if(index===current_checked_index){
+            __reset_filterGroup_inAllSearchParamsDict()
+            __set_index_inFilterGroupCheckedIndexDict(null)
+        }else{
+            __reset_filterGroup_inAllSearchParamsDict()
+            __set_index_inFilterGroupCheckedIndexDict(index)
+            // 通过筛选组的params覆盖
+            all_search_params_dict[params.type] = {
+                ...all_search_params_dict[params.type],
+                ...item[dict.PARAMS]
+            }
+        }
+
+        await __getPageData()
+
+        loadingShow = false
+    }
+    function __getFilterGroupSubmenu(){
+        return sheetDisplayConfigDict[params.type][dict.FILTER_GROUP].map((item, index)=>{
+            let current_checked_index = filterGroup_checkedIndex_dict[params.type]
+            let sheet = params.type
+            return {
+                label: item[dict.TITLE],
+                type: 'checkbox',
+                checked: index===current_checked_index,
+                click: () =>{
+                    handleFilterGroupClick(item, index)
+                }
+            }
+        })
+    }
     async function __handleContextMenu(e){
         // sheet页选择
         if (document.querySelector('.subMenuWrapper').contains(e.target)){
@@ -4201,6 +4250,15 @@
                     ]
                 })
                 menu.append(unmodified_free_multipleHandle_menuItem)
+
+                // 当前页面的特定筛选组合
+                if (sheetDisplayConfigDict[params.type][dict.FILTER_GROUP]){
+                    let filterGroup_menuItem = new remote.MenuItem({
+                        label: '筛选组合',
+                        submenu: __getFilterGroupSubmenu()
+                    })
+                    menu.append(filterGroup_menuItem)
+                }
 
                 menu.popup({window: remote.getCurrentWindow()})
             }
@@ -5391,7 +5449,7 @@
         // console.log(sample_list, sampleSn_dict)
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict, all_sheet_record_dict)
-        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
@@ -5400,13 +5458,13 @@
         // console.log(pageModifyField_mouseEnter_dict)
         // console.log(all_selected_dataIds_dict)
         // console.log(all_status_of_data_dict)
-        console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
-        console.log(page_id_modifyField_mouseEnter_dicts, page_id_availableSelect_dict, page_id_availableEdit_dict)
+        // console.log(page_id_modifyField_mouseEnter_dicts, page_id_availableSelect_dict, page_id_availableEdit_dict)
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
         // console.log(all_previousLog_list_dict)
         // console.log(now_input_field && now_input_id, !panal_unable_handle, now_params_type === params.type, page_id_availableEdit_dict[now_input_id], page_data.some(data=>data.id===now_input_id))
@@ -5419,7 +5477,8 @@
         // console.log(genes_connectImmune_dict)
         // console.log(currentPage_falseMutantRecord_dict)
         // console.log(freqLowInput, freqHighInput, freqLowInput?freqLowInput.value:'', freqHighInput?freqHighInput.value:'')
-        console.log(data_count)
+        // console.log(data_count)
+        console.log(filterGroup_checkedIndex_dict, filterGroup_names_dict)
     }
 
 </script>
