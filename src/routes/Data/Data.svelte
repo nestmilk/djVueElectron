@@ -4230,7 +4230,7 @@
                 let typeItem = cnaType_logic_dict[geneName][cna_type]
                 let value = typeItem[dict.VALUE]
                 let logic = typeItem[dict.LOGIC]
-                console.log('__get_cnaType_genesinImmune_byCNAId value logic copy_num', value, logic, copy_num)
+                console.log('__get_cnaType_genesinImmune_byCNAId copy_num logic value', copy_num, logic, value)
                 if (logic === 'lt'){
                     if (copy_num < value){
                         avail_cna_type = cna_type
@@ -4242,6 +4242,7 @@
                         break
                     }
                 }else if (logic === 'e'){
+                    // todo parseFloat(3.00) === 3 是相等的
                     if (copy_num === value){
                         avail_cna_type = cna_type
                         break
