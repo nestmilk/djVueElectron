@@ -964,7 +964,9 @@
         affirmSelectionConfig,
         idsGroupSelections,
         upSheet_name_dict,
-        sampleTypeConfig
+        sampleTypeConfig,
+        cnaType_logic_dict,
+        immune_types_forGeneinImmune
     } from '../../configs/config'
     import {dict_translate} from '../../utils/dict'
 
@@ -1018,7 +1020,7 @@
         SKIP: 'skip', STATUS_FOR_DATA_UPDATE: "status_for_data_update", STATUS_FOR_TEMPLATE_UPDATE: "status_for_template_update",
         POSITIVE: 'positive', NEGATIVE: 'negative', TEST: 'test', ICON: 'icon',
         SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune', IMMUNE_CONNECT: "immune_connect",
-        GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune',
+        GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune', LOGIC: 'logic',
         TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', IMMUNE_ID: 'immune_id', _GENENAME: '_geneName', ADD: 'add',
         CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune', CNA: 'CNA', FUSION: 'fusion', MUTANT: 'mutant',
         MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio', MODIFIED_MUTANTS: 'modified_mutants', MODIFIED_IMMUNES: 'modified_immunes',
@@ -4209,6 +4211,66 @@
             }
         })
     }
+
+    function __get_cnaType_genesinImmune_byCNAId(cna_id){
+        let sampleSn = all_preValue_of_data_dict[params.type][cna_id][dict.SAMPLESN]
+        let geneName = all_preValue_of_data_dict[params.type][cna_id][dict._GENENAME]
+        let cnaRatio = all_preValue_of_data_dict[params.type][cna_id][dict.CNARATIO]
+        // cnaRatio能够转数字， geneName在免疫类型字典中, geneNamecna_type判断规则中有
+        if (!isNaN(cnaRatio) &&
+                immune_types_forGeneinImmune.hasOwnProperty(geneName) &&
+                cnaType_logic_dict.hasOwnProperty(geneName)
+            ){
+            let copy_num = parseFloat(cnaRatio)
+            // 这个基因的可行的免疫类型表
+            let type_list = immune_types_forGeneinImmune[geneName]
+            // 先根据copyNum判断规则， 获取可能的cna_type
+            let avail_cna_type = null
+            for (let cna_type in cnaType_logic_dict[geneName]){
+                let typeItem = cnaType_logic_dict[geneName][cna_type]
+                let value = typeItem[dict.VALUE]
+                let logic = typeItem[dict.LOGIC]
+                console.log('__get_cnaType_genesinImmune_byCNAId value logic copy_num', value, logic, copy_num)
+                if (logic === 'lt'){
+                    if (copy_num < value){
+                        avail_cna_type = cna_type
+                        break
+                    }
+                }else if (logic === 'lte'){
+                    if (copy_num <= value){
+                        avail_cna_type = cna_type
+                        break
+                    }
+                }else if (logic === 'e'){
+                    if (copy_num === value){
+                        avail_cna_type = cna_type
+                        break
+                    }
+                }else if (logic === 'gte'){
+                    if (copy_num >= value){
+                        avail_cna_type = cna_type
+                        break
+                    }
+                }else if (logic === 'gt'){
+                    if (copy_num > value){
+                        avail_cna_type = cna_type
+                        break
+                    }
+                }
+            }
+
+            if(avail_cna_type && type_list.indexOf(avail_cna_type) !== -1){
+                let genes_inImmune = sample_dict[sampleSn][avail_cna_type +'_genes_inImmune']
+                return [avail_cna_type, genes_inImmune]
+            }else{
+                return [null, null]
+            }
+
+        }else{
+            return [null, null]
+        }
+    }
+
     async function __handleContextMenu(e){
         // sheet页选择
         if (document.querySelector('.subMenuWrapper').contains(e.target)){
@@ -4551,17 +4613,10 @@
             if (params.type === dict.TARGET || params.type === dict.HEREDITARY){
                 genes_inImmune = sample_dict[right_sampleSn][dict.MUTANT_GENES_INIMMUNE]
             }else if (params.type === dict.CNA){
-                let cnaRatio = all_nowValue_of_data_dict[params.type][right_id][dict.CNARATIO]
-                if (!isNaN(cnaRatio)){
-                    let copy_num = parseInt(cnaRatio)
-                    if (copy_num < 2){
-                        genes_inImmune = sample_dict[right_sampleSn]['CNA_loss_genes_inImmune']
-                        cna_type = dict.CNA_LOSS
-                    }else if (copy_num > 2){
-                        genes_inImmune = sample_dict[right_sampleSn]['CNA_gain_genes_inImmune']
-                        cna_type = dict.CNA_GAIN
-                    }
-                }
+                let cnaType_genesinImmune = __get_cnaType_genesinImmune_byCNAId(right_id)
+                console.log('__handleContextMenu cna关联免疫表 cnaType_genesinImmune', cnaType_genesinImmune)
+                cna_type = cnaType_genesinImmune[0]
+                genes_inImmune = cnaType_genesinImmune[1]
             }else if (params.type === dict.FUSION){
                 genes_inImmune = sample_dict[right_sampleSn]['fusion_genes_inImmune']
             }

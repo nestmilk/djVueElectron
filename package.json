@@ -28,6 +28,7 @@
   "dependencies": {
     "axios": "^0.19.0",
     "bootstrap": "^4.4.1",
+    "echarts": "^4.8.0",
     "electron-is-dev": "^1.1.0",
     "electron-store": "^5.1.0",
     "elizabot": "0.0.2",
