@@ -2302,18 +2302,17 @@
     function change_nowValue_inAllNowvalueOfDataDict(e, modify_id, field){
         console.log('changeValue_In_AllNowvalueOfDataDict field, ifHgvsAutoFillOthers, ifMultipleModify)', field, settingsStore.get('ifHgvsAutoFillOthers'), settingsStore.get('ifMultipleModify'))
         let id_list = [modify_id]
-        if(all_affirmWorkingStatus_of_sheet_dict[params.type]===dict.MULTIPLE_AFFIRM && settingsStore.get('ifMultipleModify')){
-            let selected_ids = all_selected_dataIds_dict[params.type]
-            selected_ids.forEach(id=>{
-                if (id_list.indexOf(id)===-1){
-                    id_list.push(id)
-                }
-            })
+        let selected_ids = all_selected_dataIds_dict[params.type]
+        // 审核状态为多项审核，打开批量修改，当前修改id在选中的ids中
+        if(all_affirmWorkingStatus_of_sheet_dict[params.type]===dict.MULTIPLE_AFFIRM &&
+                settingsStore.get('ifMultipleModify') &&
+                selected_ids && selected_ids.indexOf(modify_id)!==-1){
+            id_list = [...selected_ids]
         }
         console.log('changeValue_In_AllNowvalueOfDataDict id_list', id_list)
 
 
-        // 针对不同
+        // 针对不同field，需要转化下值
         let modify_value
         switch (field) {
             case dict.DELETE:
@@ -2340,42 +2339,31 @@
         for (let id of id_list){
             if (all_status_of_data_dict[params.type][id]===dict.FREE) {
                 if(field===dict.DELETE){
-                    let pre_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
-                    all_nowValue_of_data_dict[params.type][id][dict.DELETE] = !pre_nowValue
+                    let now_delete_value = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
+                    // 删除操作，同时需要将其余已修改的项恢复
+                    if (!now_delete_value && modify_value){
+                        recover_nowValue_byIDs_fields([id])
+                    }
 
-                    // 同时需要将其余已修改的项恢复
-                    recover_nowValue_byIDs_fields([id])
+                    all_nowValue_of_data_dict[params.type][id][dict.DELETE] = modify_value
                 }else{
                     // 1) 操作前先将delete置换为false
                     all_nowValue_of_data_dict[params.type][id][dict.DELETE] = false
                     // 2) 接着修改title的值
-                    if ([dict.POSSTART, dict.POSEND].indexOf(field) > -1){
-                        all_nowValue_of_data_dict[params.type][id][field] = parseInt(e.target.value)
-                    }else if (field === dict.FREQ){
-                        let eValue = e.target.value
-
-                        // console.log(eValue, isNaN(eValue), parseFloat(eValue)>=0, parseFloat(eValue)<=1)
-                        if(!isNaN(eValue) && parseFloat(eValue)>=0 && parseFloat(eValue)<=1){
-                            all_nowValue_of_data_dict[params.type][id][field] = parseFloat(eValue)
-                        }else{
-                            remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
-                        }
-                    }else if (field===dict.EXONICFUNCREFGENE && all_titleListItem_dict[params.type][field][dict.SELECTIONS]){
+                    if (field===dict.EXONICFUNCREFGENE && all_titleListItem_dict[params.type][field][dict.SELECTIONS]){
                         // 针对exonicfuncRefgene，通过select进行修改的
-                        let new_value = e.target.value
                         let pre_value = all_preValue_of_data_dict[params.type][id][field]
-                        if (new_value !== pre_value.replace(' ', '_')){
-                            all_nowValue_of_data_dict[params.type][id][field] = new_value
+                        if (modify_value !== pre_value.replace(' ', '_')){
+                            all_nowValue_of_data_dict[params.type][id][field] = modify_value
                         }else{
                             all_nowValue_of_data_dict[params.type][id][field] = pre_value
                         }
                     }else if (field === dict.HGVS && settingsStore.get('ifHgvsAutoFillOthers')){
                         // 针对hgvs， 并且打开自动关联修改
-                        let hgvsValue = e.target.value
-                        all_nowValue_of_data_dict[params.type][id][field] = hgvsValue
+                        all_nowValue_of_data_dict[params.type][id][field] = modify_value
                         // console.log('changeValue_In_AllNowvalueOfDataDict hgvsValue', hgvsValue)
 
-                        let values = hgvsValue.split(':')
+                        let values = modify_value.split(':')
                         if (values.hasOwnProperty(1)){
                             all_nowValue_of_data_dict[params.type][id][dict.ZLB] = values[1]
                         }else{
@@ -2406,7 +2394,7 @@
                         }
 
                     }else {
-                        all_nowValue_of_data_dict[params.type][id][field] = e.target.value
+                        all_nowValue_of_data_dict[params.type][id][field] = modify_value
                     }
                 }
 
