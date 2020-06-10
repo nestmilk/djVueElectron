@@ -6256,11 +6256,12 @@
     .contentRight .selectFieldsWrapper .titleGroupWrapper .titleGroup{
         float: left;
         padding: 1px 2px;
-        margin: 3px 1px;
+        margin: 1px;
         height: 20px;
         line-height: 20px;
         font-size: 14px;
         border: 1px solid #939393;
+        border-radius: 5px;
     }
     .contentRight .selectFieldsWrapper .titleGroupWrapper .titleGroup.active{
         background: orange;
