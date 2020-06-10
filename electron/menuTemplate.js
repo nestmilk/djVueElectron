@@ -109,6 +109,18 @@ let template = [
                     }
                 ]
             }, {
+                label: '审核功能',
+                submenu: [
+                    {
+                        label: '靶向hgvs修改关联填充',
+                        type: 'checkbox',
+                        checked: settingsStore.get('ifHgvsAutoFillOthers'),
+                        click: ()=>{
+                            settingsStore.set('ifHgvsAutoFillOthers', !settingsStore.get('ifHgvsAutoFillOthers'))
+                        }
+                    },
+                ]
+            }, {
                 label: '打开Ensembl',
                 click: () => {
                     shell.openExternal('http://asia.ensembl.org/index.html')
@@ -125,7 +137,6 @@ let template = [
                             if(settingsStore.get('ifIgvConnect')){
                                 ipcMain.emit('set-ifIgvConnect-true-done')
                             }
-
                         }
                     }, {
                         label: '当前突变置顶',
@@ -169,7 +180,6 @@ let template = [
                         }
                     }
                 ]
-
             }, {
                 label: '打开调试工具',
                 accelerator: (function () {

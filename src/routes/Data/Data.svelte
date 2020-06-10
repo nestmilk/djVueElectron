@@ -292,14 +292,26 @@
                     >
                         <div class="firstDefaultTitle selectFieldItem"  on:click={toggleDefaultFiledsOpen}>
                             <span>恢复默认标题栏</span>
-                            <span class="checkBox icon-undo2
-                                    {!all_titleDefaultShow_dict[params.type]?'active':''}"
+                            <span class="checkBox icon-undo2 {!all_titleDefaultShow_dict[params.type]?'active':''}"
                             ></span>
                         </div>
-                        {#if  all_selectTitle_list_dict[params.type].length > 0}
+                        {#if all_titleGroup_dict.hasOwnProperty(params.type) && all_titleGroup_dict[params.type].length > 0}
+                            <div class="titleGroupWrapper">
+                                {#each all_titleGroup_dict[params.type] as item, index}
+                                    <div class="titleGroup {all_currentTitleGroupIndex_dict[params.type] === index?'active':''}"
+                                         on:click={()=>handleChangeTitleGroup(index)}
+                                    >
+                                        {item[dict.NAME]}
+                                    </div>
+                                {/each}
+                            </div>
+                        {/if}
+                        {#if  all_defaultTitle_list_dict[params.type].length + all_selectTitle_list_dict[params.type].length > 0}
                             <div class="contentWrapper">
-                                {#each [...all_defaultTitle_list_dict[params.type],
-                                    ...all_selectTitle_list_dict[params.type]] as field }
+                                {#each [
+                                    ...all_defaultTitle_list_dict[params.type],
+                                    ...all_selectTitle_list_dict[params.type]
+                                ] as field }
                                     <div class="selectFieldItem"
                                          on:click={()=>toggle_selectField_nowDisplay(field)}
                                     >
@@ -312,9 +324,7 @@
                                 {/each}
                             </div>
                         {/if}
-
-                    </div>
-
+                    </div><!--selectFieldsWrapper-->
 
                     <div class="titleTableWrapper" bind:this={topScroll}
                          on:scroll={handleTopScroll} >
@@ -989,16 +999,16 @@
         ID: 'id', SAMPLE: 'sample', SAMPLESN: 'sampleSn',  TITLE_LIST: 'title_list',
         PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEID: 'sampleId', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
         TITLE: 'title', TRANSLATE: 'translate', PANAL_ID: 'panal_id', PANALIDS: 'panalIds',
-        TYPE: 'type', CONTENT: 'content', VALUE: 'value', STATUS: 'status',
+        TYPE: 'type', CONTENT: 'content', VALUE: 'value', STATUS: 'status', TITLES: 'titles',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll', PARAMS: 'params',
         ALLDATA: 'allData', S_ADATA: "subAndAffData", US_ADATA: 'unsubAndAffData', US_UADATA: 'unsubAndUnaffData',
         DONE: 'done', LOGSEDIT: 'logsEdit', ORDERING: 'ordering', EXONICFUNCREFGENE: 'exonicfuncRefgene', EXONICFUNCREFGENES: "exonicfuncRefgenes",
         SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
         TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB", tmb: "tmb", TNB: 'TNB', MSI: 'MSI',
-        MODIFY: 'modify', IFEQUAL: 'ifEqual', FREQRANGE: "freqRange",
+        MODIFY: 'modify', IFEQUAL: 'ifEqual', FREQRANGE: "freqRange", AA_CHANGE: 'AA_change',
         DELETE: "delete", FREQ: 'freq', COUNT: 'count',
         NOWDISPLAY: 'nowDisplay', DEFAULTDISPLAY: 'defaultDisplay', SELECTDISPLAY: 'selectDisplay',
-        FIELD_MOUSE_ENTER: 'field_mouse_enter',
+        FIELD_MOUSE_ENTER: 'field_mouse_enter', TITLE_GROUP: 'title_group', GROUP: 'group',
         FREE: 'free', CHECKED: 'checked', DELETED: 'deleted', EDITED: 'edited',
         AVAILABLE_EDIT: 'availableEdit', REASON_TYPE: 'reason_type', REASON_DESC: 'reason_desc', LOG_ID: 'log_id',
         DEFAULT: 'default', IDS: 'ids', NOTHING: 'nothing',
@@ -2142,31 +2152,43 @@
         result[item[dict.SHEET]] = true
         return result
     },{})))
+    // 页面标题分组的标题列表的字典
+    let all_titleGroup_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        let sheet = item[dict.SHEET]
+        if (item.hasOwnProperty(dict.TITLE_GROUP)){
+            result[sheet] = []
+            for (let group of item[dict.TITLE_GROUP]){
+                let titles = []
+                for (let title_item of item[dict.TITLE_LIST]){
+                    if (title_item.hasOwnProperty(dict.GROUP) && title_item[dict.GROUP] === group ){
+                        titles.push(title_item[dict.TITLE])
+                    }
+                }
+                result[sheet].push({
+                    name: group,
+                    titles
+                })
+            }
+        }
+        return result
+    },{})))
+    let all_currentTitleGroupIndex_dict = JSON.parse(JSON.stringify(Object.keys(all_titleGroup_dict).reduce((result, sheet)=>{
+        result[sheet] = null
+        return result
+    }, {})))
 
     let selectFields
     function closeSelectFieldDiv(){
         selectFields.style.display = 'none'
         // document.querySelector(".selectFieldsDiv").style.display = 'none'
     }
-    // 处理标题栏菜单中 全部默认标题的打开, 全部选择标题的关闭
-    function toggleDefaultFiledsOpen(){
-        if (all_titleDefaultShow_dict[params.type]) return
-        all_defaultTitle_list_dict[params.type].forEach(field=>{
-            all_titleListItem_dict[params.type][field][dict.NOWDISPLAY] = true
-        })
-        all_selectTitle_list_dict[params.type].forEach(field=>{
-            all_titleListItem_dict[params.type][field][dict.NOWDISPLAY] = false
-        })
-
-        all_titleDefaultShow_dict[params.type] = true
+    // 设置标题是否现在显示
+    function __toggle_nowDisplay_inAllTitleListItemDict(title, status){
+        all_titleListItem_dict[params.type][title][dict.NOWDISPLAY] = status
     }
-    // 单个改变可选标题栏是否打开
-    function toggle_selectField_nowDisplay(field){
-        // 1) 先设置点击的值
-        let status = all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]
-        all_titleListItem_dict[params.type][field][dict.NOWDISPLAY] = !status
+    // 查看默认的title是否都打开，选择的title都关闭, 设置all_titleDefaultShow_dict
+    function __toggle_allDefaultOpenedandClosed_inAllTitlteDefaultShowDict(){
 
-        // 2)查看默认的title是否都打开，选择的title都关闭
         let allDefaultOpened = all_defaultTitle_list_dict[params.type].every(field=>{
             return all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]
         })
@@ -2174,7 +2196,42 @@
             return !all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]
         })
         all_titleDefaultShow_dict[params.type] = allDefaultOpened && allSelectClosed? true: false
+    }
+    // 处理标题栏菜单中 全部默认标题的打开, 全部选择标题的关闭
+    function toggleDefaultFiledsOpen(){
+        if (all_titleDefaultShow_dict[params.type]) return
+        all_defaultTitle_list_dict[params.type].forEach(field=>{
+            __toggle_nowDisplay_inAllTitleListItemDict(field, true)
+        })
+        all_selectTitle_list_dict[params.type].forEach(field=>{
+            __toggle_nowDisplay_inAllTitleListItemDict(field, false)
+        })
+        all_titleDefaultShow_dict[params.type] = true
 
+        // 选中组的index设置为null
+        all_currentTitleGroupIndex_dict[params.type] = null
+    }
+
+    // 单个改变可选标题栏是否打开
+    function toggle_selectField_nowDisplay(field){
+        let status = all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]
+        __toggle_nowDisplay_inAllTitleListItemDict(field, !status)
+
+        __toggle_allDefaultOpenedandClosed_inAllTitlteDefaultShowDict()
+    }
+    function handleChangeTitleGroup(index){
+        all_currentTitleGroupIndex_dict[params.type] = index
+        let titleGroup = all_titleGroup_dict[params.type][index]
+
+        // 先清空nowDisplay为false
+        for (let title in all_titleListItem_dict[params.type]){
+            __toggle_nowDisplay_inAllTitleListItemDict(title, false)
+        }
+        // 选中组内的title，nowDisplay改为true
+        for (let title of titleGroup[dict.TITLES]){
+            __toggle_nowDisplay_inAllTitleListItemDict(title, true)
+        }
+        __toggle_allDefaultOpenedandClosed_inAllTitlteDefaultShowDict()
     }
 
     // 当前页面信息列表，用于循环展示
@@ -2252,7 +2309,7 @@
 
                     // console.log(eValue, isNaN(eValue), parseFloat(eValue)>=0, parseFloat(eValue)<=1)
                     if(!isNaN(eValue) && parseFloat(eValue)>=0 && parseFloat(eValue)<=1){
-                        all_nowValue_of_data_dict[params.type][id][field] = eValue
+                        all_nowValue_of_data_dict[params.type][id][field] = parseFloat(eValue)
                     }else{
                         remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
                     }
@@ -4614,16 +4671,29 @@
             if (params.type === dict.TARGET || params.type === dict.HEREDITARY){
                 genes_inImmune = sample_dict[right_sampleSn][dict.MUTANT_GENES_INIMMUNE]
             }else if (params.type === dict.CNA){
-                let cnaType_genesinImmune = __get_cnaType_genesinImmune_byCNAId(right_id)
-                console.log('__handleContextMenu cna关联免疫表 cnaType_genesinImmune', cnaType_genesinImmune)
-                cna_type = cnaType_genesinImmune[0]
-                genes_inImmune = cnaType_genesinImmune[1]
+                // 通过cnaRatio获取cnaType
+                // let cnaType_genesinImmune = __get_cnaType_genesinImmune_byCNAId(right_id)
+                // console.log('__handleContextMenu cna关联免疫表 cnaType_genesinImmune', cnaType_genesinImmune)
+                // cna_type = cnaType_genesinImmune[0]
+                // genes_inImmune = cnaType_genesinImmune[1]
+
+                // 通过AA_change（氨基酸改变）直接获取扩增或缺失
+                let AA_change = all_preValue_of_data_dict[params.type][right_id][dict.AA_CHANGE]
+                if (AA_change === '扩增'){
+                    cna_type = dict.CNA_GAIN
+                }else if (AA_change === '缺失'){
+                    cna_type = dict.CNA_LOSS
+                }
+                if (cna_type){
+                    genes_inImmune = sample_dict[right_sampleSn][cna_type +'_genes_inImmune']
+                }
             }else if (params.type === dict.FUSION){
                 genes_inImmune = sample_dict[right_sampleSn]['fusion_genes_inImmune']
             }
 
             let genes_inImmune_list = genes_inImmune? genes_inImmune.split(';') : []
-            // console.log('__handleContextMenu genes_inImmune_list', genes_inImmune_list)
+            console.log('__handleContextMenu geneName genes_inImmune_list', geneName, genes_inImmune_list)
+
             let right_nowValue_delete = all_nowValue_of_data_dict[params.type][right_id][dict.DELETE]
 
             if(sheetDisplayConfigDict[params.type][dict.CONNECT_IMMUNE] &&
@@ -5539,7 +5609,8 @@
         // console.log(currentPage_falseMutantRecord_dict)
         // console.log(freqLowInput, freqHighInput, freqLowInput?freqLowInput.value:'', freqHighInput?freqHighInput.value:'')
         // console.log(data_count)
-        console.log(filterGroup_checkedIndex_dict, filterGroup_names_dict)
+        // console.log(filterGroup_checkedIndex_dict, filterGroup_names_dict)
+        console.log(all_titleGroup_dict, all_currentTitleGroupIndex_dict)
     }
 
 </script>
@@ -6083,13 +6154,32 @@
         display: none;
         font-size: 14px;
     }
-    .contentRight .mutantList .selectFieldsWrapper .firstDefaultTitle{
+    .contentRight .selectFieldsWrapper .titleGroupWrapper {
+        width: 100%;
+        border-top: 1px solid #cccccc;
+    }
+    .contentRight .selectFieldsWrapper .titleGroupWrapper .titleGroup{
+        float: left;
+        padding: 1px 2px;
+        margin: 3px 1px;
+        height: 20px;
+        line-height: 20px;
+        font-size: 14px;
+        border: 1px solid #939393;
+    }
+    .contentRight .selectFieldsWrapper .titleGroupWrapper .titleGroup.active{
+        background: orange;
+    }
+    .contentRight .selectFieldsWrapper .titleGroupWrapper .titleGroup:hover{
+        background: #69ca60;
+    }
+    .contentRight .selectFieldsWrapper .firstDefaultTitle{
         margin: 0 0 0 6px!important;
     }
-    .contentRight .mutantList .selectFieldsWrapper .firstDefaultTitle .checkBox{
+    .contentRight .selectFieldsWrapper .firstDefaultTitle .checkBox{
         color: #cccccc;
     }
-    .contentRight .mutantList .selectFieldsWrapper .firstDefaultTitle .checkBox.active{
+    .contentRight .selectFieldsWrapper .firstDefaultTitle .checkBox.active{
         color: black;
     }
     .contentRight .selectFieldsWrapper .contentWrapper{

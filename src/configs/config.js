@@ -347,6 +347,7 @@ export const sheetDisplayConfigList = [
                 content: '其它'
             }
         ],
+        title_group: ['突变位点', '免疫相关', '位点解析'],
         title_list: [
             {
                 title: "sampleSn",
@@ -363,104 +364,82 @@ export const sheetDisplayConfigList = [
                 type: "text",
                 modify: true,
                 defaultDisplay: true,
-                selectDisplay: false
+                selectDisplay: true,
+                group: '突变位点'
             }, {
                 title: "posStart",
                 translate: "起始位置",
                 type: "number",
                 modify: true,
                 defaultDisplay: true,
-                selectDisplay: false
+                selectDisplay: true,
+                group: '突变位点'
             }, {
                 title: "posEnd",
                 translate: "终止位置",
                 type: "number",
                 modify: true,
                 defaultDisplay: true,
-                selectDisplay: false
+                selectDisplay: true,
+                group: '突变位点'
             }, {
                 title: "ref",
                 translate: "参考序列",
                 type: "text",
                 modify: true,
                 defaultDisplay: true,
-                selectDisplay: false
+                selectDisplay: true,
+                group: '突变位点'
             }, {
                 title: "alt",
                 translate: "突变序列",
                 type: "text",
                 modify: true,
                 defaultDisplay: true,
-                selectDisplay: false
+                selectDisplay: true,
+                group: '突变位点'
             }, {
                 title: "freq",
                 translate: "频率",
                 type: "text",
                 modify: true,
                 defaultDisplay: true,
-                selectDisplay: false
-            }, {
-                title: "exonicfuncRefgene",
+                selectDisplay: true,
+                group: '突变位点'
+            },
+            {
+                title: "_geneName",
+                translate: "基因名称",
                 type: "text",
-                translate: "突变方式",
                 modify: true,
-                selections: lineDataModify_selection_dict["exonicfuncRefgene"],
-                // equal_modify: 'blank_to_underline',
                 defaultDisplay: true,
-                selectDisplay: false
-            }, {
+                selectDisplay: true,
+                group: '免疫相关'
+            },
+            {
                 title: "clinsig",
                 translate: "突变分类1",
                 type: "text",
                 modify: false,
                 defaultDisplay: true,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '免疫相关'
             }, {
                 title: "intervarAutomated",
                 translate: "突变分类2",
                 type: "text",
                 modify: false,
                 defaultDisplay: true,
-                selectDisplay: true
-            },
-
-
-            // 药物相关
-            {
-                title: "drugLevel",
-                translate: "证据等级",
-                type: "text",
-                modify: true,
-                defaultDisplay: true,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '免疫相关'
             }, {
-                title: "cancerType",
-                translate: "癌症类型",
+                title: "geneType",
+                translate: "基因类型",
                 type: "text",
                 modify: true,
                 defaultDisplay: true,
-                selectDisplay: true
-            }, {
-                title: "drugs",
-                translate: "靶向药",
-                type: "text",
-                modify: true,
-                defaultDisplay: true,
-                selectDisplay: true
-            }, {
-                title: "hgvs",
-                translate: "hgvs命名",
-                type: "text",
-                modify: true,
-                defaultDisplay: true,
-                selectDisplay: true
-            }, {
-                title: "geneVar",
-                translate: "位点解析",
-                type: "text",
-                modify: true,
-                defaultDisplay: true,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '免疫相关'
             }, {
                 title: "immuneId",
                 type: "text",
@@ -468,100 +447,142 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: true,
+                group: '免疫相关',
                 redirect: 'immune'
             },
-
-
             {
-                title: "projectAbbreviation",
-                translate: "项目简称",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
-            }, {
                 title: "NM_ID",
                 translate: "转录本",
                 type: "text",
-                modify: false,
+                modify: true,
                 defaultDisplay: false,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '位点解析'
             }, {
                 title: "GeneName",
                 translate: "基因名称",
                 type: "text",
-                modify: false,
+                modify: true,
                 defaultDisplay: false,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '位点解析'
             }, {
                 title: "DNA_change",
                 translate: "碱基改变",
                 type: "text",
-                modify: false,
+                modify: true,
                 defaultDisplay: false,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '位点解析'
             }, {
                 title: "AA_change",
                 translate: "氨基酸改变",
                 type: "text",
-                modify: false,
+                modify: true,
                 defaultDisplay: false,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '位点解析'
+            }, {
+                title: "drugLevel",
+                translate: "证据等级",
+                type: "text",
+                modify: true,
+                defaultDisplay: false,
+                selectDisplay: true,
+                group: '位点解析'
+            }, {
+                title: "cancerType",
+                translate: "癌症类型",
+                type: "text",
+                modify: true,
+                defaultDisplay: false,
+                selectDisplay: true,
+                group: '位点解析'
+            }, {
+                title: "drugs",
+                translate: "靶向药",
+                type: "text",
+                modify: true,
+                defaultDisplay: false,
+                selectDisplay: true,
+                group: '位点解析'
             },
-
-            // 依赖于hgvs变更，先允许修改
             {
+                title: "hgvs",
+                translate: "hgvs命名",
+                type: "text",
+                modify: true,
+                defaultDisplay: false,
+                selectDisplay: true,
+                group: '位点解析'
+            }, {
+                title: "geneVar",
+                translate: "位点解析",
+                type: "text",
+                modify: true,
+                defaultDisplay: false,
+                selectDisplay: true,
+                group: '位点解析'
+            },{
+                title: "zlb",
+                translate: "转录本",
+                type: "text",
+                modify: true,
+                defaultDisplay: false,
+                selectDisplay: true,
+                group: '位点解析'
+            }, {
                 title: "wxz",
                 translate: "外显子",
                 type: "text",
                 modify:true,
                 defaultDisplay: false,
                 selectDisplay: true,
-            }, {
-                title: "zlb",
-                translate: "转录本",
-                type: "text",
-                modify: true,
-                defaultDisplay: false,
-                selectDisplay: true
+                group: '位点解析'
             }, {
                 title: "hgsGb",
                 translate: "碱基改变",
                 type: "text",
                 modify: true,
                 defaultDisplay: false,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '位点解析'
             }, {
                 title: "ajsGb",
                 translate: "氨基酸改变",
                 type: "text",
                 modify: true,
                 defaultDisplay: false,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '位点解析'
             }, {
                 title: "alteration",
                 translate: "基因变异",
                 type: "text",
                 modify: true,
                 defaultDisplay: false,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '位点解析'
             }, {
-                title: "_geneName",
-                translate: "基因名称",
+                title: "exonicfuncRefgene",
+                type: "text",
+                translate: "突变方式",
+                modify: true,
+                selections: lineDataModify_selection_dict["exonicfuncRefgene"],
+                // equal_modify: 'blank_to_underline',
+                defaultDisplay: false,
+                selectDisplay: true,
+                group: '位点解析'
+            },
+            {
+                title: "level",
+                translate: "等级分类",
                 type: "text",
                 modify: true,
                 defaultDisplay: false,
-                selectDisplay: true
-            }, {
-                title: "geneType",
-                translate: "基因类型",
-                type: "text",
-                modify: false,
-                defaultDisplay: false,
-                selectDisplay: true
+                selectDisplay: true,
+                group: '位点解析'
             },
-
-            // 提供给 hgvs修改参考
             {
                 title: "aachangeRefgene",
                 translate: "突变描述",
@@ -569,7 +590,14 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: false,
                 selectDisplay: true
-            }
+            }, {
+                title: "projectAbbr",
+                translate: "项目简称",
+                type: "text",
+                modify: false,
+                defaultDisplay: false,
+                selectDisplay: true
+            },
         ],
     },
 
