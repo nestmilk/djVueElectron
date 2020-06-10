@@ -976,7 +976,8 @@
         upSheet_name_dict,
         sampleTypeConfig,
         cnaType_logic_dict,
-        immune_types_forGeneinImmune
+        immune_types_forGeneinImmune,
+        amino_abbreviation_list
     } from '../../configs/config'
     import {dict_translate} from '../../utils/dict'
 
@@ -1040,6 +1041,7 @@
         MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
         FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput', DELETE_AFFIRM: 'delete_affirm',
         CHECK_AFFIRM: 'check_affirm', CHECK: 'check', SELECT: 'select', SELECTIONS: 'selections', FILTER_GROUP: 'filter_group',
+        ZLB: 'zlb', WXZ: 'wxz', HGSGB: "hgsGb", AJSGB: 'ajsGb', ALTERATION: 'alteration',
     }
     // 获取路径中的：值
     export let params = {}
@@ -2291,17 +2293,20 @@
     }
 
     function changeValue_In_AllNowvalueOfDataDict(e, id, field, force=false){
+        console.log('changeValue_In_AllNowvalueOfDataDict field, ifHgvsAutoFillOthers)', field, settingsStore.get('ifHgvsAutoFillOthers'))
+
         // 只能状态为free或者人为forece为true，才能修改nowValue
         if (all_status_of_data_dict[params.type][id]===dict.FREE || force) {
             if(field===dict.DELETE){
                 let pre_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
                 all_nowValue_of_data_dict[params.type][id][dict.DELETE] = !pre_nowValue
+
                 // 同时需要将其余已修改的项恢复
                 recover_nowValue_byIDs_fields([id])
             }else{
-                // 操作前先将delete置换为false
+                // 1) 操作前先将delete置换为false
                 all_nowValue_of_data_dict[params.type][id][dict.DELETE] = false
-                // 接着修改title的值
+                // 2) 接着修改title的值
                 if ([dict.POSSTART, dict.POSEND].indexOf(field) > -1){
                     all_nowValue_of_data_dict[params.type][id][field] = parseInt(e.target.value)
                 }else if (field === dict.FREQ){
@@ -2322,7 +2327,43 @@
                     }else{
                         all_nowValue_of_data_dict[params.type][id][field] = pre_value
                     }
-                }else{
+                }else if (field === dict.HGVS && settingsStore.get('ifHgvsAutoFillOthers')){
+                    // 针对hgvs， 并且打开自动关联修改
+                    let hgvsValue = e.target.value
+                    all_nowValue_of_data_dict[params.type][id][field] = hgvsValue
+                    // console.log('changeValue_In_AllNowvalueOfDataDict hgvsValue', hgvsValue)
+
+                    let values = hgvsValue.split(':')
+                    if (values.hasOwnProperty(1)){
+                        all_nowValue_of_data_dict[params.type][id][dict.ZLB] = values[1]
+                    }else{
+                        all_nowValue_of_data_dict[params.type][id][dict.ZLB] = ''
+                    }
+                    if (values.hasOwnProperty(2)){
+                        all_nowValue_of_data_dict[params.type][id][dict.WXZ] = values[2]
+                    }else{
+                        all_nowValue_of_data_dict[params.type][id][dict.WXZ] = ''
+                    }
+                    if (values.hasOwnProperty(3)){
+                        all_nowValue_of_data_dict[params.type][id][dict.HGSGB] = values[3]
+                    }else{
+                        all_nowValue_of_data_dict[params.type][id][dict.HGSGB] = ''
+                    }
+                    if (values.hasOwnProperty(4)){
+                        all_nowValue_of_data_dict[params.type][id][dict.AJSGB] = values[4]
+                        // 遍历3位氨基酸转1位简码字典，替换
+                        let alteration = values[4].replace(/^p./, '')
+                        for (let aminoItem of amino_abbreviation_list){
+                            let {three_abbr, one_abbr} = aminoItem
+                            alteration = alteration.replace(three_abbr, one_abbr)
+                        }
+                        all_nowValue_of_data_dict[params.type][id][dict.ALTERATION] = alteration
+                    }else{
+                        all_nowValue_of_data_dict[params.type][id][dict.AJSGB] = ''
+                        all_nowValue_of_data_dict[params.type][id][dict.ALTERATION] = ''
+                    }
+
+                }else {
                     all_nowValue_of_data_dict[params.type][id][field] = e.target.value
                 }
             }
@@ -2349,10 +2390,10 @@
         now_params_type = params.type
     }
     function handleValueChangeInBigInput(event){
-        if(now_input_id&&now_input_field){
-            all_nowValue_of_data_dict[now_params_type][now_input_id][now_input_field] = event.target.value
+        if(now_params_type && now_input_id && now_input_field){
+            // all_nowValue_of_data_dict[now_params_type][now_input_id][now_input_field] = event.target.value
+            changeValue_In_AllNowvalueOfDataDict(event, now_input_id, now_input_field)
         }
-
     }
 
     function __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_id, status, reason=null, unequal_values=null, common_log_id=null, adjust_mulAff_items=false, cancel_submit=false){
