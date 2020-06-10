@@ -623,6 +623,9 @@ export const sheetDisplayConfigList = [
                 value: 'false_positive',
                 content: '假阳性'
             }, {
+                value: 'before_merge',
+                content: '合并前'
+            }, {
                 value: 'merge_complex_loci',
                 content: '复杂位点合并'
             }, {
