@@ -831,7 +831,7 @@
                                                                     page_id_availableEdit_dict[line_data.id]?'show':''
                                                                 }
                                                             "
-                                                                 on:click={()=>recover_nowValue_byIDs_fields([line_data.id],[field])}
+                                                                 on:click={()=>recover_nowValue_byIDs_fields([line_data.id],[field], false, null, true)}
                                                             ></div>
                                                         {/if}
 
@@ -866,8 +866,7 @@
                                                                     ></div>
                                                                 </div>
                                                                 <div class="downIconWrapper">
-                                                                    <div class="downIcon {line_data[dict.FALSE_MUTANT_RECORD]?'icon-eye-plus':''}"
-                                                                    >
+                                                                    <div class="downIcon {line_data[dict.FALSE_MUTANT_RECORD]?'icon-eye-plus':''}">
                                                                     </div>
                                                                 </div>
                                                             {/if}
@@ -2272,15 +2271,16 @@
 
 
     // 修改all_nowValue_of_data_dict中的值
-    function recover_nowValue_byIDs_fields(id_list, field_list=[], force=false, sheet=null){
+    function recover_nowValue_byIDs_fields(id_list, field_list=[], force=false, sheet=null, inputRecover=false){
         // console.log('recoverValuesInNowPageDataDict', id_list, field_list)
         let default_sheet = sheet?sheet:params.type
 
-        let recover_field_list = all_modifyTitle_list_dict[default_sheet]
-        if (field_list && field_list.length > 0) {
-            recover_field_list = field_list
-        }
+        let recover_field_list = field_list && field_list.length > 0? field_list: all_modifyTitle_list_dict[default_sheet]
 
+        // 针对行内，且打开自动关联修改的， hgvs，添加恢复修改项
+        if (inputRecover && field_list.indexOf(dict.HGVS)!==-1 && settingsStore.get('ifHgvsAutoFillOthers')){
+            recover_field_list = [...recover_field_list, dict.ZLB, dict.WXZ, dict.HGSGB, dict.AJSGB, dict.ALTERATION]
+        }
 
         id_list.forEach(id=>{
             // 判断数据条目是否为free状态,free才能修改
