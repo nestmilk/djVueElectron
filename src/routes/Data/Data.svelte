@@ -1040,7 +1040,8 @@
         MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
         FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput', DELETE_AFFIRM: 'delete_affirm',
         CHECK_AFFIRM: 'check_affirm', CHECK: 'check', SELECT: 'select', SELECTIONS: 'selections', FILTER_GROUP: 'filter_group',
-        ZLB: 'zlb', WXZ: 'wxz', HGSGB: "hgsGb", AJSGB: 'ajsGb', ALTERATION: 'alteration',
+        ZLB: 'zlb', WXZ: 'wxz', HGSGB: "hgsGb", AJSGB: 'ajsGb', ALTERATION: 'alteration', A_REASONBEFOREMERGE_IDS: 'affirmed_reason_before_merge_ids',
+        BEFORE_MERGE: 'before_merge',
     }
     // 获取路径中的：值
     export let params = {}
@@ -3346,7 +3347,7 @@
         idsGroupSelectShow = false
     }
     function handleIdsGroupSelect(type){
-        // console.log("handleIdsGroupSelect", type)
+        console.log("handleIdsGroupSelect", type)
         idsGroupSelectShow = false
 
         let ids = []
@@ -3395,6 +3396,15 @@
                     }
                     return result
                 }, [])
+                query_ids =  ids.join(' ')
+                break
+            case dict.A_REASONBEFOREMERGE_IDS:
+                for (let logId in logs_together_dict){
+                    let reason = logs_together_dict[logId][dict.VALUE]
+                    if(reason===dict.BEFORE_MERGE){
+                        ids = [...ids, ...logs_together_dict[logId][dict.IDS]]
+                    }
+                }
                 query_ids =  ids.join(' ')
                 break
             default:
