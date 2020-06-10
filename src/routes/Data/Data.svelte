@@ -664,7 +664,7 @@
                                                            {all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
                                                                 page_id_availableEdit_dict[line_data.id]?'availableEdit':''}
                                                            "
-                                                    on:click={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data.id, dict.DELETE)}
+                                                    on:click={(e)=>changeValue_In_AllNowvalueOfDataDict(e, [line_data.id], dict.DELETE)}
                                                     disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
                                                                     page_id_availableEdit_dict[line_data.id]?
                                                                     '':'disabled'
@@ -755,7 +755,7 @@
                                                         <select value={all_nowValue_of_data_dict[params.type][line_data.id]?
                                                                             all_nowValue_of_data_dict[params.type][line_data.id][field].replace(' ', '_'):''}
                                                                 class="dataSelect"
-                                                                on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data[dict.ID], field)}
+                                                                on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, [line_data[dict.ID]], field)}
                                                                 disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
                                                                     page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
                                                         >
@@ -816,7 +816,7 @@
                                                                value="{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}"
                                                                disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
                                                                             page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
-                                                               on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, line_data.id, field)}
+                                                               on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, [line_data.id], field)}
                                                                on:focus={(e)=>focusNowField(e, line_data.id, field)}
                                                         >
 
@@ -1008,7 +1008,7 @@
         MODIFY: 'modify', IFEQUAL: 'ifEqual', FREQRANGE: "freqRange", AA_CHANGE: 'AA_change',
         DELETE: "delete", FREQ: 'freq', COUNT: 'count',
         NOWDISPLAY: 'nowDisplay', DEFAULTDISPLAY: 'defaultDisplay', SELECTDISPLAY: 'selectDisplay',
-        FIELD_MOUSE_ENTER: 'field_mouse_enter', TITLE_GROUP: 'title_group', GROUP: 'group',
+        FIELD_MOUSE_ENTER: 'field_mouse_enter', TITLE_GROUP: 'title_group', GROUP: 'group', GROUPS: 'groups',
         FREE: 'free', CHECKED: 'checked', DELETED: 'deleted', EDITED: 'edited',
         AVAILABLE_EDIT: 'availableEdit', REASON_TYPE: 'reason_type', REASON_DESC: 'reason_desc', LOG_ID: 'log_id',
         DEFAULT: 'default', IDS: 'ids', NOTHING: 'nothing',
@@ -1360,7 +1360,7 @@
                         // D) 需要先删除的
                         if (type==dict.DELETE){
                             for (let id of ids){
-                                changeValue_In_AllNowvalueOfDataDict(null, id, dict.DELETE)
+                                changeValue_In_AllNowvalueOfDataDict(null, [id], dict.DELETE)
                             }
                         }
                         // E) 勾选这些删除数据，（简化为 设置多选的数据id)
@@ -1745,17 +1745,19 @@
         let status = all_status_of_data_dict[params.type][id]
         if (status!==dict.FREE) return false
 
-        let delete_preValue = all_preValue_of_data_dict[params.type][id][dict.DELETE]
-        let delete_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
-        if(!delete_preValue && delete_nowValue){
-            // 1) free状态下，必须是真删除，才true
-            return true
-        }else{
-            // 2) free状态下，必须是有真修改的（delete false， 删除撤销的不算）才true, 否则返回false
-            // todo 理论上应该要查修改记录的历史值
-            let unequal_values = __check_unequalValues_ofModifiyFields(id, [...all_modifyTitle_list_dict[params.type]])
-            return Object.keys(unequal_values).length>0
-        }
+        return true
+        // todo 20.06.10 关闭检测是否有修改
+        // let delete_preValue = all_preValue_of_data_dict[params.type][id][dict.DELETE]
+        // let delete_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
+        // if(!delete_preValue && delete_nowValue){
+        //     // 1) free状态下，必须是真删除，才true
+        //     return true
+        // }else{
+        //     // 2) free状态下，必须是有真修改的（delete false， 删除撤销的不算）才true, 否则返回false
+        //     // todo 理论上应该要查修改记录的历史值
+        //     let unequal_values = __check_unequalValues_ofModifiyFields(id, [...all_modifyTitle_list_dict[params.type]])
+        //     return Object.keys(unequal_values).length>0
+        // }
     }
     function __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(str_id){
         let id = parseInt(str_id)
@@ -2162,7 +2164,8 @@
             for (let group of item[dict.TITLE_GROUP]){
                 let titles = []
                 for (let title_item of item[dict.TITLE_LIST]){
-                    if (title_item.hasOwnProperty(dict.GROUP) && title_item[dict.GROUP] === group ){
+                    if (title_item.hasOwnProperty(dict.GROUPS) &&
+                            title_item[dict.GROUPS].indexOf(group)!==-1 ){
                         titles.push(title_item[dict.TITLE])
                     }
                 }
@@ -2227,7 +2230,10 @@
 
         // 先清空nowDisplay为false
         for (let title in all_titleListItem_dict[params.type]){
-            __toggle_nowDisplay_inAllTitleListItemDict(title, false)
+            let titleItem = all_titleListItem_dict[params.type][title]
+            if(titleItem[dict.SELECTDISPLAY]){
+                __toggle_nowDisplay_inAllTitleListItemDict(title, false)
+            }
         }
         // 选中组内的title，nowDisplay改为true
         for (let title of titleGroup[dict.TITLES]){
@@ -2338,17 +2344,17 @@
                     if (values.hasOwnProperty(1)){
                         all_nowValue_of_data_dict[params.type][id][dict.ZLB] = values[1]
                     }else{
-                        all_nowValue_of_data_dict[params.type][id][dict.ZLB] = ''
+                        all_nowValue_of_data_dict[params.type][id][dict.ZLB] = '.'
                     }
                     if (values.hasOwnProperty(2)){
                         all_nowValue_of_data_dict[params.type][id][dict.WXZ] = values[2]
                     }else{
-                        all_nowValue_of_data_dict[params.type][id][dict.WXZ] = ''
+                        all_nowValue_of_data_dict[params.type][id][dict.WXZ] = '.'
                     }
                     if (values.hasOwnProperty(3)){
                         all_nowValue_of_data_dict[params.type][id][dict.HGSGB] = values[3]
                     }else{
-                        all_nowValue_of_data_dict[params.type][id][dict.HGSGB] = ''
+                        all_nowValue_of_data_dict[params.type][id][dict.HGSGB] = '.'
                     }
                     if (values.hasOwnProperty(4)){
                         all_nowValue_of_data_dict[params.type][id][dict.AJSGB] = values[4]
@@ -2360,8 +2366,8 @@
                         }
                         all_nowValue_of_data_dict[params.type][id][dict.ALTERATION] = alteration
                     }else{
-                        all_nowValue_of_data_dict[params.type][id][dict.AJSGB] = ''
-                        all_nowValue_of_data_dict[params.type][id][dict.ALTERATION] = ''
+                        all_nowValue_of_data_dict[params.type][id][dict.AJSGB] = '.'
+                        all_nowValue_of_data_dict[params.type][id][dict.ALTERATION] = '.'
                     }
 
                 }else {
@@ -2393,7 +2399,7 @@
     function handleValueChangeInBigInput(event){
         if(now_params_type && now_input_id && now_input_field){
             // all_nowValue_of_data_dict[now_params_type][now_input_id][now_input_field] = event.target.value
-            changeValue_In_AllNowvalueOfDataDict(event, now_input_id, now_input_field)
+            changeValue_In_AllNowvalueOfDataDict(event, [now_input_id], now_input_field)
         }
     }
 
@@ -2411,8 +2417,17 @@
                 }
 
                 // 3) 配置此条id的log_id
-                let log_checked_id = uuidv4()
-                all_submit_logs_dict[params.type][id] = log_checked_id
+                if (common_log_id){
+                    all_submit_logs_dict[params.type][id] = common_log_id
+                }else{
+                    let log_checked_id = uuidv4()
+                    all_submit_logs_dict[params.type][id] = log_checked_id
+                }
+                // 针对调整多项审核条目数目
+                if(adjust_mulAff_items){
+                    logs_together_dict[common_log_id][dict.IDS] = [...logs_together_dict[common_log_id][dict.IDS], id]
+                }
+
 
                 // 4) 更新sampleRecord和sheetRecord
                 __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, dict.US_UADATA, dict.US_ADATA)
@@ -3916,7 +3931,9 @@
 
                     // 判断不等项中有没有delete，如果有需要明确删除为true, 才能判定位 删除状态
                     // 否则如果删除是false，可能是删除提交后撤销，当前准备撤销删除或加修改后的提交状态， 编辑状态
-                    let type = unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]?dict.DELETED:dict.EDITED
+                    let type = Object.keys(unequal_values).length === 0?
+                            dict.CHECKED:
+                            (unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]?dict.DELETED:dict.EDITED)
 
                     // 1) 分别修改相关记录，reason不用提交了
                     __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_id, type, null, unequal_values, log_id_mulAffirm)
@@ -3952,7 +3969,9 @@
                 difference[dict.ADDED_IDS].forEach(id=>{
                     // 同上，判断修改类型
                     let unequal_values = __check_unequalValues_ofModifiyFields(id)
-                    let type = unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]?dict.DELETED:dict.EDITED
+                    let type = Object.keys(unequal_values).length === 0?
+                            dict.CHECKED:
+                            (unequal_values.hasOwnProperty(dict.DELETE) && unequal_values[dict.DELETE]?dict.DELETED:dict.EDITED)
                     // console.log('handleAddReasonSure', unequal_values, type, id)
                     // 1) 分别修改相关记录，reason不用提交了
                     __change_dataStatusandPreValueandNowValue_params_logs_sampleRecord_sheetRecord(id, sample_ids[id], type, null, unequal_values, locked_logId, true)
@@ -5631,7 +5650,7 @@
         // console.log(sample_list, sampleSn_dict)
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict, all_sheet_record_dict)
-        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
@@ -5642,7 +5661,7 @@
         // console.log(all_status_of_data_dict)
         // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_submit_params_dict)
-        // console.log(all_submit_logs_dict, logs_together_dict)
+        console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
@@ -5661,7 +5680,7 @@
         // console.log(freqLowInput, freqHighInput, freqLowInput?freqLowInput.value:'', freqHighInput?freqHighInput.value:'')
         // console.log(data_count)
         // console.log(filterGroup_checkedIndex_dict, filterGroup_names_dict)
-        console.log(all_titleGroup_dict, all_currentTitleGroupIndex_dict)
+        // console.log(all_titleGroup_dict, all_currentTitleGroupIndex_dict)
     }
 
 </script>
