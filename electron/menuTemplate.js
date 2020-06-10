@@ -112,11 +112,18 @@ let template = [
                 label: '审核功能',
                 submenu: [
                     {
-                        label: '靶向hgvs修改关联填充',
+                        label: '靶向、遗传表-hgvs修改关联填充',
                         type: 'checkbox',
                         checked: settingsStore.get('ifHgvsAutoFillOthers'),
                         click: ()=>{
                             settingsStore.set('ifHgvsAutoFillOthers', !settingsStore.get('ifHgvsAutoFillOthers'))
+                        }
+                    }, {
+                        label: '同批审核-多项数据同批修改',
+                        type: 'checkbox',
+                        checked: settingsStore.get('ifMultipleModify'),
+                        click: ()=>{
+                            settingsStore.set('ifMultipleModify', !settingsStore.get('ifMultipleModify'))
                         }
                     },
                 ]

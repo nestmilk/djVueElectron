@@ -2350,7 +2350,7 @@ export const affirmSelectionConfig = [
         type: "multiple",
         value: "multiple_affirm",
         availableEdit: true,
-        content: '同批审核(限修改)'
+        content: '多项审核'
     }, {
         type: "multiple",
         value: "cancel_multiple_affirm",

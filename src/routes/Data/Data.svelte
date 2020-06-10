@@ -664,7 +664,7 @@
                                                            {all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
                                                                 page_id_availableEdit_dict[line_data.id]?'availableEdit':''}
                                                            "
-                                                    on:click={(e)=>changeValue_In_AllNowvalueOfDataDict(e, [line_data.id], dict.DELETE)}
+                                                    on:click={(e)=>change_nowValue_inAllNowvalueOfDataDict(e, line_data.id, dict.DELETE)}
                                                     disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
                                                                     page_id_availableEdit_dict[line_data.id]?
                                                                     '':'disabled'
@@ -755,7 +755,7 @@
                                                         <select value={all_nowValue_of_data_dict[params.type][line_data.id]?
                                                                             all_nowValue_of_data_dict[params.type][line_data.id][field].replace(' ', '_'):''}
                                                                 class="dataSelect"
-                                                                on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, [line_data[dict.ID]], field)}
+                                                                on:change={(e)=>change_nowValue_inAllNowvalueOfDataDict(e, line_data[dict.ID], field)}
                                                                 disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
                                                                     page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
                                                         >
@@ -816,7 +816,7 @@
                                                                value="{all_nowValue_of_data_dict[params.type][line_data.id]?all_nowValue_of_data_dict[params.type][line_data.id][field]:''}"
                                                                disabled="{all_status_of_data_dict[params.type][line_data.id]===dict.FREE &&
                                                                             page_id_availableEdit_dict[line_data.id]?'':'disabled'}"
-                                                               on:change={(e)=>changeValue_In_AllNowvalueOfDataDict(e, [line_data.id], field)}
+                                                               on:change={(e)=>change_nowValue_inAllNowvalueOfDataDict(e, line_data.id, field)}
                                                                on:focus={(e)=>focusNowField(e, line_data.id, field)}
                                                         >
 
@@ -1360,7 +1360,7 @@
                         // D) 需要先删除的
                         if (type==dict.DELETE){
                             for (let id of ids){
-                                changeValue_In_AllNowvalueOfDataDict(null, [id], dict.DELETE)
+                                change_nowValue_inAllNowvalueOfDataDict(null, id, dict.DELETE)
                             }
                         }
                         // E) 勾选这些删除数据，（简化为 设置多选的数据id)
@@ -2299,85 +2299,122 @@
         })
     }
 
-    function changeValue_In_AllNowvalueOfDataDict(e, id, field, force=false){
-        console.log('changeValue_In_AllNowvalueOfDataDict field, ifHgvsAutoFillOthers)', field, settingsStore.get('ifHgvsAutoFillOthers'))
-
-        // 只能状态为free或者人为forece为true，才能修改nowValue
-        if (all_status_of_data_dict[params.type][id]===dict.FREE || force) {
-            if(field===dict.DELETE){
-                let pre_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
-                all_nowValue_of_data_dict[params.type][id][dict.DELETE] = !pre_nowValue
-
-                // 同时需要将其余已修改的项恢复
-                recover_nowValue_byIDs_fields([id])
-            }else{
-                // 1) 操作前先将delete置换为false
-                all_nowValue_of_data_dict[params.type][id][dict.DELETE] = false
-                // 2) 接着修改title的值
-                if ([dict.POSSTART, dict.POSEND].indexOf(field) > -1){
-                    all_nowValue_of_data_dict[params.type][id][field] = parseInt(e.target.value)
-                }else if (field === dict.FREQ){
-                    let eValue = e.target.value
-
-                    // console.log(eValue, isNaN(eValue), parseFloat(eValue)>=0, parseFloat(eValue)<=1)
-                    if(!isNaN(eValue) && parseFloat(eValue)>=0 && parseFloat(eValue)<=1){
-                        all_nowValue_of_data_dict[params.type][id][field] = parseFloat(eValue)
-                    }else{
-                        remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
-                    }
-                }else if (field===dict.EXONICFUNCREFGENE && all_titleListItem_dict[params.type][field][dict.SELECTIONS]){
-                    // 针对exonicfuncRefgene，通过select进行修改的
-                    let new_value = e.target.value
-                    let pre_value = all_preValue_of_data_dict[params.type][id][field]
-                    if (new_value !== pre_value.replace(' ', '_')){
-                        all_nowValue_of_data_dict[params.type][id][field] = new_value
-                    }else{
-                        all_nowValue_of_data_dict[params.type][id][field] = pre_value
-                    }
-                }else if (field === dict.HGVS && settingsStore.get('ifHgvsAutoFillOthers')){
-                    // 针对hgvs， 并且打开自动关联修改
-                    let hgvsValue = e.target.value
-                    all_nowValue_of_data_dict[params.type][id][field] = hgvsValue
-                    // console.log('changeValue_In_AllNowvalueOfDataDict hgvsValue', hgvsValue)
-
-                    let values = hgvsValue.split(':')
-                    if (values.hasOwnProperty(1)){
-                        all_nowValue_of_data_dict[params.type][id][dict.ZLB] = values[1]
-                    }else{
-                        all_nowValue_of_data_dict[params.type][id][dict.ZLB] = '.'
-                    }
-                    if (values.hasOwnProperty(2)){
-                        all_nowValue_of_data_dict[params.type][id][dict.WXZ] = values[2]
-                    }else{
-                        all_nowValue_of_data_dict[params.type][id][dict.WXZ] = '.'
-                    }
-                    if (values.hasOwnProperty(3)){
-                        all_nowValue_of_data_dict[params.type][id][dict.HGSGB] = values[3]
-                    }else{
-                        all_nowValue_of_data_dict[params.type][id][dict.HGSGB] = '.'
-                    }
-                    if (values.hasOwnProperty(4)){
-                        all_nowValue_of_data_dict[params.type][id][dict.AJSGB] = values[4]
-                        // 遍历3位氨基酸转1位简码字典，替换
-                        let alteration = values[4].replace(/^p./, '')
-                        for (let aminoItem of amino_abbreviation_list){
-                            let {three_abbr, one_abbr} = aminoItem
-                            alteration = alteration.replace(three_abbr, one_abbr)
-                        }
-                        all_nowValue_of_data_dict[params.type][id][dict.ALTERATION] = alteration
-                    }else{
-                        all_nowValue_of_data_dict[params.type][id][dict.AJSGB] = '.'
-                        all_nowValue_of_data_dict[params.type][id][dict.ALTERATION] = '.'
-                    }
-
-                }else {
-                    all_nowValue_of_data_dict[params.type][id][field] = e.target.value
+    function change_nowValue_inAllNowvalueOfDataDict(e, modify_id, field){
+        console.log('changeValue_In_AllNowvalueOfDataDict field, ifHgvsAutoFillOthers, ifMultipleModify)', field, settingsStore.get('ifHgvsAutoFillOthers'), settingsStore.get('ifMultipleModify'))
+        let id_list = [modify_id]
+        if(all_affirmWorkingStatus_of_sheet_dict[params.type]===dict.MULTIPLE_AFFIRM && settingsStore.get('ifMultipleModify')){
+            let selected_ids = all_selected_dataIds_dict[params.type]
+            selected_ids.forEach(id=>{
+                if (id_list.indexOf(id)===-1){
+                    id_list.push(id)
                 }
-            }
-
-            // 更新此条
-            __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+            })
         }
+        console.log('changeValue_In_AllNowvalueOfDataDict id_list', id_list)
+
+
+        // 针对不同
+        let modify_value
+        switch (field) {
+            case dict.DELETE:
+                modify_value = !all_nowValue_of_data_dict[params.type][modify_id][dict.DELETE]
+                break
+            case dict.POSSTART: case dict.POSEND:
+                modify_value = parseInt(e.target.value)
+                break
+            case dict.FREQ:
+                let eValue = e.target.value
+                // console.log(eValue, isNaN(eValue), parseFloat(eValue)>=0, parseFloat(eValue)<=1)
+                if(!isNaN(eValue) && parseFloat(eValue)>=0 && parseFloat(eValue)<=1){
+                    modify_value = parseFloat(eValue)
+                }else{
+                    remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
+                    return
+                }
+                break
+            default:
+                modify_value = e.target.value
+                break
+        }
+
+        for (let id of id_list){
+            if (all_status_of_data_dict[params.type][id]===dict.FREE) {
+                if(field===dict.DELETE){
+                    let pre_nowValue = all_nowValue_of_data_dict[params.type][id][dict.DELETE]
+                    all_nowValue_of_data_dict[params.type][id][dict.DELETE] = !pre_nowValue
+
+                    // 同时需要将其余已修改的项恢复
+                    recover_nowValue_byIDs_fields([id])
+                }else{
+                    // 1) 操作前先将delete置换为false
+                    all_nowValue_of_data_dict[params.type][id][dict.DELETE] = false
+                    // 2) 接着修改title的值
+                    if ([dict.POSSTART, dict.POSEND].indexOf(field) > -1){
+                        all_nowValue_of_data_dict[params.type][id][field] = parseInt(e.target.value)
+                    }else if (field === dict.FREQ){
+                        let eValue = e.target.value
+
+                        // console.log(eValue, isNaN(eValue), parseFloat(eValue)>=0, parseFloat(eValue)<=1)
+                        if(!isNaN(eValue) && parseFloat(eValue)>=0 && parseFloat(eValue)<=1){
+                            all_nowValue_of_data_dict[params.type][id][field] = parseFloat(eValue)
+                        }else{
+                            remote.dialog.showErrorBox('频率输入不正确', '必须为浮点数，范围在0-1之间！')
+                        }
+                    }else if (field===dict.EXONICFUNCREFGENE && all_titleListItem_dict[params.type][field][dict.SELECTIONS]){
+                        // 针对exonicfuncRefgene，通过select进行修改的
+                        let new_value = e.target.value
+                        let pre_value = all_preValue_of_data_dict[params.type][id][field]
+                        if (new_value !== pre_value.replace(' ', '_')){
+                            all_nowValue_of_data_dict[params.type][id][field] = new_value
+                        }else{
+                            all_nowValue_of_data_dict[params.type][id][field] = pre_value
+                        }
+                    }else if (field === dict.HGVS && settingsStore.get('ifHgvsAutoFillOthers')){
+                        // 针对hgvs， 并且打开自动关联修改
+                        let hgvsValue = e.target.value
+                        all_nowValue_of_data_dict[params.type][id][field] = hgvsValue
+                        // console.log('changeValue_In_AllNowvalueOfDataDict hgvsValue', hgvsValue)
+
+                        let values = hgvsValue.split(':')
+                        if (values.hasOwnProperty(1)){
+                            all_nowValue_of_data_dict[params.type][id][dict.ZLB] = values[1]
+                        }else{
+                            all_nowValue_of_data_dict[params.type][id][dict.ZLB] = '.'
+                        }
+                        if (values.hasOwnProperty(2)){
+                            all_nowValue_of_data_dict[params.type][id][dict.WXZ] = values[2]
+                        }else{
+                            all_nowValue_of_data_dict[params.type][id][dict.WXZ] = '.'
+                        }
+                        if (values.hasOwnProperty(3)){
+                            all_nowValue_of_data_dict[params.type][id][dict.HGSGB] = values[3]
+                        }else{
+                            all_nowValue_of_data_dict[params.type][id][dict.HGSGB] = '.'
+                        }
+                        if (values.hasOwnProperty(4)){
+                            all_nowValue_of_data_dict[params.type][id][dict.AJSGB] = values[4]
+                            // 遍历3位氨基酸转1位简码字典，替换
+                            let alteration = values[4].replace(/^p./, '')
+                            for (let aminoItem of amino_abbreviation_list){
+                                let {three_abbr, one_abbr} = aminoItem
+                                alteration = alteration.replace(three_abbr, one_abbr)
+                            }
+                            all_nowValue_of_data_dict[params.type][id][dict.ALTERATION] = alteration
+                        }else{
+                            all_nowValue_of_data_dict[params.type][id][dict.AJSGB] = '.'
+                            all_nowValue_of_data_dict[params.type][id][dict.ALTERATION] = '.'
+                        }
+
+                    }else {
+                        all_nowValue_of_data_dict[params.type][id][field] = e.target.value
+                    }
+                }
+
+                // 更新此条
+                __update_oneId_availSelect_inPageIdAvailSelectDict(id)
+            }
+        }
+
     }
     // 处理鼠标划入突变的td的状态, 为了触发单元格 恢复按钮
     function handleMutantTDMouseenter (field, id){
@@ -2399,7 +2436,7 @@
     function handleValueChangeInBigInput(event){
         if(now_params_type && now_input_id && now_input_field){
             // all_nowValue_of_data_dict[now_params_type][now_input_id][now_input_field] = event.target.value
-            changeValue_In_AllNowvalueOfDataDict(event, [now_input_id], now_input_field)
+            change_nowValue_inAllNowvalueOfDataDict(event, now_input_id, now_input_field)
         }
     }
 
