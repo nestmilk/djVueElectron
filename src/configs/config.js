@@ -331,9 +331,6 @@ export const sheetDisplayConfigList = [
                 value: 'false_positive',
                 content: '假阳性'
             }, {
-                value: 'before_merge',
-                content: '合并前'
-            }, {
                 value: 'merge_complex_loci',
                 content: '复杂位点合并'
             }, {
@@ -622,9 +619,6 @@ export const sheetDisplayConfigList = [
             }, {
                 value: 'false_positive',
                 content: '假阳性'
-            }, {
-                value: 'before_merge',
-                content: '合并前'
             }, {
                 value: 'merge_complex_loci',
                 content: '复杂位点合并'
@@ -2386,10 +2380,7 @@ export const idsGroupSelections = [
     }, {
         value: "unaffirmed_unsubmited_ids",
         translate: '使用未审核、未提交的IDs(限已浏览页)'
-    }, {
-        value: 'affirmed_reason_before_merge_ids',
-        translate: "使用已审核、原因为'合并前'的IDs"
-    }
+    },
 ]
 
 export const upSheet_name_dict = {

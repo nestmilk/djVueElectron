@@ -336,6 +336,12 @@
                                         行号
                                     </th>
                                 {/if}
+                                <!--暂不提交-->
+                                {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
+                                    <th class="suspend short">
+                                        暂不提交
+                                    </th>
+                                {/if}
                                 <!--显示历史假突变-->
                                 {#if sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEPOSITIVEMUTANT] && openHistoryFalsePositiveMutant}
                                     <th class="falseMutant">
@@ -532,6 +538,16 @@
                                     {#if openLineNum}
                                         <td class="affirmed short">
                                             {index+1}
+                                        </td>
+                                    {/if}
+                                    <!--暂不提交-->
+                                    {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
+                                        <td class="suspend short">
+                                            {#if [dict.FREE, dict.DONE].indexOf(all_status_of_data_dict[params.type][line_data.id]) === -1}
+                                                <button class="{all_suspendStatus_of_data_dict[params.type][line_data.id]?'icon-stopwatch':''}"
+                                                        on:click={()=>toggleSuspendSubmit(line_data.id)}
+                                                ></button>
+                                            {/if}
                                         </td>
                                     {/if}
                                     <!--显示历史假突变-->
@@ -1040,7 +1056,7 @@
         MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
         FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput', DELETE_AFFIRM: 'delete_affirm',
         CHECK_AFFIRM: 'check_affirm', CHECK: 'check', SELECT: 'select', SELECTIONS: 'selections', FILTER_GROUP: 'filter_group',
-        ZLB: 'zlb', WXZ: 'wxz', HGSGB: "hgsGb", AJSGB: 'ajsGb', ALTERATION: 'alteration', A_REASONBEFOREMERGE_IDS: 'affirmed_reason_before_merge_ids',
+        ZLB: 'zlb', WXZ: 'wxz', HGSGB: "hgsGb", AJSGB: 'ajsGb', ALTERATION: 'alteration',
         BEFORE_MERGE: 'before_merge',
     }
     // 获取路径中的：值
@@ -2095,16 +2111,20 @@
     let bottomScroll
     function handleTopScroll(){
         // console.log(topScroll.scrollLeft)
-        let bottomScroll_scrollTop = bottomScroll.scrollTop
-        console.log('handleTopScroll', bottomScroll_scrollTop)
-        bottomScroll.scrollTo(topScroll.scrollLeft, bottomScroll_scrollTop)
+        if (topScroll && bottomScroll){
+            let bottomScroll_scrollTop = bottomScroll.scrollTop
+            console.log('handleTopScroll', bottomScroll_scrollTop)
+            bottomScroll.scrollTo(topScroll.scrollLeft, bottomScroll_scrollTop)
+        }
     }
     function handleBottomScroll(){
         // 如果页面拖动超过了topScroll的底部，就不用管topScrol啦, 废弃，屏幕好的，没有主页面scroll啦
         // if(windowScrollTop<147){
-        let bottomScroll_scrollTop = bottomScroll.scrollTop
-        topScroll.scrollTo(bottomScroll.scrollLeft, 0)
-        bottomScroll.scrollTo(bottomScroll.scrollLeft, bottomScroll_scrollTop)
+        if (topScroll && bottomScroll){
+            let bottomScroll_scrollTop = bottomScroll.scrollTop
+            topScroll.scrollTo(bottomScroll.scrollLeft, 0)
+            bottomScroll.scrollTo(bottomScroll.scrollLeft, bottomScroll_scrollTop)
+        }
     }
 
     //标题相关参数 每页全部title的列表，
@@ -3438,15 +3458,6 @@
                 }, [])
                 query_ids =  ids.join(' ')
                 break
-            case dict.A_REASONBEFOREMERGE_IDS:
-                for (let logId in logs_together_dict){
-                    let reason = logs_together_dict[logId][dict.VALUE]
-                    if(reason===dict.BEFORE_MERGE){
-                        ids = [...ids, ...logs_together_dict[logId][dict.IDS]]
-                    }
-                }
-                query_ids =  ids.join(' ')
-                break
             default:
                 break
         }
@@ -3660,6 +3671,10 @@
         name = name.slice(0, 1).toUpperCase() + name.slice(1)
         for (let str_id in all_submit_params_dict[params.type]){
             let id = parseInt(str_id)
+            // 如果暂不提交，则跳过
+            if (all_suspendStatus_of_data_dict[params.type][id]){
+                continue
+            }
             let success = false
             let sampleId = all_preValue_of_data_dict[params.type][id][dict.SAMPLEID]
             let log_id = all_submit_logs_dict[params.type][id]
@@ -5029,6 +5044,27 @@
         }
     }
 
+    let all_suspendStatus_of_data_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
+        let sheet = item[dict.SHEET]
+        if (item[dict.FILTERS].indexOf(dict.LOGSEDIT)!==-1){
+            result[sheet] = {}
+        }
+        return result
+    }, {})))
+    function toggleSuspendSubmit(current_id){
+        // console.log("toggleSuspendSubmit", id)
+        if ([dict.FREE, dict.DONE].indexOf(all_status_of_data_dict[params.type][current_id]) === -1){
+            let log_id = all_submit_logs_dict[params.type][current_id]
+            let ids = logs_together_dict.hasOwnProperty(log_id)?
+                    logs_together_dict[log_id][dict.IDS]:[current_id]
+
+            let new_value = all_suspendStatus_of_data_dict[params.type][current_id]?false:true
+            for (let id of ids){
+                all_suspendStatus_of_data_dict[params.type][id] = new_value
+            }
+        }
+    }
+
     function handleSelectSampleId(sample_id){
         // console.log('handleSelectSampleId', sample_id)
         let selected_sample_ids = all_selected_dataIds_dict[params.type]
@@ -5653,7 +5689,7 @@
     afterUpdate(()=>{
         // console.log('afterUpdate', pre_params_type, params.type, doneFilter)
 
-        if (autoscroll) {
+        if (autoscroll && uploadMessageDiv) {
             uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
         }
 
@@ -5706,6 +5742,7 @@
         // console.log(data_count)
         // console.log(filterGroup_checkedIndex_dict, filterGroup_names_dict)
         // console.log(all_titleGroup_dict, all_currentTitleGroupIndex_dict)
+        console.log(all_suspendStatus_of_data_dict)
     }
 
 </script>
