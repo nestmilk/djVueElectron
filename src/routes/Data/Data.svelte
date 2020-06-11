@@ -1346,6 +1346,7 @@
         })
         if (all_data){
             // A) 检查数据库中done状态为false, 本地如果有下载则需要status为free，并且unmodified，
+            // todo 此时需要留意，delete撤销后的状态
             let ids = []
             for (let data of all_data){
                 let id = data[dict.ID]
@@ -1376,7 +1377,11 @@
                         // D) 需要先删除的
                         if (type==dict.DELETE){
                             for (let id of ids){
-                                change_nowValue_inAllNowvalueOfDataDict(null, id, dict.DELETE)
+                                // 如果已经是delete提交、撤销后的状态，不用修改了
+                                if (!all_preValue_of_data_dict[params.type][id][dict.DELETE]){
+                                    // 阻止批量修改
+                                    change_nowValue_inAllNowvalueOfDataDict(null, id, dict.DELETE, true)
+                                }
                             }
                         }
                         // E) 勾选这些删除数据，（简化为 设置多选的数据id)
@@ -2319,13 +2324,13 @@
         })
     }
 
-    function change_nowValue_inAllNowvalueOfDataDict(e, modify_id, field){
-        console.log('changeValue_In_AllNowvalueOfDataDict field, ifHgvsAutoFillOthers, ifMultipleModify)', field, settingsStore.get('ifHgvsAutoFillOthers'), settingsStore.get('ifMultipleModify'))
+    function change_nowValue_inAllNowvalueOfDataDict(e, modify_id, field, avoidMultipleModify=false){
+        // console.log('changeValue_In_AllNowvalueOfDataDict field, ifHgvsAutoFillOthers, ifMultipleModify', field, settingsStore.get('ifHgvsAutoFillOthers'), settingsStore.get('ifMultipleModify'))
         let id_list = [modify_id]
         let selected_ids = all_selected_dataIds_dict[params.type]
-        // 审核状态为多项审核，打开批量修改，当前修改id在选中的ids中
+        // 审核状态为多项审核，打开批量修改(没有方法中阻止批量修改)，当前修改id在选中的ids中
         if(all_affirmWorkingStatus_of_sheet_dict[params.type]===dict.MULTIPLE_AFFIRM &&
-                settingsStore.get('ifMultipleModify') &&
+                settingsStore.get('ifMultipleModify') && !avoidMultipleModify &&
                 selected_ids && selected_ids.indexOf(modify_id)!==-1){
             id_list = [...selected_ids]
         }
