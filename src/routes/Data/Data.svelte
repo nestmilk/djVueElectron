@@ -6360,6 +6360,8 @@
     }
 
     .contentRight .titleTableWrapper{
+        /*overflow-x: hidden;*/
+        /*overflow-y: scroll;*/
         overflow: scroll;
         flex: 0 0 54px;
     }
