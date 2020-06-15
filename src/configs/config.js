@@ -423,7 +423,7 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: true,
-                groups: ['免疫相关']
+                groups: ['免疫相关', '药物相关']
             }, {
                 title: "intervarAutomated",
                 translate: "突变分类2",
@@ -431,7 +431,7 @@ export const sheetDisplayConfigList = [
                 modify: false,
                 defaultDisplay: true,
                 selectDisplay: true,
-                groups: ['免疫相关']
+                groups: ['免疫相关', '药物相关']
             }, {
                 title: "geneType",
                 translate: "基因类型",
