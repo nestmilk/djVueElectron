@@ -2410,7 +2410,8 @@
                             let alteration = values[4].replace(/^p./, '')
                             for (let aminoItem of amino_abbreviation_list){
                                 let {three_abbr, one_abbr} = aminoItem
-                                alteration = alteration.replace(three_abbr, one_abbr)
+                                let pattern = new RegExp(three_abbr, 'g')
+                                alteration = alteration.replace(pattern, one_abbr)
                             }
                             all_nowValue_of_data_dict[params.type][id][dict.ALTERATION] = alteration
                         }else{
