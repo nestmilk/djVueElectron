@@ -105,3 +105,5 @@ export const addDataConnectImmune = form => {return axios.post(`${host()}/adddat
 export const listFalseMutantRecord = params => {return axios.get(`${host()}/falsemutantrecord/`, {params: params})}
 // 取消假阳性
 export const cancelDeleteFalseMutant = form => {return axios.post(`${host()}/canceldeletefalsemutant/`, form)}
+// 请求zip生成
+export const requestGenerateZip = form => {return axios.post(`${host()}/requsetgeneratezip/`, form)}

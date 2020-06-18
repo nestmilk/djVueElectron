@@ -196,11 +196,12 @@
                         <div class="contentTableWrapper">
                             <table class="excelTable">
                                 {#each excel_list as excel, index}
-                                    <tr class="{excel[dict.ID]===selected_excel_id?'selected':''}"
+                                    <tr class="excelTR {excel[dict.ID]===selected_excel_id?'selected':''}"
                                             on:click={()=>handleSelectExcel(excel[dict.ID])}
+                                            data-excelid='{excel[dict.ID]}'
                                     >
                                         <td class="index">{index+1}</td>
-                                        <td class="excel">
+                                        <td class="excel" title="id:{excel[dict.ID]}">
                                             {excel[dict.EXCEL_URL].split('/').slice(-1)}
                                         </td>
                                         <td class="zip">{excel[dict.ZIP_URL]?excel[dict.ZIP_URL].split('/').slice(-1):'-'}</td>
@@ -4526,7 +4527,52 @@
     }
 
     async function __handleContextMenu(e){
-        // 总览页
+        // 总览页中，excel的选择
+        if (document.querySelector('.contentTableWrapper').contains(e.target)){
+            let element =getParentNodeByParentClassName(e.target, 'excelTR')
+            let right_excel_id = parseInt(element.dataset.excelid)
+            let right_excel = excel_list.filter(excel=>excel[dict.ID]===right_excel_id)[0]
+            // console.log('__handleContextMenu right_excel_id right_excel', right_excel_id, right_excel)
+
+            let menu = new remote.Menu()
+
+            let downloadExcelMenuItem = new remote.MenuItem({
+                label: "下载Excel",
+                enabled: selected_excel_id === right_excel_id,
+                click: ()=>{
+                    let excel_url = `${host()}/${right_excel[dict.EXCEL_URL]}`
+                    console.log('__handleContextMenu excel_url', excel_url)
+                    window.location.href = excel_url
+                }
+            })
+            menu.append(downloadExcelMenuItem)
+
+            let renderZipMenuItem = new remote.MenuItem({
+                label: right_excel[dict.ZIP_URL]?'下载ZIP':'生成ZIP',
+                enabled: selected_excel_id === right_excel_id,
+                click: async () => {
+                    if(right_excel[dict.ZIP_URL]){
+                        let zip_url = `${host()}/${right_excel[dict.ZIP_URL]}`
+                        console.log('__handleContextMenu zip_url', zip_url)
+                        window.location.href = zip_url
+                    }else{
+                        let form = new FormData()
+                        form.append('token', userInfo.getToken())
+                        form.append('excel_id', right_excel_id)
+                        await api.requestGenerateZip(form).then(response=>{
+                            console.log('__handleContextMenu requestGenerateZip response', response.data)
+
+                        }).catch(error=>{
+                            console.log('__handleContextMenu requestGenerateZip error', error)
+                            errors = error
+                        })
+                    }
+                }
+            })
+            menu.append(renderZipMenuItem)
+
+            menu.popup({window: remote.getCurrentWindow()})
+        }
 
         // sheet页选择
         if (document.querySelector('.subMenuWrapper').contains(e.target)){
