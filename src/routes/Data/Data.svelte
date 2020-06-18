@@ -24,11 +24,12 @@
             </div>
         </div>
         <div class="middleContent">
-            {#if params.type !== dict.SAMPLEINFOINPANAL}
-                <div class="navLeft">
-                    <div class="divider"
-                         on:mousedown={handleDividerMouseDown}
-                    ></div>
+            <div class="navLeft">
+                <div class="divider"
+                     on:mousedown={handleDividerMouseDown}
+                ></div>
+
+                {#if params.type !== dict.SAMPLEINFOINPANAL}
                     <div class="leftAffirmSelectWrapper">
                         <button class="commonButton
                                    {sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1 &&
@@ -94,11 +95,14 @@
                                 </table>
                             </div>
                         {/if}
+                    </div><!--leftAffirmSelectWrapper-->
+                {/if}
 
-                    </div>
-                    <div class="leftMessage">
-                        提示：{errors}
-                    </div>
+                <div class="leftMessage">
+                    提示：{errors}
+                </div>
+
+                {#if params.type !== dict.SAMPLEINFOINPANAL}
                     <div class="leftSampleTableWrapper">
                         <table class="sampleTable">
                             <tr>
@@ -135,6 +139,9 @@
                             </table>
                         </div>
                     </div><!--leftSampleTableWrapper-->
+                {/if}
+
+                {#if params.type !== dict.SAMPLEINFOINPANAL}
                     <div class="leftMessageWrapper">
                         <div class="messageWrapper">
                             <div class="title">
@@ -155,8 +162,11 @@
                                 </div>
                             </div><!--uploadMessageWrapper-->
                         </div>
-                    </div>
+                    </div><!--leftMessageWrapper-->
+                {/if}
 
+
+                {#if params.type !== dict.SAMPLEINFOINPANAL}
                     <div class="leftSelectFileWrapper">
                         <div class="selectFile">
                             <input class="fileInput" id="fileWidget" type="file"
@@ -172,11 +182,48 @@
                             {/each}
                         </div>
                     </div>
+                {/if}
 
-                    <div class="leftButtomWrapper">
+                {#if params.type === dict.SAMPLEINFOINPANAL}
+                    <div class="excelFileWrapper">
+                        <table class="excelTable">
+                            <tr>
+                                <th class="index">行号</th>
+                                <th class="excel">excel文件</th>
+                                <th class="zip">zip文件</th>
+                                <th class="zipTime">zip创建时间</th>
+                            </tr>
+                        </table>
+                        <div class="contentTableWrapper">
+                            <table class="excelTable">
+                                {#each excel_list as excel, index}
+                                    <tr class="{excel[dict.ID]===selected_excel_id?'selected':''}"
+                                            on:click={()=>handleSelectExcel(excel[dict.ID])}
+                                    >
+                                        <td class="index">{index+1}</td>
+                                        <td class="excel">
+                                            {excel[dict.EXCEL_URL].split('/').slice(-1)}
+                                        </td>
+                                        <td class="zip">{excel[dict.ZIP_URL]?excel[dict.ZIP_URL].split('/').slice(-1):'-'}</td>
+                                        <td class="zipTime">{excel[dict.ZIP_UPDATE_TIME]?excel[dict.ZIP_UPDATE_TIME]:'-'}</td>
+                                    </tr>
+                                {/each}
+                            </table>
+                        </div>
                     </div>
+                {/if}
+
+                {#if params.type === dict.SAMPLEINFOINPANAL}
+                    <div class="socketMessageWrapper">
+                        <div class="title">
+                            <span>实时后台信息</span>
+                        </div>
+                    </div>
+                {/if}
+
+                <div class="leftButtomWrapper">
                 </div>
-            {/if}
+            </div>
 
             <div class="contentRight">
                 {#if sheetDisplayConfigDict[params.type][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1}
@@ -995,6 +1042,7 @@
         amino_abbreviation_list
     } from '../../configs/config'
     import {dict_translate} from '../../utils/dict'
+    import {host} from "../../api/api";
 
     const sheetDisplayConfigDict = arrayToDict(sheetDisplayConfigList, 'sheet')
     const sampleTypeConfigDict = arrayToDict(sampleTypeConfig, 'value')
@@ -1022,13 +1070,13 @@
         SAMPLEID2UNDERLINE: 'sample__id', CHR: 'chr', POSSTART: 'posStart', POSEND: 'posEnd', REF: 'ref', ALT: 'alt',
         TARGET: "target", HEREDITARY: "hereditary", TMB: "TMB", tmb: "tmb", TNB: 'TNB', MSI: 'MSI',
         MODIFY: 'modify', IFEQUAL: 'ifEqual', FREQRANGE: "freqRange", AA_CHANGE: 'AA_change',
-        DELETE: "delete", FREQ: 'freq', COUNT: 'count',
+        DELETE: "delete", FREQ: 'freq', COUNT: 'count', EXCEL_URL: 'excel_url', ZIP_URL: 'zip_url', ZIP_UPDATE_TIME: 'zip_update_time',
         NOWDISPLAY: 'nowDisplay', DEFAULTDISPLAY: 'defaultDisplay', SELECTDISPLAY: 'selectDisplay',
         FIELD_MOUSE_ENTER: 'field_mouse_enter', TITLE_GROUP: 'title_group', GROUP: 'group', GROUPS: 'groups',
         FREE: 'free', CHECKED: 'checked', DELETED: 'deleted', EDITED: 'edited',
         AVAILABLE_EDIT: 'availableEdit', REASON_TYPE: 'reason_type', REASON_DESC: 'reason_desc', LOG_ID: 'log_id',
         DEFAULT: 'default', IDS: 'ids', NOTHING: 'nothing',
-        SINGLE: 'single', MULTIPLE: 'multiple',
+        SINGLE: 'single', MULTIPLE: 'multiple', EXCEL_LIST: 'excel_list',
         SIN_CANCEL_OR_AFFIRM: "single_cancel_or_affirm", CHECK_SINSUB_LOGS: "check_single_submit_logs",
         CANCEL_SUBMIT_DONE: "cancel_submit_done", EDIT_SINAFF_REASON: "edit_single_affirm_reason",
         MUL_AFFIRM: "multiple_affirm", CANCEL_MULAFF: 'cancel_multiple_affirm', EDIT_MULAFF_REASON: "edit_multiple_affirm_reason",
@@ -2110,6 +2158,7 @@
     function __reset_errors(){
         errors = ''
     }
+
 
     // 控制右侧的标题和下面mutant内容的联动
     let topScroll
@@ -3534,6 +3583,23 @@
         await __getPageData()
     }
 
+    let excel_list = []
+    let selected_excel_id
+    async function __getExcelList(){
+        await api.listExcel({
+            panalId: params[dict.PANALID]
+        }).then(response=>{
+            console.log('__getExcelList response.data', response.data)
+            excel_list = response.data
+        }).catch(error=>{
+            console.log('__getExcelList error', error)
+            errors = error
+        })
+    }
+    function handleSelectExcel(excel_id){
+        selected_excel_id = excel_id
+    }
+
     // 整个表的sampleId的列表
     let sample_list = []
     // key为sampleSn, value为sample实例字典
@@ -4268,8 +4334,12 @@
             panal_id: parseInt(params[dict.PANALID]),
             sample_ids: all_selected_dataIds_dict[params.type].join(',')
         }).then(response=>{
-            // console.log('__handleExcelOut', response.data)
-            window.location.href = response.data.excel
+            console.log('__handleExcelOut', response.data)
+            excel_list = response.data[dict.EXCEL_LIST]
+            if (excel_list.length>0){
+                selected_excel_id = excel_list[0][dict.ID]
+            }
+            // window.location.href = response.data.excel
         }).catch(error=>{
             console.log('__handleExcelOut', error)
             errors = error
@@ -5594,6 +5664,25 @@
         }
     }
 
+    // readyState: 0 connecting, 1 open, 2 closing, 3 closed
+    let panal_socket
+    function __prepare_panal_socket(){
+        let socket_url = `ws://${settingsStore.get('host')}:${settingsStore.get('port')}/ws/panal/${params[dict.PANALID]}/`
+        panal_socket = new WebSocket(socket_url)
+        // 收到消息时候
+        panal_socket.onmessage = function(e) {
+            console.log('__prepare_panal_socket onmessage', e.data)
+            let data = JSON.parse(e.data);
+            let message = data['msg'];
+
+        }
+        // 关闭时候
+        panal_socket.onclose = function(e) {
+            errors = 'panal_socket已关闭'
+            console.log('__prepare_panal_socket panal socket已关闭')
+        }
+    }
+
     // let windowScrollTop
     onMount(async () => {
         loadingShow = true
@@ -5641,6 +5730,10 @@
         // };
 
         await __getPageData()
+        await __getExcelList()
+
+        // 打开socket
+        __prepare_panal_socket()
 
         loadingShow = false
     })
@@ -5648,6 +5741,9 @@
     onDestroy(()=>{
         document.removeEventListener('contextmenu', __handleContextMenu)
         window.removeEventListener('resize', __update_relatedDom_size)
+        if (panal_socket) {
+            panal_socket.close()
+        }
     })
 
     beforeUpdate(()=>{
@@ -5749,6 +5845,8 @@
         // console.log(filterGroup_checkedIndex_dict, filterGroup_names_dict)
         // console.log(all_titleGroup_dict, all_currentTitleGroupIndex_dict)
         console.log(all_suspendStatus_of_data_dict)
+        // panal_socket.send('111')
+        console.log(panal_socket)
     }
 
 </script>
@@ -6098,6 +6196,62 @@
         font-size: 12px;
         text-align: center;
         float: left;
+    }
+    .navLeft .excelFileWrapper{
+        flex: 0 0 200px;
+        box-sizing: border-box;
+        width: 300px;
+        padding: 3px;
+        border-bottom: 1px solid black;
+    }
+    .navLeft .excelFileWrapper .excelTable{
+        border-collapse: collapse;
+        border: 1px solid #cccccc;
+        text-align: center;
+        font-size: 12px;
+        font-weight: bold;
+        /*固定td宽度*/
+        table-layout:fixed;
+        /*这个用于强制换行*/
+        word-break: break-all;
+    }
+    .navLeft .excelFileWrapper .contentTableWrapper{
+        width: 298px;
+        height: 165px;
+        overflow-y: scroll;
+    }
+    .navLeft .excelFileWrapper .excelTable th,
+    .navLeft .excelFileWrapper .excelTable td{
+        width: 35px;
+        height: 32px;
+        box-sizing: border-box;
+        padding: 1px;
+        margin: 0;
+        border-left: 1px solid #cccccc;
+        border-bottom: 3px solid #cccccc;
+        box-sizing: border-box;
+    }
+    .navLeft .excelFileWrapper .excelTable td{
+        height: 30px!important;
+        border-bottom: 1px solid #cccccc!important;
+        font-weight: normal!important;
+    }
+    .navLeft .excelFileWrapper .excelTable tr:hover{
+        background: #09c762;
+    }
+    .navLeft .excelFileWrapper .excelTable tr.selected{
+        border: 2px solid black;
+    }
+    .navLeft .excelFileWrapper .excelTable .excel,
+    .navLeft .excelFileWrapper .excelTable .zip{
+        width: 82px!important;
+    }
+    .navLeft .excelFileWrapper .excelTable .zipTime{
+        width: 80px!important;
+    }
+
+    .navaLeft .socketMessageWrapper {
+
     }
 
     .leftButtomWrapper{

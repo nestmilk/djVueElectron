@@ -86,7 +86,8 @@ export const listHLA = params => {return axios.get(`${host()}/hlas/`, {params: p
 export const listMLPA = params => {return axios.get(`${host()}/mlpas/`, {params: params})}
 // 获取sampleInfo列表
 export const listSampleInfo = params => {return axios.get(`${host()}/samples/`, {params: params})}
-
+// 获取excel列表
+export const listExcel = params => {return axios.get(`${host()}/excels/`, {params: params})}
 
 //复制一条数据
 export const copyData = form => {return axios.post(`${host()}/copydata/`, form)}
