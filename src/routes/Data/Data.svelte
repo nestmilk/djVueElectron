@@ -158,7 +158,6 @@
                                             disabled="{panal_unable_handle || all_sheet_record_dict[params.type][dict.US_ADATA] === 0?'disabled':''}"
                                             on:click={submitAffirmedData}
                                     >&nbsp;提交</button>
-                                    <button on:click={test}>test</button>
                                 </div>
                             </div><!--uploadMessageWrapper-->
                         </div>
@@ -215,13 +214,24 @@
 
                 {#if params.type === dict.SAMPLEINFOINPANAL}
                     <div class="socketMessageWrapper">
-                        <div class="title">
-                            <span>实时后台信息</span>
+                        <div class="titleWrapper">
+                            <div class="title">{connect_panal_socket? '已连接后台实时信息':'尚未连接后台实时信息'}</div>
+                            <div class="switchOnoffWrapper"
+                                 on:click={handleToggleConnectPanalSocket}
+                            >
+                                <OnOff on="{connect_panal_socket}"/>
+                            </div>
+                        </div>
+                        <div class="panalSocketMessageWrapper" bind:this={panalSocketMessageDiv}>
+                            {#each panal_socket_messages as message}
+                                {message}<br/>
+                            {/each}
                         </div>
                     </div>
                 {/if}
 
                 <div class="leftButtomWrapper">
+                    <button on:click={test}>test</button>
                 </div>
             </div>
 
@@ -1017,7 +1027,7 @@
     import Reason from '../../components/Reason/Reason.svelte'
     import LogDetails from '../../components/LogDetails/Logdetails.svelte'
     import AddData from '../../components/AddData/AddData.svelte'
-
+    import OnOff from '../../components/OnOff/OnOff.svelte'
 
     // 引入本地脚本
     import api from '../../api'
@@ -1105,7 +1115,7 @@
         FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput', DELETE_AFFIRM: 'delete_affirm',
         CHECK_AFFIRM: 'check_affirm', CHECK: 'check', SELECT: 'select', SELECTIONS: 'selections', FILTER_GROUP: 'filter_group',
         ZLB: 'zlb', WXZ: 'wxz', HGSGB: "hgsGb", AJSGB: 'ajsGb', ALTERATION: 'alteration',
-        BEFORE_MERGE: 'before_merge',
+        BEFORE_MERGE: 'before_merge', ACONNECTED: '@connected',
     }
     // 获取路径中的：值
     export let params = {}
@@ -3679,7 +3689,7 @@
 
     // 绑定上传信息的div
     let uploadMessageDiv
-    let autoscroll
+    let autoScrollofUploadMessageDiv
     // 上传数据的结果信息列表
     let all_uploadMessage_dict = JSON.parse(JSON.stringify(sheetDisplayConfigList.reduce((result, item)=>{
         result[item[dict.SHEET]] = []
@@ -4516,6 +4526,8 @@
     }
 
     async function __handleContextMenu(e){
+        // 总览页
+
         // sheet页选择
         if (document.querySelector('.subMenuWrapper').contains(e.target)){
             let element =getParentNodeByParentClassName(e.target, 'submenuBtn')
@@ -5666,22 +5678,48 @@
 
     // readyState: 0 connecting, 1 open, 2 closing, 3 closed
     let panal_socket
-    function __prepare_panal_socket(){
+    let connect_panal_socket
+    function __open_panal_socket(){
         let socket_url = `ws://${settingsStore.get('host')}:${settingsStore.get('port')}/ws/panal/${params[dict.PANALID]}/`
         panal_socket = new WebSocket(socket_url)
         // 收到消息时候
+        panal_socket.onerror = function(e){
+            console.log('__open_panal_socket onerror', e)
+            errors = '无法连接后端panal_socket'
+        }
         panal_socket.onmessage = function(e) {
-            console.log('__prepare_panal_socket onmessage', e.data)
-            let data = JSON.parse(e.data);
-            let message = data['msg'];
+            console.log('__open_panal_socket onmessage', e.data)
+            let data = JSON.parse(e.data)
+            let message = data['msg']
+            // 接收到连接信息，传递给参数
+            if (message === dict.ACONNECTED){
+                connect_panal_socket = true
+                return
+            }
 
+            __append_timePlused_panalSocketMessage(message)
         }
         // 关闭时候
         panal_socket.onclose = function(e) {
-            errors = 'panal_socket已关闭'
-            console.log('__prepare_panal_socket panal socket已关闭')
+            // console.log('__open_panal_socket panal socket已关闭')
+            connect_panal_socket = false
         }
     }
+    function handleToggleConnectPanalSocket(){
+        if (connect_panal_socket){
+            panal_socket.close()
+        }else{
+            __open_panal_socket()
+        }
+    }
+    let panal_socket_messages = []
+    function __append_timePlused_panalSocketMessage(message){
+        let time = getTime()
+        panal_socket_messages = [...panal_socket_messages, `${time} ${message}`]
+    }
+    let panalSocketMessageDiv
+    let autoScrollofPanalSocketMessageDiv
+
 
     // let windowScrollTop
     onMount(async () => {
@@ -5733,7 +5771,7 @@
         await __getExcelList()
 
         // 打开socket
-        __prepare_panal_socket()
+        __open_panal_socket()
 
         loadingShow = false
     })
@@ -5751,7 +5789,8 @@
         // console.log('beforeUpdate', pre_params_type, params.type, doneFilter)
 
         // TODO clientHeight：包括padding但不包括border、水平滚动条、margin的元素的高度。 offsetHeight为含边框的div高度，scrollTop为元素被上边框遮住的部分，scrollHeight为内容高度
-        autoscroll = uploadMessageDiv && (uploadMessageDiv.scrollTop + uploadMessageDiv.clientHeight) < uploadMessageDiv.scrollHeight
+        autoScrollofUploadMessageDiv = uploadMessageDiv && (uploadMessageDiv.scrollTop + uploadMessageDiv.clientHeight) < uploadMessageDiv.scrollHeight
+        autoScrollofPanalSocketMessageDiv = panalSocketMessageDiv && (panalSocketMessageDiv.scrollTop + panalSocketMessageDiv.clientHeight) < panalSocketMessageDiv.scrollHeight
     })
 
     // 手动更新doneFIlter， deleteFilter， logsEditFilter的选项第一位显示
@@ -5791,8 +5830,12 @@
     afterUpdate(()=>{
         // console.log('afterUpdate', pre_params_type, params.type, doneFilter)
 
-        if (autoscroll && uploadMessageDiv) {
+        if (autoScrollofUploadMessageDiv && uploadMessageDiv) {
             uploadMessageDiv.scrollTo(0, uploadMessageDiv.scrollHeight)
+        }
+
+        if (autoScrollofPanalSocketMessageDiv && panalSocketMessageDiv){
+            panalSocketMessageDiv.scrollTo(0, panalSocketMessageDiv.scrollHeight)
         }
 
         //手动更新公用过滤的dom的value值,done,delete,logsEdit,exonicfuncRefgene,connectSheet
@@ -5846,7 +5889,7 @@
         // console.log(all_titleGroup_dict, all_currentTitleGroupIndex_dict)
         console.log(all_suspendStatus_of_data_dict)
         // panal_socket.send('111')
-        console.log(panal_socket)
+        console.log(panal_socket, connect_panal_socket)
     }
 
 </script>
@@ -6250,8 +6293,39 @@
         width: 80px!important;
     }
 
-    .navaLeft .socketMessageWrapper {
-
+    .navLeft .socketMessageWrapper {
+        flex: 0 0 200px;
+        box-sizing: border-box;
+        width: 300px;
+        padding: 3px;
+        border-bottom: 1px solid black;
+    }
+    .navLeft .socketMessageWrapper .titleWrapper{
+        width: 100%;
+        height: 30px;
+        box-sizing: border-box;
+        margin: 3px 0;
+        border-bottom: 1px solid #cccccc;
+    }
+    .navLeft .socketMessageWrapper .titleWrapper .title{
+        float: left;
+        width: 150px;
+        height: 100%;
+        line-height: 30px;
+        text-align: center;
+        font-size: 15px;
+    }
+    .navLeft .socketMessageWrapper .titleWrapper .switchOnoffWrapper{
+        float: right;
+        width: 80px;
+        height: 25px;
+        margin: 0 5px;
+    }
+    .navLeft .socketMessageWrapper .panalSocketMessageWrapper{
+        height: 190px;
+        width: 290px;
+        font-size: 12px;
+        overflow-y: scroll;
     }
 
     .leftButtomWrapper{
