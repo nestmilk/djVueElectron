@@ -44,7 +44,7 @@
     import Loading from '../../components/Loading/Loading.svelte'
 
     import cookie from '../../utils/cookie'
-    import {setUserInfoInStoreByToken} from "../../utils/common";
+    import {setUserInfoInStore_setTokenInSettingsStore_ByToken} from "../../utils/common";
 
     let username
     let password
@@ -69,7 +69,7 @@
         console.log('settime countdown ' + countdown)
         if (countdown==0){
             push('/')
-            // 一定return，不然就是死循环
+            // todo 一定return，不然就是死循环
             return
         } else {
             message = countdown + '秒后跳转首页，您目前为访客身份！'
@@ -108,7 +108,7 @@
         // console.log('register ' + gong)
 
         if (userInfo.getToken()) {
-            await setUserInfoInStoreByToken(userInfo.getToken())
+            await setUserInfoInStore_setTokenInSettingsStore_ByToken(userInfo.getToken())
             settime()
         }
     }

@@ -1123,8 +1123,13 @@
 
     // 控制loading页面的显示
     let loadingShow = false
+    function __handleLoadingShow(status, name){
+        loadingShow = status
+        // console.log(status?'打开loadingShow':'关闭loadingShow', name)
+    }
     // 控制确定页面的显示
     let sureShow = false
+
     // 控制修改原因页面的显示
     let reasonShow = false
     function openReasonShow(value, desc){
@@ -1149,7 +1154,7 @@
 
 
     async function __handleCopyData(){
-        loadingShow = true
+        __handleLoadingShow(true, '__handleCopyData')
 
         let sample_id = all_now_sample_id[params.type]
         let data_id = all_now_data_id[params.type]
@@ -1239,7 +1244,7 @@
             await __getPageData()
         }
 
-        loadingShow = false
+        __handleLoadingShow(false, '__handleCopyData')
     }
 
     function __change_sampleType(sample_id, type){
@@ -1295,7 +1300,7 @@
         __delete_oneData_params_logRelated(sheet, id)
     }
     async function __handleChangeSampleType(){
-        loadingShow = true
+        __handleLoadingShow(true, '__handleChangeSampleType')
 
         let {sample_id, panal_id, sampleSn, type} = sureData
         console.log('__handleChangeSampleType', sample_id, panal_id, sampleSn, type)
@@ -1361,7 +1366,7 @@
         // 更新smpleInfoInPanal页
         await __getPageData()
 
-        loadingShow = false
+        __handleLoadingShow(false, '__handleChangeSampleType')
     }
 
     async function __get_currentFilterParamss_allData(){
@@ -1396,7 +1401,7 @@
         // 当前没有数据，则返回
         if (!data_count) return
 
-        loadingShow = true
+        __handleLoadingShow(true, '__differentTypeAffirm_beFreeandUnmodified_data')
 
         let all_data = null
         await __get_currentFilterParamss_allData().then(result=>{
@@ -1464,10 +1469,11 @@
 
         }
 
-        loadingShow = false
+        __handleLoadingShow(false, '__differentTypeAffirm_beFreeandUnmodified_data')
     }
     async function __checkAffirm_selectedSampleIds_beFreeandUnmodified_data(){
-        loadingShow = true
+        __handleLoadingShow(true, '__checkAffirm_selectedSampleIds_beFreeandUnmodified_data')
+
         let panalId = params[dict.PANALID]
         let sampleIds = selected_sampleId_list.join(',')
         let search = all_search_params_dict[params.type][dict.SEARCH]
@@ -1543,11 +1549,11 @@
         // F) 重置当前页所有id，是否可选
         __update_allIds_availSelect_inPageIdAvailSelectDict()
 
-        loadingShow = false
+        __handleLoadingShow(false, '__checkAffirm_selectedSampleIds_beFreeandUnmodified_data')
     }
 
     async function __handleCancelFalseMutant(){
-        loadingShow = true
+        __handleLoadingShow(true, '__handleCancelFalseMutant')
 
         let mutant_id = all_now_data_id[params.type]
         console.log('__handle_cancelFalseMutant  mutant_id', mutant_id)
@@ -1614,7 +1620,7 @@
             await __getPageData()
         }
 
-        loadingShow = false
+        __handleLoadingShow(false, '__handleCancelFalseMutant')
     }
 
 
@@ -2042,7 +2048,7 @@
 
     }
     async function __update_Ids_and_relatedIds_PreviousLogs(id_list=null){
-        loadingShow = true
+        __handleLoadingShow(true, '__update_Ids_and_relatedIds_PreviousLogs')
 
         // 默认使用当前页的所有id进行更新
         let ids = id_list && id_list.length>0? id_list: page_data.map(data=>data.id)
@@ -2065,7 +2071,7 @@
         //更新完logs日志，肯定需要更新一下页面可选项
         __update_allIds_availSelect_inPageIdAvailSelectDict()
 
-        loadingShow = false
+        __handleLoadingShow(false, '__update_Ids_and_relatedIds_PreviousLogs')
     }
 
     // 清空当前页面的多选框selected_dataIds
@@ -2876,7 +2882,7 @@
     }
     // 用于实际处理撤销提交操作
     async function __handleCancelSelectedIdsDone(){
-        loadingShow = true
+        __handleLoadingShow(true, '__handleCancelSelectedIdsDone')
 
         let success_num = 0
         let fail_num = 0
@@ -2935,7 +2941,7 @@
             })
         }
 
-        loadingShow = false
+        __handleLoadingShow(false, '__handleCancelSelectedIdsDone')
     }
 
     // 处理点击取消提交按钮事情
@@ -3069,7 +3075,7 @@
     // 根据all_query_params_dict[params.type]， 当前页名，获取当前页所有信息
     async function __getPageData () {
         console.log('<=== __getPageData begin , params.type', params.type)
-        loadingShow = true
+        __handleLoadingShow(true, '__getPageData')
         // 第一次切换到mutant上加载，还没有更新获得panalId和sampleIds参数
         __addPanalIDIfFirstLoad()
 
@@ -3080,13 +3086,14 @@
         // console.log("__getPageData upperQueryName params", name)
 
         await api[`list${name}`](all_search_params_dict[params.type]).then(response=>{
+            console.log('__getPageData response.data', response.data)
             page_data = response.data.results
             //更新当前页data总条数，__updateTotalPageNums()需要调用，获得总页数
             data_count = response.data.count
 
             success = true
         }).catch(error=>{
-            console.log("__getPageData", error)
+            console.log("__getPageData error", error)
             errors = error
         })
 
@@ -3094,7 +3101,7 @@
             await __set_configs_afterPageDataUpdated()
         }
 
-        loadingShow = false
+        __handleLoadingShow(false, '__getPageData')
     }
 
     // submenu列表(即sheet页，含附加的汇总表）
@@ -3166,7 +3173,8 @@
         }
 
         if (e.which === 13){
-            loadingShow = true
+            __handleLoadingShow(true, 'handleFreqRangeKeydown')
+
             let lowValue = freqLowInput.value
             let highValue = freqHighInput.value
             let need_getPageData = false
@@ -3192,7 +3200,7 @@
                 await __getPageData()
             }
 
-            loadingShow = false
+            __handleLoadingShow(false, 'handleFreqRangeKeydown')
         }
     }
 
@@ -3347,7 +3355,7 @@
     // 切换filter的项
     async function handleToggleFilter(subFilter){
         console.log("<===handleToggleFilter")
-        loadingShow = true
+        __handleLoadingShow(true, 'handleToggleFilter')
 
         let result = __find_filterName_subFilterIndex(subFilter)
         let found_filter_name = result[0]
@@ -3365,11 +3373,11 @@
         __set_param_page_inAllSearchParamsDict(1)
         await __getPageData()
 
-        loadingShow = false
+        __handleLoadingShow(false, 'handleToggleFilter')
     }
     // 改变filter
     async function handleChangeFilter(event, subFilter){
-        loadingShow = true
+        __handleLoadingShow(true, 'handleChangeFilter')
 
         let index = event.target.value
         // console.log('handleChangeFilter index', index)
@@ -3388,7 +3396,7 @@
         __set_param_page_inAllSearchParamsDict(1)
         await __getPageData()
 
-        loadingShow = false
+        __handleLoadingShow(false, 'handleChangeFilter')
     }
 
     // 重置all_subFilter_indexes_dict中所有坐标为0, 默认done, logsEdit, Ordering, exonicFuncrefgene, falseMutant
@@ -3597,6 +3605,8 @@
     let excel_list = []
     let selected_excel_id
     async function __getExcelList(){
+        __handleLoadingShow(true, '__getExcelList')
+
         await api.listExcel({
             panalId: params[dict.PANALID]
         }).then(response=>{
@@ -3606,6 +3616,8 @@
             console.log('__getExcelList error', error)
             errors = error
         })
+
+        __handleLoadingShow(false, '__getExcelList')
     }
     function handleSelectExcel(excel_id){
         selected_excel_id = excel_id
@@ -3703,7 +3715,7 @@
 
 
     async function submitAffirmedData(){
-        loadingShow = true
+        __handleLoadingShow(true, 'submitAffirmedData')
 
         //A) 先上传log
         let success_logs = []
@@ -3739,7 +3751,7 @@
         if(fail_logs.length>0) {
             // 如果有日志提交失败就停止后续数据的更新提交
             errors = '日志上传失败，取消后续提交！'
-            loadingShow = false
+            __handleLoadingShow(false, 'submitAffirmedData')
             return
         }
 
@@ -3995,7 +4007,7 @@
             })
         })
 
-        loadingShow = false
+        __handleLoadingShow(false, 'submitAffirmedData')
     }
 
 
@@ -4222,7 +4234,7 @@
     // 处理sample样品全选、取消全选的切换
     async function handleToggleAllSample(e, force=false){
         console.log('<=== handleToggleAllSample force', force)
-        loadingShow = true
+        __handleLoadingShow(true, 'handleToggleAllSample')
 
         if (force || selected_sampleId_list.length !== sample_list.length) {
             selected_sampleId_list =  sample_list.map(item => item[dict.ID])
@@ -4243,12 +4255,12 @@
             await __getPageData()
         }
 
-        loadingShow = false
+        __handleLoadingShow(false, 'handleToggleAllSample')
     }
     // 处理sample样品单独选择
     async function handleSelectSample(sample_id) {
         console.log('handleSelectSample ' + sample_id)
-        loadingShow = true
+        __handleLoadingShow(true, 'handleSelectSample')
 
         if (selected_sampleId_list.indexOf(sample_id)===-1) {
             selected_sampleId_list.push(sample_id)
@@ -4269,13 +4281,13 @@
 
         await __getPageData()
 
-        loadingShow = false
+        __handleLoadingShow(false, 'handleSelectSample')
     }
 
 
     // 获取所有样本的id和sampleSn信息
     async function getSampleList(){
-        loadingShow = true
+        __handleLoadingShow(true, 'getSampleList')
 
         await api.retrievePanal(params.panalId).then(response=>{
             // console.log("getPanalSummary", response.data)
@@ -4291,7 +4303,7 @@
             errors = error
         })
 
-        loadingShow = false
+        __handleLoadingShow(false, 'getSampleList')
     }
 
     // 更新所有页面查询的panalId, sampleIds参数
@@ -4339,7 +4351,7 @@
     }
 
     async function __handleExcelOut(){
-        loadingShow = true
+        __handleLoadingShow(true, '__handleExcelOut')
 
         await api.createExcel({
             panal_id: parseInt(params[dict.PANALID]),
@@ -4356,7 +4368,7 @@
             errors = error
         })
 
-        loadingShow = false
+        __handleLoadingShow(false, '__handleExcelOut')
     }
 
     function __get_sampleSn_bySampleId_inSampleList(sample_id) {
@@ -4430,7 +4442,7 @@
     }
     async function handleFilterGroupClick(item, index){
         console.log('handleFilterGroupClick item index params.type', item, index, params.type)
-        loadingShow = true
+        __handleLoadingShow(true, 'handleFilterGroupClick')
 
         let current_checked_index = filterGroup_checkedIndex_dict[params.type]
         if(index===current_checked_index){
@@ -4449,7 +4461,7 @@
         __set_param_page_inAllSearchParamsDict(1)
         await __getPageData()
 
-        loadingShow = false
+        __handleLoadingShow(false, 'handleFilterGroupClick')
     }
     function __getFilterGroupSubmenu(){
         return sheetDisplayConfigDict[params.type][dict.FILTER_GROUP].map((item, index)=>{
@@ -5283,7 +5295,7 @@
     }
     let ori_currentPage_falseMutantRecord_dict = JSON.parse(JSON.stringify(currentPage_falseMutantRecord_dict))
     async function __update_currentPageHistroyFalseMutantDict(false_mutant_type){
-        loadingShow = true
+        __handleLoadingShow(true, '__update_currentPageHistroyFalseMutantDict')
 
         //先重置当前页的假阳性突变字典
         currentPage_falseMutantRecord_dict = JSON.parse(JSON.stringify(ori_currentPage_falseMutantRecord_dict))
@@ -5329,7 +5341,7 @@
             }
         }
 
-        loadingShow = false
+        __handleLoadingShow(false, '__update_currentPageHistroyFalseMutantDict')
     }
 
 
@@ -5410,7 +5422,7 @@
         // console.log('handleAddDataSubmit', e.detail.data, added_data_dict[dict.SHEET_INFO_LIST])
 
         addDataShow = false
-        loadingShow = true
+        __handleLoadingShow(true, 'handleAddDataSubmit')
 
         let data_info = e.detail.data
         let data_sheet = data_info.reduce((result, data)=>{
@@ -5532,7 +5544,7 @@
 
         // 清空数据
         added_data_dict = {}
-        loadingShow = false
+        __handleLoadingShow(false, 'handleAddDataSubmit')
     }
     function handleAddDataCancel(){
         addDataShow = false
@@ -5541,7 +5553,7 @@
 
     let added_data_dict = {}
     async function __handleLoadAddedData(filePath){
-        loadingShow = true
+        __handleLoadingShow(true, '__handleLoadAddedData')
         let blob
         let file
         let file_name = filePath.split('\\').slice(-1)
@@ -5589,7 +5601,7 @@
             })
         }
 
-        loadingShow = false
+        __handleLoadingShow(false, '__handleLoadAddedData')
         addDataShow = true
     }
 
@@ -5639,7 +5651,7 @@
         }
     }
     async function __handle_add_dataConnectImmune(sheet, id, cna_type){
-        loadingShow = true
+        __handleLoadingShow(true, '__handle_add_dataConnectImmune')
 
         let form = new FormData()
         form.append('sheet', sheet)
@@ -5664,10 +5676,10 @@
         // 刷新页面
         await __getPageData()
 
-        loadingShow = false
+        __handleLoadingShow(false, '__handle_add_dataConnectImmune')
     }
     async function __handle_delete_dataConnectImmune(sheet, id){
-        loadingShow = true
+        __handleLoadingShow(true, '__handle_delete_dataConnectImmune')
 
         let form = new FormData()
         form.append('sheet', sheet)
@@ -5705,7 +5717,7 @@
         // 刷新页面
         await __getPageData()
 
-        loadingShow = false
+        __handleLoadingShow(false, '__handle_delete_dataConnectImmune')
     }
 
     function handle_dataConnectImmune_Delete(sheet, id, immune_id, event){
@@ -5769,7 +5781,7 @@
 
     // let windowScrollTop
     onMount(async () => {
-        loadingShow = true
+        __handleLoadingShow(true, 'onMount')
         __update_relatedDom_size()
         window.addEventListener('resize', __update_relatedDom_size)
 
@@ -5819,7 +5831,7 @@
         // 打开socket
         __open_panal_socket()
 
-        loadingShow = false
+        __handleLoadingShow(false, 'onMount')
     })
 
     onDestroy(()=>{

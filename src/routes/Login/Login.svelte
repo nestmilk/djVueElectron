@@ -35,7 +35,7 @@
 
     import cookie from '../../utils/cookie'
     import api from '../../api'
-    import {setUserInfoInStoreByToken} from "../../utils/common";
+    import {setUserInfoInStore_setTokenInSettingsStore_ByToken} from "../../utils/common";
 
 
     let username = settingsStore.get('username')
@@ -67,11 +67,12 @@
         // console.log('login ' + userInfo.getToken())
 
         if(!userInfo.getToken()) {
+            // 上面没有获取到token
             loadingShow = false
             return
         }
 
-        await setUserInfoInStoreByToken(userInfo.getToken(), keep)
+        await setUserInfoInStore_setTokenInSettingsStore_ByToken(userInfo.getToken(), keep)
 
         loadingShow = false
 

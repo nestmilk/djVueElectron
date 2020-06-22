@@ -10,7 +10,7 @@ import {push} from 'svelte-spa-router'
 import {draw} from "svelte/transition";
 
 
-export const  setUserInfoInStoreByToken = async (token, keep) => {
+export const  setUserInfoInStore_setTokenInSettingsStore_ByToken = async (token, keep) => {
     let name = null
     let level = null
     let group = null
@@ -28,6 +28,8 @@ export const  setUserInfoInStoreByToken = async (token, keep) => {
             cookie.setCookie('level', userInfo.getLevel(), 7)
             cookie.setCookie('group', userInfo.getGroup(), 7)
         }
+
+        settingsStore.set('token', token)
     }).catch((error)=>{
         console.log('common.js setuserinfoinstorebytoken ', error)
     })

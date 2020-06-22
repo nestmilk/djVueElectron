@@ -1,5 +1,7 @@
 import axios from 'axios';
 import {userInfo} from '../store/store'
+const Store = window.require('electron-store')
+const settingsStore = new Store({name: 'Settings'})
 
 //全局状态控制引入
 // import store from '../store/store';
@@ -9,9 +11,10 @@ import {userInfo} from '../store/store'
 axios.interceptors.request.use(
     config => {
         // console.log('axios.interceptors.request.use!')
-        if (userInfo.getToken()) {
-            // console.log('axios.interceptors.request.use: ' + userInfo.getToken())
-            config.headers['Authorization'] = `JWT ${userInfo.getToken()}`;
+        let token = userInfo.getToken() || settingsStore.get('token')
+        if (token) {
+            // console.log('axios.interceptors.request.use: ', token)
+            config.headers['Authorization'] = `JWT ${token}`;
         }
         return config;
     },
