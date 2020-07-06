@@ -2438,7 +2438,6 @@ export const cnaType_logic_dict = {
     FGFR1: {CNA_gain: {value: 4, logic: 'gte'}},
     MDM2: {CNA_gain: {value: 2, logic: 'gt'}},
     EGFR: {CNA_gain: {value: 4, logic: 'gt'}},
-    RICTOR: {CNA_gain: {value: 3, logic: 'gt'}},
     CDKN2A: {CNA_loss: {value: 0, logic: 'e'}},
     CDKN2B: {CNA_loss: {value: 0, logic: 'e'}},
     TP53: {CNA_loss: {value: 1.2,logic: 'lt'},
@@ -2462,7 +2461,10 @@ export const cnaType_logic_dict = {
     FGF19: {CNA_gain: {value: 3,logic: 'gt'}},
     FGF3: {CNA_gain: {value: 3,logic: 'gt'}},
     FGF4: {CNA_gain: {value: 3,logic: 'gt'}},
-    MDM4: {CNA_gain: {value: 3,logic: 'gt'}}
+    MDM4: {CNA_gain: {value: 3,logic: 'gt'}},
+    CD274: {CNA_gain: {value: 3, logic: 'gt'}},
+    VEGFA: {CNA_gain: {value: 3, logic: 'gt'}},
+    BCL2L11: {CNA_loss: {value: '1.2', logic: 'lt'}},
 }
 
 export const immune_types_forGeneinImmune = {

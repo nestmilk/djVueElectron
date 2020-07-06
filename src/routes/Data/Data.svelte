@@ -4571,6 +4571,7 @@
                         let form = new FormData()
                         form.append('token', userInfo.getToken())
                         form.append('excel_id', right_excel_id)
+                        form.append('panal_id', params.panalId)
                         await api.requestGenerateZip(form).then(response=>{
                             console.log('__handleContextMenu requestGenerateZip response', response.data)
 
