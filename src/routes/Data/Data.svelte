@@ -216,10 +216,10 @@
                 {#if params.type === dict.SAMPLEINFOINPANAL}
                     <div class="socketMessageWrapper">
                         <div class="titleWrapper">
-                            <div class="title">{connect_panal_socket? '已连接后台实时信息':'尚未连接后台实时信息'}</div>
-                            <div class="switchOnoffWrapper"
-                                 on:click={handleToggleConnectPanalSocket}
-                            >
+                            <div class="title">{connect_panal_socket? '已连接后台实时信息':'与后台实时信息断开！'}</div>
+                            <div class="switchOnoffWrapper">
+<!--                                 on:click={handleToggleConnectPanalSocket}-->
+<!--                            >-->
                                 <OnOff on="{connect_panal_socket}"/>
                             </div>
                         </div>
@@ -4539,8 +4539,16 @@
     }
 
     async function __handleContextMenu(e){
+        // console.log("__handleContextMenu",
+        //         document.querySelector('.contentTableWrapper'),
+        //         document.querySelector('.subMenuWrapper'),
+        //         document.querySelector('.upTable'),
+        //         document.querySelector('.downTable')
+        // )
+
         // 总览页中，excel的选择
-        if (document.querySelector('.contentTableWrapper').contains(e.target)){
+        if (document.querySelector('.contentTableWrapper') &&
+                document.querySelector('.contentTableWrapper').contains(e.target)){
             let element =getParentNodeByParentClassName(e.target, 'excelTR')
             let right_excel_id = parseInt(element.dataset.excelid)
             let right_excel = excel_list.filter(excel=>excel[dict.ID]===right_excel_id)[0]
@@ -4588,10 +4596,11 @@
         }
 
         // sheet页选择
-        if (document.querySelector('.subMenuWrapper').contains(e.target)){
+        if (document.querySelector('.subMenuWrapper') &&
+                document.querySelector('.subMenuWrapper').contains(e.target)){
             let element =getParentNodeByParentClassName(e.target, 'submenuBtn')
             let sheet = element.dataset.sheet
-            console.log("__handleContextMenu sheet", sheet)
+            // console.log("__handleContextMenu sheet", sheet)
 
             //首先点在了sheet上，右键的sheet与当前params.type一致，并且sheet是需要全部审核的
             if (sheet && params.type===sheet && sheet_needAllCheck_list.indexOf(sheet)!==-1){
@@ -4648,7 +4657,8 @@
         }
 
         // 右键upTable 标题栏
-        if (document.querySelector('.upTable').contains(e.target)){
+        if (document.querySelector('.upTable') &&
+                document.querySelector('.upTable').contains(e.target)){
             // console.log('右键upTable', document.body.clientWidth, e.clientX)
 
             let screenWidth = document.body.clientWidth
@@ -4661,7 +4671,8 @@
         }
 
         // 右键downTable处理数据表格
-        if (document.querySelector('.downTable').contains(e.target)){
+        if (document.querySelector('.downTable') &&
+                document.querySelector('.downTable').contains(e.target)){
             let lineData_element = getParentNodeByParentClassName(e.target, 'lineData')
             // 使用右键获取当前data的id和sample的id，20.3.19弃用
             let right_id = parseInt(lineData_element.dataset.id)
@@ -5738,13 +5749,19 @@
     // readyState: 0 connecting, 1 open, 2 closing, 3 closed
     let panal_socket
     let connect_panal_socket
+    let openSocketInterval
     function __open_panal_socket(){
+        // 赋值前，先把已有的关闭掉
+        if (panal_socket) panal_socket.close()
+
         let socket_url = `ws://${settingsStore.get('host')}:${settingsStore.get('port')}/ws/panal/${params[dict.PANALID]}/`
         panal_socket = new WebSocket(socket_url)
         // 收到消息时候
         panal_socket.onerror = function(e){
             console.log('__open_panal_socket onerror', e)
             errors = '无法连接后端panal_socket'
+            // 不用关闭，自动跳转到关闭了
+            // panal_socket.close()
         }
         panal_socket.onmessage = function(e) {
             console.log('__open_panal_socket onmessage', e.data)
@@ -5753,6 +5770,7 @@
             // 接收到连接信息，传递给参数
             if (message === dict.ACONNECTED){
                 connect_panal_socket = true
+                errors = '已连接后端panal_socket'
                 return
             }
 
@@ -5760,17 +5778,17 @@
         }
         // 关闭时候
         panal_socket.onclose = function(e) {
-            // console.log('__open_panal_socket panal socket已关闭')
+            console.log('__open_panal_socket onclose')
             connect_panal_socket = false
         }
     }
-    function handleToggleConnectPanalSocket(){
-        if (connect_panal_socket){
-            panal_socket.close()
-        }else{
-            __open_panal_socket()
-        }
-    }
+    // function handleToggleConnectPanalSocket(){
+    //     if (connect_panal_socket){
+    //         panal_socket.close()
+    //     }else{
+    //         __open_panal_socket()
+    //     }
+    // }
     let panal_socket_messages = []
     function __append_timePlused_panalSocketMessage(message){
         let time = getTime()
@@ -5829,8 +5847,13 @@
         await __getPageData()
         await __getExcelList()
 
-        // 打开socket
-        __open_panal_socket()
+        // 打开监测socket是否连接
+        openSocketInterval = setInterval(()=>{
+            if (!connect_panal_socket){
+                __open_panal_socket()
+            }
+        }, 1000)
+
 
         __handleLoadingShow(false, 'onMount')
     })
@@ -5838,6 +5861,8 @@
     onDestroy(()=>{
         document.removeEventListener('contextmenu', __handleContextMenu)
         window.removeEventListener('resize', __update_relatedDom_size)
+
+        clearInterval(openSocketInterval)
         if (panal_socket) {
             panal_socket.close()
         }

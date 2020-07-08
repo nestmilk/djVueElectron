@@ -130,7 +130,7 @@
                     {#each panal_list as panal}
                         <tr class="{panal.done?'done':''} {panal.id===current_panal_id?'now':''}"
                             on:click={()=>changePanal(panal.id)}>
-                            <td class="name" style="{panal.delete?'text-decoration:line-through;':''}" >
+                            <td class="name" style="{panal.delete?'text-decoration:line-through;':''}" title="panal的ID: {panal.id}">
                                 {panal.name}
                             </td>
                             <td class="add_time" style="{panal.delete?'text-decoration:line-through;':''}" >
@@ -180,9 +180,9 @@
                         <th class="name">病人姓名</th>
                         <th class="gender">性别</th>
                         <th class="receiveTime">收样日期</th>
-                        <th class="Depth">Depth</th>
+                        <th class="Depth">tumorDepth</th>
                         <th class="effectDepth">effectDepth</th>
-                        <th class="coverage">coverage</th>
+                        <th class="coverage">tumorCoverage</th>
                         <th class="effectCoverage500">effectCoverage500</th>
 <!--                        <th class="targetCount">靶向总数</th>-->
 <!--                        <th class="hereditaryCount">遗传总数</th>-->
@@ -194,9 +194,9 @@
                             <td class="name">{sample.name?sample.name:'-'}</td>
                             <td class="gender">{sample.gender?sample.gender:'-'}</td>
                             <td class="receiveTime">{sample.receiveTime?sample.receiveTime:'-'}</td>
-                            <td class="Depth">{sample[dict.QC]?sample[dict.QC][dict.DEPTH]:'-'}</td>
+                            <td class="Depth">{sample[dict.QC]?sample[dict.QC][dict.TUMORDEPTH]:'-'}</td>
                             <td class="effectDepth">{sample[dict.QC]?sample[dict.QC][dict.EFFECTDEPTH]:'-'}</td>
-                            <td class="coverage">{sample[dict.QC]?sample[dict.QC][dict.COVERAGE]:'-'}</td>
+                            <td class="coverage">{sample[dict.QC]?sample[dict.QC][dict.TUMORCOVERAGE]:'-'}</td>
                             <td class="effectCoverage500">{sample[dict.QC]?sample[dict.QC][dict.EFFECTCOVERAGE500]:'-'}</td>
 <!--                            <td class="targetCount">{sample.targetCount}</td>-->
 <!--                            <td class="hereditaryCount">{sample.hereditaryCount}</td>-->
@@ -256,7 +256,7 @@
         TMB: 'TMB', HEREDITARY: 'hereditary', QC: 'QC', qc: 'qc', STATUS: 'status', SKIP: 'skip', SAMPLEINFO: 'sampleInfo',
         TARGETCOUNT: 'targetCount', HEREDITARYCOUNT: 'hereditaryCount', TMBCOUNT: 'TMBCount',
         DEPTH: 'Depth', EFFECTDEPTH: 'effectDepth', COVERAGE: 'coverage', EFFECTCOVERAGE500: 'effectCoverage500',
-        VALUE: 'value',
+        VALUE: 'value', TUMORDEPTH: 'tumorDepth', TUMORCOVERAGE: 'tumorCoverage',
         IMMUNE: "immune", TNB: "TNB", HLA: "HLA", FUSION: "fusion", CHEMICAL: "chemical", CNA: "CNA", MSI: "MSI",
         CLINICAL_TRIALS: "clinicaltrials", HRR: "HRR", MLPA: "MLPA",
     }
