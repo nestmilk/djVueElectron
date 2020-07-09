@@ -2464,7 +2464,7 @@ export const cnaType_logic_dict = {
     MDM4: {CNA_gain: {value: 3,logic: 'gt'}},
     CD274: {CNA_gain: {value: 3, logic: 'gt'}},
     VEGFA: {CNA_gain: {value: 3, logic: 'gt'}},
-    BCL2L11: {CNA_loss: {value: '1.2', logic: 'lt'}},
+    BCL2L11: {CNA_loss: {value: 1.2, logic: 'lt'}},
 }
 
 export const immune_types_forGeneinImmune = {
