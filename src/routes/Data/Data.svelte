@@ -1009,6 +1009,16 @@
     >
     </LogDetails>
 {/if}
+
+{#if checkFalseNegativeShow}
+    <CheckFalseNegative
+        sample_list="{sample_list}"
+        on:close={handleCloseCheckFalseNegativeShow}
+    >
+    </CheckFalseNegative>
+{/if}
+
+
 <script>
     import uuidv4 from 'uuid/v4'
 
@@ -1029,6 +1039,7 @@
     import LogDetails from '../../components/LogDetails/Logdetails.svelte'
     import AddData from '../../components/AddData/AddData.svelte'
     import OnOff from '../../components/OnOff/OnOff.svelte'
+    import CheckFalseNegative from '../../components/CheckFalseNegative/CheckFalseNegative.svelte'
 
     // 引入本地脚本
     import api from '../../api'
@@ -1115,7 +1126,7 @@
         MUTANTS: 'mutants', CHRPOSSTARTPOSENDREFALT: 'chrPosstartPosendRefAlt', FALSE_MUTANT_RECORD: 'false_mutant_record',
         FALSEMUTANT: 'falseMutant', FREQLOWINPUT: 'freqLowInput', FREQHIGHINPUT: 'freqHighInput', DELETE_AFFIRM: 'delete_affirm',
         CHECK_AFFIRM: 'check_affirm', CHECK: 'check', SELECT: 'select', SELECTIONS: 'selections', FILTER_GROUP: 'filter_group',
-        ZLB: 'zlb', WXZ: 'wxz', HGSGB: "hgsGb", AJSGB: 'ajsGb', ALTERATION: 'alteration',
+        ZLB: 'zlb', WXZ: 'wxz', HGSGB: "hgsGb", AJSGB: 'ajsGb', ALTERATION: 'alteration', CHECK_FALSE_NEGATIVE_MUTANT: "check_false_negative_mutant",
         BEFORE_MERGE: 'before_merge', ACONNECTED: '@connected',
     }
     // 获取路径中的：值
@@ -1143,6 +1154,8 @@
     let multipleAffirmSelectionShow = false
     // 控制单数据过往logdetails显示
     let logDetailsShow = false
+    // 控制检查假阴性的界面显示
+    let checkFalseNegativeShow = false
 
 
     let field_needCheck_inSampleInfoinPanal = JSON.parse(JSON.stringify(sheetDisplayConfigDict[dict.SAMPLEINFOINPANAL][dict.TITLE_LIST].reduce((result, title)=>{
@@ -3068,7 +3081,7 @@
 
         // G) 如果当前需要查看历史假突变，需要更新之前的历史假突变
         if(sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEPOSITIVEMUTANT] && openHistoryFalsePositiveMutant){
-            await __update_currentPageHistroyFalseMutantDict(dict.FALSE_POSITIVE)
+            await __update_currentPageHistoryFalseMutantDict(dict.FALSE_POSITIVE)
         }
     }
 
@@ -4538,6 +4551,13 @@
         }
     }
 
+    function openCheckFalseNegativeShow(){
+        checkFalseNegativeShow = true
+    }
+    function handleCloseCheckFalseNegativeShow(){
+        checkFalseNegativeShow = false
+    }
+
     async function __handleContextMenu(e){
         // console.log("__handleContextMenu",
         //         document.querySelector('.contentTableWrapper'),
@@ -4649,6 +4669,17 @@
                         submenu: __getFilterGroupSubmenu()
                     })
                     menu.append(filterGroup_menuItem)
+                }
+
+                // 当前靶向页面添加假阴性
+                if (sheetDisplayConfigDict[params.type][dict.CHECK_FALSE_NEGATIVE_MUTANT]){
+                    let checkFalseNegativeMutant_menuItem = new remote.MenuItem({
+                        label: "假阴性筛查",
+                        click: ()=>{
+                            openCheckFalseNegativeShow()
+                        }
+                    })
+                    menu.append(checkFalseNegativeMutant_menuItem)
                 }
 
                 menu.popup({window: remote.getCurrentWindow()})
@@ -5306,7 +5337,7 @@
         [dict.FALSE_POSITIVE]: {}
     }
     let ori_currentPage_falseMutantRecord_dict = JSON.parse(JSON.stringify(currentPage_falseMutantRecord_dict))
-    async function __update_currentPageHistroyFalseMutantDict(false_mutant_type){
+    async function __update_currentPageHistoryFalseMutantDict(false_mutant_type){
         __handleLoadingShow(true, '__update_currentPageHistroyFalseMutantDict')
 
         //先重置当前页的假阳性突变字典
@@ -6202,7 +6233,8 @@
     .navLeft .leftSampleTableWrapper .sampleTable .sampleSn{
         width: 105px!important;
     }
-    .navLeft .leftSampleTableWrapper .sampleTable .selectALL, .navLeft .leftSampleTableWrapper .sampleTable .selectOne{
+    .navLeft .leftSampleTableWrapper .sampleTable .selectALL,
+    .navLeft .leftSampleTableWrapper .sampleTable .selectOne{
         margin: 0;
         padding: 0;
         width: 34px;
@@ -6791,6 +6823,9 @@
     .contentRight .rightDataTable .lineData .containSelect{
         position: relative;
     }
+    /* todo 2020.08.06 */
+
+
     .contentRight .rightDataTable .lineData .containInput .dataInput,
     .contentRight .rightDataTable .lineData .containSelect .dataSelect{
         position: absolute;

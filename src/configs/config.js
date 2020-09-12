@@ -9,11 +9,13 @@
 // query_params作用，1，标题栏利用此处关联，
 export const common_filters = ["page","page_size","sampleIds","panalId","search",]
 
+
+// frameshift_insertion
 const lineDataModify_selection_dict = {
     exonicfuncRefgene: [
         {
             value: 'frameshift_insertion',
-            content: 'frameshift insertion'
+            content: 'frameshift_insertion'
         }, {
             value: 'nonframeshift_insertion',
             content: 'nonframeshift insertion'
@@ -298,6 +300,7 @@ export const sheetDisplayConfigList = [
         connect_immune: true,
         show_historyFalsePositiveMutant: true,
         false_mutant_record: true,
+        check_false_negative_mutant: true,
         filter_group: [
             {
                 title: 'cancerType:本次检测到的变异对临床用药的指导意义暂不明确',
@@ -659,7 +662,7 @@ export const sheetDisplayConfigList = [
                 title: "posStart",
                 translate: "起始位置",
                 type: "number",
-                modify: false,
+                modify: true,
                 defaultDisplay: true,
                 selectDisplay: true,
                 groups: ['突变位点']
@@ -667,7 +670,7 @@ export const sheetDisplayConfigList = [
                 title: "posEnd",
                 translate: "终止位置",
                 type: "number",
-                modify: false,
+                modify: true,
                 defaultDisplay: true,
                 selectDisplay: true,
                 groups: ['突变位点']
@@ -675,7 +678,7 @@ export const sheetDisplayConfigList = [
                 title: "ref",
                 translate: "参考序列",
                 type: "text",
-                modify: false,
+                modify: true,
                 defaultDisplay: true,
                 selectDisplay: true,
                 groups: ['突变位点']
@@ -683,7 +686,7 @@ export const sheetDisplayConfigList = [
                 title: "alt",
                 translate: "突变序列",
                 type: "text",
-                modify: false,
+                modify: true,
                 defaultDisplay: true,
                 selectDisplay: true,
                 groups: ['突变位点']
@@ -691,7 +694,7 @@ export const sheetDisplayConfigList = [
                 title: "freq",
                 translate: "频率",
                 type: "text",
-                modify: false,
+                modify: true,
                 defaultDisplay: true,
                 selectDisplay: true,
                 groups: ['突变位点']
@@ -2509,7 +2512,10 @@ export const immune_types_forGeneinImmune = {
     FGF19: ['CNA_gain'],
     FGF3: ['CNA_gain'],
     FGF4: ['CNA_gain'],
-    CCND1: ['CNA_gain']
+    CCND1: ['CNA_gain'],
+    NRAS: ['GOF'],  // 2020.8.7 临时按王慧玲要求添加
+    SERPINB3: ['GOF'], //  2020.8.7 临时按王亚茹新报告自己添加
+    SERPINB4: ['GOF'], // 2020.8.7 临时按王亚茹新报告自己添加
 }
 
 
@@ -2615,4 +2621,20 @@ export const amino_abbreviation_list = [
         three_abbr: "His",
         one_abbr: "H"
     },
+]
+
+export const negativeCheckPositions = [
+    {
+        gene: 'EGFR',
+        chr: 'chr7',
+        posStart: "55241707",
+        posEnd: "55241708",
+        desc: 'G719'
+    }, {
+        gene: 'KRAS',
+        chr: 'chr12',
+        posStart: "25398281",
+        posEnd: "25398286",
+        desc: 'G13 G12 '
+    }
 ]

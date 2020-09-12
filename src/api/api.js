@@ -102,7 +102,7 @@ export const deleteDataConnectImmune = form => {return axios.post(`${host()}/del
 // 添加数据连接的免疫实例
 export const addDataConnectImmune = form => {return axios.post(`${host()}/adddataconnectimmune/`, form)}
 // 获取历史假突变
-export const listFalseMutantRecord = params => {return axios.get(`${host()}/falsemutantrecord/`, {params: params})}
+export const listFalseMutantRecord = params => {return axios.get(`${host()}/falsemutantrecords/`, {params: params})}
 // 取消假阳性
 export const cancelDeleteFalseMutant = form => {return axios.post(`${host()}/canceldeletefalsemutant/`, form)}
 // 请求zip生成

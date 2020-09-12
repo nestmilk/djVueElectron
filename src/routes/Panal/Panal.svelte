@@ -691,7 +691,6 @@
                 name_dict[panalName] = 1
             }
 
-
             let file_item = {}
             file_item[dict.NAME] = file.name
             file_item[dict.FILE] = file
