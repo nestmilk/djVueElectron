@@ -107,3 +107,5 @@ export const listFalseMutantRecord = params => {return axios.get(`${host()}/fals
 export const cancelDeleteFalseMutant = form => {return axios.post(`${host()}/canceldeletefalsemutant/`, form)}
 // 请求zip生成
 export const requestGenerateZip = form => {return axios.post(`${host()}/requsetgeneratezip/`, form)}
+// 请求SNV单项检测实例的表
+export const listSNV = params => {return axios.get(`${host()}/snvs/`, {params: params})}

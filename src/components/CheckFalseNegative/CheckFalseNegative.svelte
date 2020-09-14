@@ -78,7 +78,7 @@
             <table>
                 <tr>
                     <th class="sampleSn">样本名称</th>
-                    <th class="position">位点名称</th>
+                    <th class="alteration">氨基酸变化</th>
                     <th class="freq">频率</th>
                     <th class="chr">染色体</th>
                     <th class="posStart">起始位置</th>
@@ -89,9 +89,16 @@
             </table>
             <div class="tableContent">
                 <table>
-                    {#each created_mutants as mutant}
-                        <tr class="mutantTR">
-
+                    {#each prepared_mutants as mutant, index}
+                        <tr class="mutantTR {selected_mutant_index===index?'selected':''}" on:click={()=>handleSelectPreparedMutant(index)}>
+                            <td class="sampleSn">{mutant.sample.sampleSn}</td>
+                            <td class="alteration">{mutant.snv.alteration}</td>
+                            <td class="freq">{mutant.freq}</td>
+                            <td class="chr">{mutant.snv.chr}</td>
+                            <td class="posStart">{mutant.snv.posStart}</td>
+                            <td class="posEnd">{mutant.snv.posEnd}</td>
+                            <td class="ref">{mutant.snv.ref}</td>
+                            <td class="alt">{mutant.snv.alt}</td>
                         </tr>
                     {/each}
                 </table>
@@ -102,7 +109,7 @@
                     <div>
                         <span class="addSpan">样本：</span>
                         <select bind:value={reserved_mutant.sample_id} class="addItem">
-                            {#each sample_list as sample}
+                            {#each sample_list_forCreateMutant as sample}
                                 <option value={sample.id}>
                                     {sample.sampleSn}
                                 </option>
@@ -114,34 +121,34 @@
                         <select bind:value={reserved_mutant.chr} class="addItem">
                             {#each chr_list as chr}
                                 <option value={chr}>
-                                    {chr?chr:'请选择'}
+                                    {chr!=='None'?chr:'请选择'}
                                 </option>
                             {/each}
                         </select>
                     </div>
                     <div>
                         <span class="addSpan">起始位置：</span>
-                        <input class="addItem" type="number" step="1" />
+                        <input bind:value={reserved_mutant.posStart} class="addItem" type="number" step="1" />
                     </div>
                     <div>
                         <span class="addSpan">终止位置：</span>
-                        <input class="addItem" type="number" step="1" />
+                        <input bind:value={reserved_mutant.posEnd} class="addItem" type="number" step="1" />
                     </div>
                     <div>
                         <span class="addSpan">参考序列：</span>
-                        <input class="addItem" type="text" />
+                        <input bind:value={reserved_mutant.ref} class="addItem" type="text" />
                     </div>
                     <div>
                         <span class="addSpan">突变序列：</span>
-                        <input class="addItem" type="text" />
+                        <input bind:value={reserved_mutant.alt} class="addItem" type="text" />
                     </div>
                     <div>
                         <span class="addSpan">频率：</span>
-                        <input class="addItem" type="number" step="0.001" min="0" max="1" />
+                        <input bind:value={reserved_mutant.freq} class="addItem" type="number" step="0.001" min="0" max="1" />
                     </div>
 
                     <div class="negativeAddBnWrapper">
-                        <button on:click={searchAdd_unsubmited_falseNegativeMutants}>搜索添加</button>
+                        <button on:click={searchAdd_unsubmitedFalseNegativeMutants}>搜索添加</button>
                         <button on:click={closeNegatvieAddShow}>关闭</button>
                     </div>
 
@@ -162,33 +169,37 @@
 
     import {negativeCheckPositions, chr_list} from '../../configs/config'
     import {getParentNodeByParentClassName} from "../../utils/common";
-    import {host} from "../../api/api";
-    import {params} from "../../routes/Data/Data.svelte";
-    import {ifContentEqualArrays, removeFromUniqueArray} from "../../utils/arrays";
+    import {ifContentEqualArrays, removeFromUniqueArray, arrayToDict} from "../../utils/arrays";
+    import api from '../../api'
 
     export let sample_list = []
     export let unsubmited_negativeFalseMutants = []
+    export let panal_id
 
     // let selected_sampleId_list = sample_list.map(item => item.id)
-    sample_list = [{id: null, sample_sn: '请选择'}, ...sample_list]
+    let sampleId_dict = arrayToDict(sample_list, 'id')
+    let sample_list_forCreateMutant = [{id: 'None', sampleSn: '请选择'}, ...sample_list]
     let selected_sampleId_list = []
     let pre_selected_sampleId_list = []
 
-    let selected_position_index
+    let selected_position_index = null
+    let selected_mutant_index = null
 
     let reserved_mutant = {
-        sample_id: null,
-        chr: null,
-        posStart: null,
-        posEnd: null,
-        ref: null,
-        alt: null,
-        freq: null
+        sample_id: 'None',
+        chr: 'None',
+        posStart: 0,
+        posEnd: 0,
+        ref: "",
+        alt: "",
+        freq: 0
     }
 
-    let created_mutants = []
+    let ori_reserved_mutant = JSON.parse(JSON.stringify(reserved_mutant))
+    // 用于存放预提交的突变位点
+    let prepared_mutants = JSON.parse(JSON.stringify(unsubmited_negativeFalseMutants))
 
-    let message = "后台无匹配数据，请先添加！"
+    let message = ""
 
     let negativeAddShow = false
 
@@ -197,7 +208,7 @@
     const dispatch = createEventDispatcher()
 
     function handleClose(){
-        dispatch("close")
+        dispatch("close", prepared_mutants)
     }
 
     function handleToggleAllSample(){
@@ -223,8 +234,15 @@
 
         if (selected_position_index === index){
             selected_position_index = null
+            reserved_mutant = JSON.parse(JSON.stringify(ori_reserved_mutant))
         }else{
             selected_position_index = index
+            // 修改预填充突变的内容
+            let {chr, posStart, posEnd} = negativeCheckPositions[index]
+            reserved_mutant.chr = chr
+            reserved_mutant.posStart = posStart
+            reserved_mutant.posEnd = posEnd
+            reserved_mutant = reserved_mutant
 
             let samples = ifEqual?null:selected_sampleId_list
             dispatch('samples_position',{
@@ -238,8 +256,85 @@
         }
     }
 
-    function searchAdd_unsubmited_falseNegativeMutants(){
+    function __check_ifExistedIn_preparedMutants(sample_id, snv_id){
+        let exists = prepared_mutants.filter(item=>item.sample.id===sample_id && item.snv.id===snv_id)
+        return exists.length !== 0
+    }
 
+    async function searchAdd_unsubmitedFalseNegativeMutants(){
+        console.log('searchAdd_unsubmitedFalseNegativeMutants reserved_mutant', reserved_mutant)
+        message = ""
+
+        if (reserved_mutant.sample_id === 'None'){
+            message = '请先选择样本!'
+            dispatch('loading', false)
+            return
+        }
+
+        dispatch('loading', true)
+
+        let existed_mutants
+        await api.mutantList({
+            panalId: panal_id,
+            sampleIds: reserved_mutant.sample_id,
+            chrPosstartPosendRefAlt: [reserved_mutant.chr, reserved_mutant.posStart, reserved_mutant.posEnd, reserved_mutant.ref, reserved_mutant.alt].join(',')
+        }).then(response=>{
+            console.log("searchAdd_unsubmitedFalseNegativeMutants response.data mutantList", response.data)
+            existed_mutants = response.data
+        }).catch(error=>{
+            console.error('searchAdd_unsubmitedFalseNegativeMutants', error)
+            message = '网络错误！'
+        })
+
+        if (existed_mutants && existed_mutants.length > 0){
+            message = '已存在突变：' + existed_mutants.map(item=>item.id).join(', ')
+            dispatch('loading', false)
+            return
+        }
+
+        let found_snvs
+        await api.listSNV({
+            chrPosstartPosendRefAlt: [reserved_mutant.chr, reserved_mutant.posStart, reserved_mutant.posEnd, reserved_mutant.ref, reserved_mutant.alt].join(',')
+        }).then(response=>{
+            console.log("searchAdd_unsubmitedFalseNegativeMutants response.data snvList", response.data)
+            found_snvs = response.data
+        }).catch(error=>{
+            console.error('searchAdd_unsubmitedFalseNegativeMutants', error)
+            message = '网络错误！'
+        })
+
+        if (found_snvs && found_snvs.length === 0){
+            message = '检测实例不存在，请先录入！'
+            dispatch('loading', false)
+            return
+        }else if (found_snvs && found_snvs.length > 1){
+            message = "snv实例存在多个，请核对数据库！"
+            dispatch('loading', false)
+            return
+        }
+
+        // 检查这个突变是否已经在预添加的突变中
+        let snv = found_snvs[0]
+        if(__check_ifExistedIn_preparedMutants(reserved_mutant.sample_id, snv.id)){
+            message = "此突变已在预提交的突变数据中！"
+            dispatch('loading', false)
+            return
+        }
+
+        //添加到假阳性未提交表中
+        prepared_mutants.push({
+            sample: JSON.parse(JSON.stringify(sampleId_dict[reserved_mutant.sample_id])),
+            snv: snv,
+            freq: reserved_mutant.freq
+        })
+        prepared_mutants = prepared_mutants
+        console.log('searchAdd_unsubmitedFalseNegativeMutants prepared_mutants', prepared_mutants)
+
+        dispatch('loading', false)
+    }
+
+    function __open_searchAddFalseNegativeMutant(){
+        negativeAddShow = true
     }
 
     async function __handleFalseNegativeContextMenu(e){
@@ -252,7 +347,7 @@
             let addNegativeMenuItem = new remote.MenuItem({
                 label: "添加突变",
                 click: ()=>{
-                    negativeAddShow = true
+                    __open_searchAddFalseNegativeMutant()
                 }
             })
             menu.append(addNegativeMenuItem)
@@ -262,6 +357,12 @@
         if (document.querySelector('.tableContentWrapper') &&
             document.querySelector('.tableContentWrapper').contains(e.target)){
             let element =getParentNodeByParentClassName(e.target, 'mutantTR')
+        }
+    }
+
+    function handleSelectPreparedMutant(index){
+        if (selected_mutant_index !== index){
+            selected_mutant_index = index
         }
     }
 
@@ -378,8 +479,8 @@
         width: 50px!important;
     }
 
-    .checkNegativeContentWrapper table th.position,
-    .checkNegativeContentWrapper table td.position{
+    .checkNegativeContentWrapper table th.alteration,
+    .checkNegativeContentWrapper table td.alteration{
         width: 70px!important;
     }
 
@@ -473,6 +574,9 @@
     .checkNegativeContentWrapper .rightBigWrapper .downWrapper .tableContent{
         height: 218px;
         overflow-y: scroll;
+    }
+    .checkNegativeContentWrapper .rightBigWrapper .downWrapper .tableContent tr.selected{
+        border: 3px solid #939393;
     }
 
     .checkNegativeContentWrapper .rightBigWrapper .downWrapper .negativeAddWrapper{

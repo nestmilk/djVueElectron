@@ -1014,8 +1014,11 @@
     <CheckFalseNegative
         sample_list="{sample_list}"
         unsubmited_negativeFalseMutants="{unsubmited_negativeFalseMutants}"
+        panal_id="{params.panalId}"
         on:close={handleCloseCheckFalseNegativeShow}
         on:samples_position={handleSamplesPositionFromNegativeCheck}
+        on:loading={__handleComponentLoading}
+        on:submitPreparedMutants={__handle_submitPreparedMutants}
     >
     </CheckFalseNegative>
 {/if}
@@ -1139,6 +1142,11 @@
     function __handleLoadingShow(status, name){
         loadingShow = status
         // console.log(status?'打开loadingShow':'关闭loadingShow', name)
+    }
+
+    function __handleComponentLoading(e){
+        let status = e.detail
+        __handleLoadingShow(status)
     }
     // 控制确定页面的显示
     let sureShow = false
@@ -4557,10 +4565,13 @@
 
     // 处理假阳性检测模块
     let unsubmited_negativeFalseMutants = []
-    function openCheckFalseNegativeShow(){
+    function openCheckFalseNegativeShow(e){
         checkFalseNegativeShow = true
     }
-    function handleCloseCheckFalseNegativeShow(){
+    function handleCloseCheckFalseNegativeShow(e){
+        console.log('handleCloseCheckFalseNegativeShow e.detail', e.detail)
+        unsubmited_negativeFalseMutants = JSON.parse(JSON.stringify(e.detail))
+
         // 仅恢复核查假阴性前的sample的tracks
         if(selected_sampleId_list.length > 0){
             __loadTracks_bySampleIds(selected_sampleId_list)
@@ -4593,6 +4604,9 @@
         let {chr, posStart, posEnd} = e.detail.position
         // console.log("handleSamplesPositionFromNegativeCheck chr posStart posEnd", chr, posStart, posEnd)
         __changeLocus(chr, posStart, posEnd)
+    }
+    function __handle_submitPreparedMutants(e){
+        console.log('__handle_preparedMutants e.detail', e.detail)
     }
 
     async function __handleContextMenu(e){
