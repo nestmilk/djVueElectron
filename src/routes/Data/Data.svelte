@@ -1013,7 +1013,9 @@
 {#if checkFalseNegativeShow}
     <CheckFalseNegative
         sample_list="{sample_list}"
+        unsubmited_negativeFalseMutants="{unsubmited_negativeFalseMutants}"
         on:close={handleCloseCheckFalseNegativeShow}
+        on:samples_position={handleSamplesPositionFromNegativeCheck}
     >
     </CheckFalseNegative>
 {/if}
@@ -3644,6 +3646,7 @@
     // 选中的样本id列表
     let selected_sampleId_list = []
     let pre_selected_sampleId_list = []
+
     // panal能否被操作的状态
     let panal_unable_handle = false
     let panal_data
@@ -4551,11 +4554,45 @@
         }
     }
 
+
+    // 处理假阳性检测模块
+    let unsubmited_negativeFalseMutants = []
     function openCheckFalseNegativeShow(){
         checkFalseNegativeShow = true
     }
     function handleCloseCheckFalseNegativeShow(){
+        // 仅恢复核查假阴性前的sample的tracks
+        if(selected_sampleId_list.length > 0){
+            __loadTracks_bySampleIds(selected_sampleId_list)
+        }
+
         checkFalseNegativeShow = false
+    }
+
+    function __loadTracks_bySampleIds(sample_ids){
+        if(settingsStore.get('ifIgvConnect')){
+            ipcRenderer.send("load-tracks",
+                sample_ids.reduce((result, sampleId)=>{
+                    if(bamAndBai_path_dict.hasOwnProperty(sampleId)){
+                        result.push(bamAndBai_path_dict[sampleId])
+                    }
+                    return result
+                },[])
+            )
+        }
+    }
+
+    function handleSamplesPositionFromNegativeCheck(e){
+        // console.log('handleSamplesPositionFromNegativeCheck e.detail selected_sampleId_list', e.detail, selected_sampleId_list)
+
+        let sample_ids = e.detail.samples
+        if (sample_ids){
+            __loadTracks_bySampleIds(sample_ids)
+        }
+
+        let {chr, posStart, posEnd} = e.detail.position
+        // console.log("handleSamplesPositionFromNegativeCheck chr posStart posEnd", chr, posStart, posEnd)
+        __changeLocus(chr, posStart, posEnd)
     }
 
     async function __handleContextMenu(e){
@@ -5159,16 +5196,17 @@
         //         }
         //     }
         // }
-        if(settingsStore.get('ifIgvConnect')){
-            ipcRenderer.send("load-tracks",
-                    reordered_sampleIds_list.reduce((result, sampleId)=>{
-                        if(bamAndBai_path_dict.hasOwnProperty(sampleId)){
-                            result.push(bamAndBai_path_dict[sampleId])
-                        }
-                        return result
-                    },[])
-            )
-        }
+        // if(settingsStore.get('ifIgvConnect')){
+        //     ipcRenderer.send("load-tracks",
+        //             reordered_sampleIds_list.reduce((result, sampleId)=>{
+        //                 if(bamAndBai_path_dict.hasOwnProperty(sampleId)){
+        //                     result.push(bamAndBai_path_dict[sampleId])
+        //                 }
+        //                 return result
+        //             },[])
+        //     )
+        // }
+        __loadTracks_bySampleIds(reordered_sampleIds_list)
 
         pre_selected_sampleId_list = JSON.parse(JSON.stringify(selected_sampleId_list))
     }
@@ -5197,7 +5235,7 @@
         return scope
     }
     // 更好染色体位置
-    function __changeLocus(chr, posEnd, posStart){
+    function __changeLocus(chr, posStart, posEnd){
         let query = __calculateScope(chr, posStart, posEnd)
 
         if(settingsStore.get('ifIgvConnect')){
@@ -5228,7 +5266,7 @@
             // 非同一mutant， 进入后再判断位置是否有变化
             let chr = all_nowValue_of_data_dict[params.type][now_data_id][dict.CHR]
             if (pre_data_id !== now_data_id) {
-                __changeLocus(chr, posEnd, posStart)
+                __changeLocus(chr, posStart, posEnd)
             }
         }
     }
