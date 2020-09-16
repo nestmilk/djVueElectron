@@ -2239,7 +2239,10 @@ export const common_subFilter_selections_dict = {
         }, {
             value: 'copy',
             content: '包含拷贝'
-        },
+        }, {
+            value: 'negative',
+            content: '包含假阴'
+        }
     ],
     sample__id: [
         {

@@ -87,8 +87,8 @@
                     <th class="alt">突变序列</th>
                 </tr>
             </table>
-            <div class="tableContent">
-                <table>
+            <div class="tableContentWrapper">
+                <table class="mutantContentTable">
                     {#each prepared_mutants as mutant, index}
                         <tr class="mutantTR {selected_mutant_index===index?'selected':''}"
                             on:click={()=>handleSelectPreparedMutant(index)}
@@ -368,8 +368,8 @@
             menu.popup({window: remote.getCurrentWindow()})
         }
 
-        if (document.querySelector('.downWrapper') &&
-            document.querySelector('.downWrapper').contains(e.target)){
+        if (document.querySelector('.mutantContentTable') &&
+            document.querySelector('.mutantContentTable').contains(e.target)){
             let element =getParentNodeByParentClassName(e.target, 'mutantTR')
             let right_index = parseInt(element.dataset.index)
             console.log('__handleFalseNegativeContextMenu right_index', right_index)
@@ -604,11 +604,11 @@
         margin: 5px;
     }
 
-    .checkNegativeContentWrapper .rightBigWrapper .downWrapper .tableContent{
+    .checkNegativeContentWrapper .rightBigWrapper .downWrapper .tableContentWrapper{
         height: 218px;
         overflow-y: scroll;
     }
-    .checkNegativeContentWrapper .rightBigWrapper .downWrapper .tableContent tr.selected{
+    .checkNegativeContentWrapper .rightBigWrapper .downWrapper .tableContentWrapper tr.selected{
         border: 3px solid #939393;
     }
 

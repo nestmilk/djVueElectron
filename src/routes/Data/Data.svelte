@@ -1088,7 +1088,7 @@
         SHEET: 'sheet', SUBMENU_TRANSLATE: "submenu_translate", FILTERS: "filters",
         PARAM: 'param', SEARCH: 'search', DATA: 'data', COPY: 'copy',
         ID: 'id', SAMPLE: 'sample', SAMPLESN: 'sampleSn',  TITLE_LIST: 'title_list',
-        PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLEID: 'sampleId', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
+        PAGE: 'page', PAGE_SIZE: 'page_size', SAMPLE_ID: 'sample_id', SAMPLEID: 'sampleId', SAMPLEIDS: 'sampleIds', PANALID: 'panalId',
         TITLE: 'title', TRANSLATE: 'translate', PANAL_ID: 'panal_id', PANALIDS: 'panalIds',
         TYPE: 'type', CONTENT: 'content', VALUE: 'value', STATUS: 'status', TITLES: 'titles',
         TOPSCROLL: 'topScroll', BOTTOMSCROLL: 'bottomScroll', PARAMS: 'params',
@@ -1123,7 +1123,7 @@
         SAMPLE_TYPE: "sample_type", CHANGE: "change", CONNECT_IMMUNE: 'connect_immune', IMMUNE_CONNECT: "immune_connect",
         GENENAMES: "geneNames", HGVS: 'hgvs', REDIRECT: 'redirect', IMMUNE: 'immune', LOGIC: 'logic',
         TESTRESULT: 'testResult', EFFECT: 'effect', IMMUNEID: 'immuneId', IMMUNE_ID: 'immune_id', _GENENAME: '_geneName', ADD: 'add',
-        CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune', CNA: 'CNA', FUSION: 'fusion', MUTANT: 'mutant',
+        CONNECTSHEET: 'connectSheet', MODIFIED_IMMUNE: 'modified_immune', CNA: 'CNA', FUSION: 'fusion', MUTANT: 'mutant', SNV:'snv',
         MODIFY_IMMUNE_NUM: 'modify_immune_num', CNARATIO: 'cnaRatio', MODIFIED_MUTANTS: 'modified_mutants', MODIFIED_IMMUNES: 'modified_immunes',
         BEFORE_DONE: 'before_done', FALSE_POSITIVE: 'false_positive', CANCEL_FALSE_POSITIVE: 'cancel_false_positive',
         CONNECT: 'connect', CANCEL_CONNECT: 'cancel_connect', CNA_LOSS: 'CNA_loss', CNA_GAIN: 'CNA_gain',
@@ -4605,6 +4605,21 @@
         // console.log("handleSamplesPositionFromNegativeCheck chr posStart posEnd", chr, posStart, posEnd)
         __changeLocus(chr, posStart, posEnd)
     }
+
+    function __removeSubmited_from_unsubmitedNegativeFalseMutants(submited_item){
+        // console.log('__removeSubmited_from_unsubmitedNegativeFalseMutants 提交的 sample_id, snv_id', submited_item[dict.SAMPLE][dict.ID], submited_item[dict.SNV][dict.ID])
+        let index = unsubmited_negativeFalseMutants.findIndex(item=>
+            item[dict.SNV][dict.ID]===submited_item[dict.SNV][dict.ID] &&
+            item[dict.SAMPLE][dict.ID]===submited_item[dict.SAMPLE][dict.ID]
+        )
+
+        if(index !== -1){
+            unsubmited_negativeFalseMutants = [...unsubmited_negativeFalseMutants.slice(0, index), ...unsubmited_negativeFalseMutants.slice(index+1)]
+        }else{
+            __append_timePlused_uploadMessage(`样本${submited_item[dict.SAMPLE][dict.SAMPLESN]} SNV${submited_item[dict.SNV][dict.ALTERATION]}  并不在预提交的假阴性表中`)
+        }
+    }
+
     async function __handle_submitPreparedMutants(e){
         console.log('__handle_preparedMutants e.detail', e.detail)
         unsubmited_negativeFalseMutants = JSON.parse(JSON.stringify(e.detail))
@@ -4612,9 +4627,42 @@
 
         __handleLoadingShow(true, '__handle_submitPreparedMutants')
 
+        let modified_immune_dict = {}
         // 开始提交假突变
-        for (let mutant of unsubmited_negativeFalseMutants){
-            await api.generateFalseNegativeMutant()
+        for (let sample_snv_freq of unsubmited_negativeFalseMutants){
+            let sample = sample_snv_freq[dict.SAMPLE]
+            let snv = sample_snv_freq[dict.SNV]
+            let freq = sample_snv_freq[dict.FREQ]
+            let form = new FormData()
+            form.append('token', userInfo.getToken())
+            form.append('sheet', params[dict.TYPE])
+            form.append('panal_id', params[dict.PANALID])
+            form.append('sample_id', sample[dict.ID])
+            form.append('snv_id', snv[dict.ID])
+            form.append('freq', freq)
+            form.append('log_id', uuidv4())
+
+            let success = false
+            let ids
+            let modified_immunes
+            await api.generateFalseNegativeMutant(form).then(response=>{
+                console.log('__handle_submitPreparedMutants sample.id snv.id response.data', sample.id, snv.id, response.data)
+                success = true
+                ids = response.data[dict.IDS]
+                modified_immunes = response.data[dict.MODIFIED_IMMUNES]
+            }).catch(error=>{
+                console.error('__handle_submitPreparedMutants', error)
+            })
+
+            let message = `${sample[dict.SAMPLESN]} 假阴性位点${snv[dict.ALTERATION]} ${success?'添加成功。':'添加失败！'}`
+
+            __append_timePlused_uploadMessage(message)
+
+            if (success){
+                // 先从报存的未提交的假突变表中删除成功提交的
+                __removeSubmited_from_unsubmitedNegativeFalseMutants(sample_snv_freq)
+            }
+
         }
 
         __handleLoadingShow(false, '__handle_submitPreparedMutants')
@@ -5827,7 +5875,7 @@
     }
 
     function handle_dataConnectImmune_Delete(sheet, id, immune_id, event){
-        console.log('handle_dataConnectImmune_Delete sheet id immune_id', sheet, id, immune_id,)
+        console.log('handle_dataConnectImmune_Delete sheet id immune_id', sheet, id, immune_id)
         event.stopPropagation()
         let status = all_status_of_data_dict[dict.IMMUNE][immune_id]
         // 只有free状态，才能在immune表中进行删除
