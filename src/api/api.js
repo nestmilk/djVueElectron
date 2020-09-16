@@ -109,3 +109,5 @@ export const cancelDeleteFalseMutant = form => {return axios.post(`${host()}/can
 export const requestGenerateZip = form => {return axios.post(`${host()}/requsetgeneratezip/`, form)}
 // 请求SNV单项检测实例的表
 export const listSNV = params => {return axios.get(`${host()}/snvs/`, {params: params})}
+// 生成假阴性突变
+export const generateFalseNegativeMutant = form => {return axios.post(`${host()}/generatefalsenegativemutant/`, form)}

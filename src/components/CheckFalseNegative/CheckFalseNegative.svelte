@@ -90,7 +90,10 @@
             <div class="tableContent">
                 <table>
                     {#each prepared_mutants as mutant, index}
-                        <tr class="mutantTR {selected_mutant_index===index?'selected':''}" on:click={()=>handleSelectPreparedMutant(index)}>
+                        <tr class="mutantTR {selected_mutant_index===index?'selected':''}"
+                            on:click={()=>handleSelectPreparedMutant(index)}
+                            data-index='{index}'
+                        >
                             <td class="sampleSn">{mutant.sample.sampleSn}</td>
                             <td class="alteration">{mutant.snv.alteration}</td>
                             <td class="freq">{mutant.freq}</td>
@@ -171,6 +174,7 @@
     import {getParentNodeByParentClassName} from "../../utils/common";
     import {ifContentEqualArrays, removeFromUniqueArray, arrayToDict} from "../../utils/arrays";
     import api from '../../api'
+    import {host} from "../../api/api";
 
     export let sample_list = []
     export let unsubmited_negativeFalseMutants = []
@@ -337,8 +341,18 @@
         negativeAddShow = true
     }
 
+    function handle_submitPreparedMutants(){
+        dispatch('submitPreparedMutants', prepared_mutants)
+    }
+
+    function handle_deleteOnePreparedMutant(){
+        console.log('handle_deleteOnePreparedMutant selected_mutant_index', selected_mutant_index)
+        prepared_mutants = [...prepared_mutants.slice(0,selected_mutant_index), ...prepared_mutants.slice(selected_mutant_index+1)]
+        selected_mutant_index = null
+    }
+
     async function __handleFalseNegativeContextMenu(e){
-        console.log('__handleFalseNegativeContextMenu begin')
+        // console.log('__handleFalseNegativeContextMenu begin')
 
         if (document.querySelector('.rightPositionTableWrapper') &&
             document.querySelector('.rightPositionTableWrapper').contains(e.target)){
@@ -354,9 +368,28 @@
             menu.popup({window: remote.getCurrentWindow()})
         }
 
-        if (document.querySelector('.tableContentWrapper') &&
-            document.querySelector('.tableContentWrapper').contains(e.target)){
+        if (document.querySelector('.downWrapper') &&
+            document.querySelector('.downWrapper').contains(e.target)){
             let element =getParentNodeByParentClassName(e.target, 'mutantTR')
+            let right_index = parseInt(element.dataset.index)
+            console.log('__handleFalseNegativeContextMenu right_index', right_index)
+
+            let menu = new remote.Menu()
+
+            let submitMenuItem = new remote.MenuItem({
+                label: "提交假突变",
+                click: handle_submitPreparedMutants
+            })
+            menu.append(submitMenuItem)
+
+            let deleteMenuItem = new remote.MenuItem({
+                label: "删除此条",
+                enabled: selected_mutant_index === right_index,
+                click: handle_deleteOnePreparedMutant
+            })
+            menu.append(deleteMenuItem)
+
+            menu.popup({window: remote.getCurrentWindow()})
         }
     }
 
@@ -616,6 +649,5 @@
         color: red;
         margin: 0;
     }
-
 
 </style>

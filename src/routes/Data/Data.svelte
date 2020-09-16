@@ -4605,8 +4605,19 @@
         // console.log("handleSamplesPositionFromNegativeCheck chr posStart posEnd", chr, posStart, posEnd)
         __changeLocus(chr, posStart, posEnd)
     }
-    function __handle_submitPreparedMutants(e){
+    async function __handle_submitPreparedMutants(e){
         console.log('__handle_preparedMutants e.detail', e.detail)
+        unsubmited_negativeFalseMutants = JSON.parse(JSON.stringify(e.detail))
+        checkFalseNegativeShow = false
+
+        __handleLoadingShow(true, '__handle_submitPreparedMutants')
+
+        // 开始提交假突变
+        for (let mutant of unsubmited_negativeFalseMutants){
+            await api.generateFalseNegativeMutant()
+        }
+
+        __handleLoadingShow(false, '__handle_submitPreparedMutants')
     }
 
     async function __handleContextMenu(e){
