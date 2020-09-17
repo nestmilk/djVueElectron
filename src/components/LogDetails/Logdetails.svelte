@@ -13,6 +13,9 @@
                         <th class="small">数据ID</th>
                         <th class="small">完成</th>
                         <th class="small">删除</th>
+                        {#if showNegative}
+                            <th class="small">假阴性</th>
+                        {/if}
                         {#each fieldList as field}
                             <th>{title_translates[field]}</th>
                         {/each}
@@ -47,6 +50,11 @@
                                 <td class="small"title="{logs[id][logId].log_details.delete?'修改前：'+logs[id][logId].log_details.delete.old_value:''}">
                                     {logs[id][logId].log_details.delete?logs[id][logId].log_details.delete.new_value:''}
                                 </td>
+                                {#if showNegative}
+                                    <td class="small"title="{logs[id][logId].log_details.negative?'修改前：'+logs[id][logId].log_details.negative.old_value:''}">
+                                        {logs[id][logId].log_details.negative?logs[id][logId].log_details.negative.new_value:''}
+                                    </td>
+                                {/if}
                                 {#each fieldList as field}
                                     <td title="{logs[id][logId].log_details[field]?'修改前：'+logs[id][logId].log_details[field].old_value:''}">
                                         {logs[id][logId].log_details[field]?logs[id][logId].log_details[field].new_value:''}
@@ -105,7 +113,9 @@
     export let titleDict
     export let cancelSubmit
     export let statusDict
-    // console.log('SingleDataLogdetails', idLogIds, logs)
+    export let showNegative
+    console.log('SingleDataLogdetails idLogIds, logs, fieldList, titleDict, cancelSubmit, statusDict',
+        idLogIds, logs, fieldList, titleDict, cancelSubmit, statusDict)
 
     let selected_ids = [idLogIds[0].ids[0]]
 

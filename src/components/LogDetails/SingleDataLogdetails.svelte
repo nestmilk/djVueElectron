@@ -9,6 +9,7 @@
                     <th class="small">数据ID</th>
                     <th class="small">完成</th>
                     <th class="small">删除</th>
+                    <th class="small">假阴性</th>
                     {#each fieldList as field}
                         <th>{title_translates[field]}</th>
                     {/each}
@@ -31,6 +32,9 @@
                         </td>
                         <td class="small"title="{log.log_details.delete?'修改前：'+log.log_details.delete.old_value:''}">
                             {log.log_details.delete?log.log_details.delete.new_value:''}
+                        </td>
+                        <td class="small"title="{log.log_details.negative?'修改前：'+log.log_details.negative.old_value:''}">
+                            {log.log_details.negative?log.log_details.negative.new_value:''}
                         </td>
                         {#each fieldList as field}
                             <td title="{log.log_details[field]?'修改前：'+log.log_details[field].old_value:''}">

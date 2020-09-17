@@ -756,7 +756,7 @@
                                         {#if all_titleListItem_dict[params.type][field][dict.NOWDISPLAY]}
                                             <!--区分处理一些特殊的field-->
                                             {#if all_titleListItem_dict[params.type][field][dict.IMMUNE_CONNECT]}
-                                                <!--显示免疫表中与target, fusion, CNA的关联-->
+                                                <!--显示免疫表中与target, fusion, CNA的关联, 首先非头三行（TMB、TNB、MSI），其次对应小行有内容-->
                                                 <td class="connectSheet">
                                                     {#if line_data.hasOwnProperty(dict.TYPE) &&
                                                         [dict.TMB, dict.TNB, dict.MSI].indexOf(line_data[dict.TYPE]) === -1 &&
@@ -1004,6 +1004,7 @@
         titleDict="{all_titleListItem_dict[params.type]}"
         statusDict="{all_status_of_data_dict[params.type]}"
         cancelSubmit="{cancelSubmit}"
+        showNegative="{sheetDisplayConfigDict[params.type][dict.CHECK_FALSE_NEGATIVE_MUTANT]}"
         on:close={handleCloseLogdetailsShow}
         on:cancel={__handleCancelDispatch_fromLogDetailsPage}
     >
@@ -3563,9 +3564,11 @@
     }
     //控制ids查询数据
     async function handleIdsQueryKeydown(event){
+        // 不是回车就返回
         if (event.which !== 13) return;
         event.preventDefault();
         // console.log('handleIdsQueryKeydown', query_ids)
+
         let query_list = query_ids.split(/[ ]+/)
         let ids = []
         query_list.forEach(query=>{
@@ -6082,7 +6085,7 @@
         // console.log(sample_list, sampleSn_dict)
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict, all_sheet_record_dict)
-        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
@@ -6093,7 +6096,7 @@
         // console.log(all_status_of_data_dict)
         // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_submit_params_dict)
-        console.log(all_submit_logs_dict, logs_together_dict)
+        // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
@@ -6113,9 +6116,9 @@
         // console.log(data_count)
         // console.log(filterGroup_checkedIndex_dict, filterGroup_names_dict)
         // console.log(all_titleGroup_dict, all_currentTitleGroupIndex_dict)
-        console.log(all_suspendStatus_of_data_dict)
+        // console.log(all_suspendStatus_of_data_dict)
         // panal_socket.send('111')
-        console.log(panal_socket, connect_panal_socket)
+        // console.log(panal_socket, connect_panal_socket)
     }
 
 </script>
