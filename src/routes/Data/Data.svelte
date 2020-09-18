@@ -313,7 +313,7 @@
                         <div class="clearBnWrapper">
                             <button class="icon-undo2"
                                     title="清空所有过滤条件"
-                                    on:click={handleClear_queryIDS_queryGenes_freqRange}
+                                    on:click={handle_clearAllFilters_updatePage}
                             ></button>
                         </div>
                     </div>
@@ -1019,7 +1019,7 @@
         on:close={handleCloseCheckFalseNegativeShow}
         on:samples_position={handleSamplesPositionFromNegativeCheck}
         on:loading={__handleComponentLoading}
-        on:submitPreparedMutants={__handle_submitPreparedMutants}
+        on:submitPreparedMutants={__handle_submit_preparedFalseNegativeMutants}
     >
     </CheckFalseNegative>
 {/if}
@@ -3155,6 +3155,11 @@
     let freqLowInput
     let freqHighInput
 
+    function __update_freqLowInput_freqHighInput_values(low_value, high_value){
+        freqLowInput.value = low_value
+        freqHighInput.value = high_value
+    }
+
     function __validate_lowFreqandHighFreq_modifyFreqrangeInAllSearchParamsDict(lowLimit, highLimit){
         let error_message = null
         let need_getPageData = false
@@ -3376,7 +3381,7 @@
         }
         return [found_filter_name, found_subFilter_index]
     }
-    // 切换filter的项
+    // 通过点击，轮循的切换subfilter的index
     async function handleToggleFilter(subFilter){
         console.log("<===handleToggleFilter")
         __handleLoadingShow(true, 'handleToggleFilter')
@@ -3399,12 +3404,12 @@
 
         __handleLoadingShow(false, 'handleToggleFilter')
     }
-    // 改变filter
+    // 通过select，点击单项event改变filter
     async function handleChangeFilter(event, subFilter){
         __handleLoadingShow(true, 'handleChangeFilter')
 
-        let index = event.target.value
-        // console.log('handleChangeFilter index', index)
+        let index = parseInt(event.target.value)
+        // console.log('handleChangeFilter index', typeof(index), index)
 
         let result = __find_filterName_subFilterIndex(subFilter)
 
@@ -3453,7 +3458,7 @@
     //"page_size", 没有改动！！！  "panalId",没有改动，"search",没有改动，
     //"sampleIds",使用全部样本， "page", 设为1  （"done", "logsEdit", 'ordering', "exonicfuncRefgene",）全部设为默认0号选项，
     // 'ids'，设为选定或null
-    function __reset_params_byIds_exceptPageSize_inAllSearchParamsDict(ids=null, genes=null, freqRange=null){
+    function __reset_params_allowModifyIdsGenesFreqRange_exceptPageSizePanalIdSearch_inAllSearchParamsDict(ids=null, genes=null, freqRange=null){
         // 重置所有特殊过滤的坐标, 以及params, 包括exonicfuncRefene，done，logEdits，ordering, falseMutant
         __reset_indexes_inAllSubFilterIndexesDict____params_inAllSearchParamsDict()
         // 重置sampleIds，全选所有样本，其中包含params
@@ -3473,6 +3478,9 @@
     }
 
     let query_genes = ''
+    function __update_queryGenes(str_genes){
+        query_genes = str_genes
+    }
     async function handleGenesQueryKeydown(event){
         if (event.which !== 13) return;
         event.preventDefault();
@@ -3484,10 +3492,9 @@
             }
             return result
         }, [])
-        // console.log('handleGenesQueryKeydown', genes)
-        __reset_params_byIds_exceptPageSize_inAllSearchParamsDict(null, genes)
-        // 清空query_ids
-        query_ids = ''
+
+        __set_param_page_inAllSearchParamsDict(1)
+        __set_param_geneNames_inAllSearchParamsDict(genes)
 
         await __getPageData()
     }
@@ -3496,6 +3503,10 @@
     let query_ids = ''
     let idsInput
     let idsGroupSelectShow = false
+
+    function __update_queryIds (str_ids){
+        query_ids = str_ids
+    }
     function handleOpenIDsGroupSelect(){
         // console.log("handleOpenIDsGroupSelect")
         idsGroupSelectShow = true
@@ -3581,20 +3592,36 @@
         })
         console.log('handleIdsQueryKeydown', ids)
 
-        __reset_params_byIds_exceptPageSize_inAllSearchParamsDict(ids)
+        __clear_allInputValues([dict.IDS])
+        __reset_params_allowModifyIdsGenesFreqRange_exceptPageSizePanalIdSearch_inAllSearchParamsDict(ids)
 
         await __getPageData()
     }
 
-    async function handleClear_queryIDS_queryGenes_freqRange(){
-        query_ids = ''
-        query_genes = ''
-        if (freqLowInput && freqHighInput){
-            freqLowInput.value = ''
-            freqHighInput.value = ''
+    function __clear_allInputValues(exlude_list=[]){
+        if (exlude_list.indexOf(dict.IDS) === -1){
+            __update_queryIds('')
+        }
+        if (exlude_list.indexOf(dict.GENENAMES) === -1){
+            __update_queryGenes('')
         }
 
-        __reset_params_byIds_exceptPageSize_inAllSearchParamsDict()
+        if (exlude_list.indexOf(dict.FREQRANGE) === -1 && freqLowInput && freqHighInput){
+            __update_freqLowInput_freqHighInput_values('', '')
+        }
+    }
+
+    // 清空当前页面所有 输入类input的 值
+    function __clear_allInputValues_searchParams_subfilterIndex(){
+        // 清空页面上的input值
+        __clear_allInputValues()
+
+        // 重置allSearchParams，内部重置了subfilter的index
+        __reset_params_allowModifyIdsGenesFreqRange_exceptPageSizePanalIdSearch_inAllSearchParamsDict()
+    }
+
+    async function handle_clearAllFilters_updatePage(){
+        __clear_allInputValues_searchParams_subfilterIndex()
 
         await __getPageData()
     }
@@ -3806,7 +3833,7 @@
             // 收集回传的immune关联结果
             let modified_immune_dict = {}
             let modified_mutants = null
-            let exonicfuncRefgenes_dict = null
+            let modified_exonicfuncRefgene_dict = null
             await api[`update${name}`](id,
                 {
                     log_id,
@@ -3818,8 +3845,8 @@
                 // data可能返回为null， 必然是后端出错了
                 modified_immune_dict = response.data[dict.MODIFIED_IMMUNES]
                 modified_mutants = response.data[dict.MODIFIED_MUTANTS]
-                exonicfuncRefgenes_dict = response.data[dict.EXONICFUNCREFGENES]
-                console.log('submitAffirmedData modified_immune_dict modified_mutants exonicfuncRefgenes_dict', modified_immune_dict, modified_mutants, exonicfuncRefgenes_dict)
+                modified_exonicfuncRefgene_dict = response.data[dict.EXONICFUNCREFGENES]
+                console.log('submitAffirmedData modified_immune_dict modified_mutants modified_exonicfuncRefgene_dict', modified_immune_dict, modified_mutants, modified_exonicfuncRefgene_dict)
 
                 success = true
                 success_num++
@@ -3947,9 +3974,9 @@
                 }
 
                 // C) 处理exonicfuncRefgenes选项更新
-                if (exonicfuncRefgenes_dict){
-                    for (let sheet in exonicfuncRefgenes_dict){
-                        let values = exonicfuncRefgenes_dict[sheet]
+                if (modified_exonicfuncRefgene_dict){
+                    for (let sheet in modified_exonicfuncRefgene_dict){
+                        let values = modified_exonicfuncRefgene_dict[sheet]
                         // 1）更新页面中的exonicfuncRefgene选项内容
                         __update_exonicfuncRefgene_inSubFilterSelectionsDict(values, sheet)
                         // 2）重置exonicfuncRefgene筛选项为null
@@ -4623,17 +4650,21 @@
         }
     }
 
-    async function __handle_submitPreparedMutants(e){
+    async function __handle_submit_preparedFalseNegativeMutants(e){
         console.log('__handle_preparedMutants e.detail', e.detail)
         unsubmited_negativeFalseMutants = JSON.parse(JSON.stringify(e.detail))
         checkFalseNegativeShow = false
 
         __handleLoadingShow(true, '__handle_submitPreparedMutants')
 
-        let modified_immune_dict = {}
+        let success_num = 0
+        let fail_num = 0
+        // key为sample_id, value为添加的id列表
+        let addedIds_dict = {}
         // 开始提交假突变
         for (let sample_snv_freq of unsubmited_negativeFalseMutants){
             let sample = sample_snv_freq[dict.SAMPLE]
+            let sample_id = sample[dict.ID]
             let snv = sample_snv_freq[dict.SNV]
             let freq = sample_snv_freq[dict.FREQ]
             let form = new FormData()
@@ -4646,15 +4677,20 @@
             form.append('log_id', uuidv4())
 
             let success = false
-            let ids
+            let added_ids
             let modified_immunes
+            let modified_exonicfuncRefgenes
+
             await api.generateFalseNegativeMutant(form).then(response=>{
                 console.log('__handle_submitPreparedMutants sample.id snv.id response.data', sample.id, snv.id, response.data)
                 success = true
-                ids = response.data[dict.IDS]
+                added_ids = response.data[dict.IDS]
                 modified_immunes = response.data[dict.MODIFIED_IMMUNES]
+                modified_exonicfuncRefgenes = response.data[dict.EXONICFUNCREFGENES]
+                success_num += 1
             }).catch(error=>{
                 console.error('__handle_submitPreparedMutants', error)
+                fail_num += 1
             })
 
             let message = `${sample[dict.SAMPLESN]} 假阴性位点${snv[dict.ALTERATION]} ${success?'添加成功。':'添加失败！'}`
@@ -4662,11 +4698,46 @@
             __append_timePlused_uploadMessage(message)
 
             if (success){
-                // 先从报存的未提交的假突变表中删除成功提交的
+                // A. 先从报存的未提交的假突变表中删除成功提交的
                 __removeSubmited_from_unsubmitedNegativeFalseMutants(sample_snv_freq)
+
+                // B. 收集ids
+                if (addedIds_dict.hasOwnProperty(sample_id)){
+                    addedIds_dict[sample_id] = JSON.parse(JSON.stringify(addedIds_dict[sample_id].concat(added_ids)))
+                }else{
+                    addedIds_dict[sample_id] = added_ids
+                }
+
+                // C. 更新subFilter_selections_dict中exonicfuncRefgenes
+                for (let sheet in modified_exonicfuncRefgenes){
+                    let values = modified_exonicfuncRefgenes[sheet]
+                    __update_exonicfuncRefgene_inSubFilterSelectionsDict(values, sheet)
+                }
+
+                // D. 更新immune表
+                for (let immune_id in modified_immunes){
+                    let immune = modified_immunes[immune_id]
+                    __substitute_oneData_byModifiedData_changeStatusDoneorFree(dict.IMMUNE, immune_id, immune)
+                }
             }
 
         }
+        __append_timePlused_uploadMessage(`共提交假阴性成功${success_num}条，失败${fail_num}条。`)
+
+        // E. 修改增加sheet， sample统计中的数值
+        let whole_ids = []
+        for (let sample_id in addedIds_dict){
+            let num = addedIds_dict[sample_id].length
+            whole_ids = whole_ids.concat(addedIds_dict[sample_id])
+            __add_nums_afterRearAdded_inSampleRecordDict_and_SheetRecordDict(params[dict.TYPE], sample_id, num)
+        }
+
+        // F. 取消所有的筛选项, 搜索显示新添加的ids
+        __clear_allInputValues_searchParams_subfilterIndex()
+        __set_param_ids_inAllSearchParamsDict(whole_ids)
+        __update_queryIds(whole_ids.join(' '))
+
+        await __getPageData()
 
         __handleLoadingShow(false, '__handle_submitPreparedMutants')
     }
@@ -5575,6 +5646,22 @@
         }
 
     }
+    function __add_nums_afterRearAdded_inSampleRecordDict_and_SheetRecordDict(sheet, id, num){
+        let sheet_need_edit = sheetDisplayConfigDict[sheet][dict.FILTERS].indexOf(dict.LOGSEDIT) > -1
+
+        let pre_allData = all_sample_record_dict[sheet][id][dict.ALLDATA]
+        let pre_subAndAffData = all_sample_record_dict[sheet][id][dict.S_ADATA]
+        let pre_unsubAndUnaffData = all_sample_record_dict[sheet][id][dict.US_UADATA]
+
+        all_sample_record_dict[sheet][id][dict.ALLDATA] = pre_allData + num
+        if(sheet_need_edit){
+            all_sample_record_dict[sheet][id][dict.US_UADATA] = pre_unsubAndUnaffData + num
+            all_sheet_record_dict[sheet][dict.US_UADATA] = all_sheet_record_dict[sheet][dict.US_UADATA] + num
+        }else{
+            all_sample_record_dict[sheet][id][dict.S_ADATA] = pre_subAndAffData + num
+            all_sheet_record_dict[sheet][dict.S_ADATA] = all_sheet_record_dict[sheet][dict.S_ADATA] + num
+        }
+    }
     async function handleAddDataSubmit(e){
         // console.log('handleAddDataSubmit', e.detail.data, added_data_dict[dict.SHEET_INFO_LIST])
 
@@ -5641,39 +5728,15 @@
                 }
             }
 
-            // 2）为新增数据个数，更新sample，sheet统计记录
+            // 2）为新增数据个数，更新增加sample，sheet统计记录中数值
             let info = data.info
             // console.log('handleAddDataSubmit info', info)
             for (let sheet in info){
-                let total = 0
-                let sheet_need_edit = sheetDisplayConfigDict[sheet][dict.FILTERS].indexOf(dict.LOGSEDIT) > -1
-
                 for (let sampleSn in info[sheet]) {
-                    let value = info[sheet][sampleSn]
-                    // 统计sheet页新添加总数
-                    total = total + value
+                    let num = info[sheet][sampleSn]
                     let id = sample_dict[sampleSn][dict.ID]
 
-                    // console.log('handleAddDataSubmit', sheet, sampleSn, id, value, total)
-                    let pre_allData = all_sample_record_dict[sheet][id][dict.ALLDATA]
-                    let pre_subAndAffData = all_sample_record_dict[sheet][id][dict.S_ADATA]
-                    let pre_unsubAndUnaffData = all_sample_record_dict[sheet][id][dict.US_UADATA]
-
-                    // console.log('handleAddDataSubmit', pre_allData, pre_subAndAffData, pre_unsubAndUnaffData)
-                    all_sample_record_dict[sheet][id][dict.ALLDATA] = pre_allData + value
-                    if(sheet_need_edit){
-                        all_sample_record_dict[sheet][id][dict.US_UADATA] = pre_unsubAndUnaffData + value
-                    }else{
-                        all_sample_record_dict[sheet][id][dict.S_ADATA] = pre_subAndAffData + value
-                    }
-
-                }
-
-                // 更新all_sheet_record_dict
-                if(sheet_need_edit){
-                    all_sheet_record_dict[sheet][dict.US_UADATA] = all_sheet_record_dict[sheet][dict.US_UADATA] + total
-                }else{
-                    all_sheet_record_dict[sheet][dict.S_ADATA] = all_sheet_record_dict[sheet][dict.S_ADATA] + total
+                    __add_nums_afterRearAdded_inSampleRecordDict_and_SheetRecordDict(sheet, id, num)
                 }
             }
 
@@ -5768,7 +5831,7 @@
         // 更换页
         await handleSelectSubmenu(sheet, false)
         // 更换filter，设置id
-        __reset_params_byIds_exceptPageSize_inAllSearchParamsDict([id])
+        __reset_params_allowModifyIdsGenesFreqRange_exceptPageSizePanalIdSearch_inAllSearchParamsDict([id])
         // 更新下query_ids
         query_ids = id
         // 更新页面
@@ -6048,11 +6111,9 @@
             let freqRangeValue = all_search_params_dict[params.type][dict.FREQRANGE]
             if (freqRangeValue){
                 let limits = freqRangeValue.split(',')
-                freqLowInput.value = limits[0]
-                freqHighInput.value = limits[1]
+                __update_freqLowInput_freqHighInput_values(limits[0], limits[1])
             }else{
-                freqLowInput.value = ''
-                freqHighInput.value = ''
+                __update_freqLowInput_freqHighInput_values('', '')
             }
         }
     }
