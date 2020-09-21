@@ -2688,7 +2688,8 @@
     // 将sample_record_dict和sheet_record_dict中相关总数进行增减
     // from为null，为copy情况
     function __moveCountFromTo_In_AllSampleRecord_and_AllSheetRecord(sample_id, from, to, sheet=null){
-        // console.log("__moveCountFromToInAllSampleRecordandAllSheetRecord", sample_id, all_sample_record_dict, all_sheet_record_dict, from, to)
+        // console.log("__moveCountFromToInAllSampleRecordandAllSheetRecord, sheet, sample_id, all_sample_record_dict, all_sheet_record_dict, from, to",
+        //     sheet, sample_id, all_sample_record_dict, all_sheet_record_dict, from, to)
         let defalult_sheet = sheet?sheet:params.type
         if(from){
             all_sample_record_dict[defalult_sheet][sample_id][from]--
@@ -5605,7 +5606,7 @@
         if (all_status_of_data_dict[sheet].hasOwnProperty(id) &&
                 sheetDisplayConfigDict[sheet][dict.FILTERS].indexOf(dict.LOGSEDIT) !== -1){
             let status = all_status_of_data_dict[sheet][id]
-            // 如果是已审核状态，
+            // 如果是 已审核未提交 状态 => 未审核未提交状态 FREE
             if ([dict.CHECKED, dict.EDITED, dict.DELETED].indexOf(status)!==-1){
                 // 因为sample表不需要修改，所以可以这样用，sample表sampleId对应外部cms
                 let sample_id = all_preValue_of_data_dict[sheet][id][dict.SAMPLEID]
