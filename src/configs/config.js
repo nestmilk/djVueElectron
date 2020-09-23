@@ -2630,15 +2630,51 @@ export const negativeCheckPositions = [
     {
         gene: 'EGFR',
         chr: 'chr7',
-        posStart: 55241707,
+        posStart: 55241706,
         posEnd: 55241708,
         desc: 'G719'
+    }, {
+        gene: 'EGFR',
+        chr: 'chr7',
+        posStart: 55242415,
+        posEnd: 55242513,
+        desc: '19DEL 19INS 19DELINS'
+    }, {
+        gene: 'EGFR',
+        chr: 'chr7',
+        posStart: 55248986,
+        posEnd: 55249171,
+        desc: '20INS S768I T790M'
+    }, {
+        gene: 'EGFR',
+        chr: 'chr7',
+        posStart: 55259514,
+        posEnd: 55259524,
+        desc: 'L858R L861'
+    }, {
+        gene: 'KRAS',
+        chr: 'chr12',
+        posStart: 25380275,
+        posEnd: 25380276,
+        desc: 'Q61'
     }, {
         gene: 'KRAS',
         chr: 'chr12',
         posStart: 25398281,
         posEnd: 25398286,
-        desc: 'G13 G12 '
+        desc: 'G12 G13'
+    }, {
+        gene: 'BRAF',
+        chr: 'chr7',
+        posStart: 140453132,
+        posEnd: 140453137,
+        desc: 'V600E V600K K601'
+    }, {
+        gene: 'ERBB2',
+        chr: 'chr17',
+        posStart: 37880979,
+        posEnd: 37881164,
+        desc: '20DEL 20INS'
     }
 ]
 
