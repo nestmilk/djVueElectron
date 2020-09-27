@@ -1103,7 +1103,7 @@
         FIELD_MOUSE_ENTER: 'field_mouse_enter', TITLE_GROUP: 'title_group', GROUP: 'group', GROUPS: 'groups',
         FREE: 'free', CHECKED: 'checked', DELETED: 'deleted', EDITED: 'edited',
         AVAILABLE_EDIT: 'availableEdit', REASON_TYPE: 'reason_type', REASON_DESC: 'reason_desc', LOG_ID: 'log_id',
-        DEFAULT: 'default', IDS: 'ids', NOTHING: 'nothing',
+        DEFAULT: 'default', IDS: 'ids', NOTHING: 'nothing', ALL: 'all', PANALINFO: 'panalinfo',
         SINGLE: 'single', MULTIPLE: 'multiple', EXCEL_LIST: 'excel_list',
         SIN_CANCEL_OR_AFFIRM: "single_cancel_or_affirm", CHECK_SINSUB_LOGS: "check_single_submit_logs",
         CANCEL_SUBMIT_DONE: "cancel_submit_done", EDIT_SINAFF_REASON: "edit_single_affirm_reason",
@@ -3763,9 +3763,10 @@
         result[item[dict.SHEET]] = []
         return result
     },{})))
-    function __append_timePlused_uploadMessage(message){
+    function __append_timePlused_uploadMessage(message, sheet){
+        let default_sheet = sheet && all_uploadMessage_dict.hasOwnProperty(sheet)?sheet:params.type
         let time = getTime()
-        all_uploadMessage_dict[params.type] = [...all_uploadMessage_dict[params.type], `${time} ${message}`]
+        all_uploadMessage_dict[default_sheet] = [...all_uploadMessage_dict[default_sheet], `${time} ${message}`]
     }
 
 
@@ -5959,6 +5960,12 @@
     let panal_socket
     let connect_panal_socket
     let openSocketInterval
+    function __append_timePlused_uploadMessage_inALL(message){
+        for (let sheet in all_uploadMessage_dict){
+            let time = getTime()
+            all_uploadMessage_dict[sheet] = [...all_uploadMessage_dict[sheet], `${time} ${message}`]
+        }
+    }
     function __open_panal_socket(){
         // 赋值前，先把已有的关闭掉
         if (panal_socket) panal_socket.close()
@@ -5975,15 +5982,27 @@
         panal_socket.onmessage = function(e) {
             console.log('__open_panal_socket onmessage', e.data)
             let data = JSON.parse(e.data)
-            let message = data['msg']
+            let msg = data['msg']
+            let target = data['target']
             // 接收到连接信息，传递给参数
-            if (message === dict.ACONNECTED){
+            if (msg === dict.ACONNECTED){
                 connect_panal_socket = true
                 errors = '已连接后端panal_socket'
                 return
             }
 
-            __append_timePlused_panalSocketMessage(message)
+            switch (target){
+                case dict.PANALINFO:
+                    __append_timePlused_panalSocketMessage(msg)
+                    break
+                case dict.ALL:
+                    __append_timePlused_panalSocketMessage(msg)
+                    __append_timePlused_uploadMessage_inALL(msg)
+                    break
+                default:
+                    __append_timePlused_uploadMessage(msg, target)
+                    break
+            }
         }
         // 关闭时候
         panal_socket.onclose = function(e) {

@@ -83,7 +83,7 @@
 
                 <div class="searchWrapper">
                     <input type="text"
-                           placeholder="请填写样本编号、病人姓名、Panal名查询"
+                           placeholder="请填样本编号、病人姓名、Panal名或ID号"
                            bind:value={search}
                            on:keydown={handleSearchKeydown}
                     />

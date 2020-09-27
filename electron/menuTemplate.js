@@ -128,10 +128,20 @@ let template = [
                     },
                 ]
             }, {
-                label: '打开Ensembl',
-                click: () => {
-                    shell.openExternal('http://asia.ensembl.org/index.html')
-                }
+                label: '相关网站',
+                submenu: [
+                    {
+                        label: 'Ensembl/GRCH37',
+                        click: () => {
+                            shell.openExternal('http://grch37.ensembl.org/Homo_sapiens/Info/Index')
+                        }
+                    }, {
+                        label: '鼎晶后端数据',
+                        click: () => {
+                            shell.openExternal('http://172.16.10.32:9733')
+                        }
+                    }
+                ]
             }, {
                 label: 'IGV工具',
                 submenu: [
