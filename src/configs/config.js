@@ -402,6 +402,14 @@ export const sheetDisplayConfigList = [
                 selectDisplay: true,
                 groups: ['突变位点']
             }, {
+                title: "source",
+                translate: "突变来源",
+                type: "text",
+                modify: true,
+                defaultDisplay: true,
+                selectDisplay: true,
+                groups: ['突变位点']
+            }, {
                 title: "freq",
                 translate: "频率",
                 type: "text",

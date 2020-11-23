@@ -59,7 +59,7 @@
             if(typeof error === 'string'){
                 errors = '网络连接错误！'
             }else{
-                errors = response.data.non_field_errors[0]
+                errors = error.data.non_field_errors[0]
             }
         })
 
