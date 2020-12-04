@@ -421,7 +421,13 @@
                                     <th class="affirmed short hoverGreen"
                                         on:click={handleToggleAllSample_inSampeInfoInPanal}
                                     >
-                                        {all_selected_dataIds_dict[params.type].length===sample_list.length?'取消':'全选'}
+                                        {all_selected_dataIds_dict[params.type].length === Object.keys(availableSelect_inSampleInfoInPanal).reduce((num, id) => {
+                                            const available = availableSelect_inSampleInfoInPanal[id]
+                                            if (available) {
+                                                num += 1
+                                            }
+                                            return num
+                                        }, 0)?'取消':'全选'}
                                     </th>
                                 {/if}
 
@@ -1168,7 +1174,7 @@
     // 控制检查假阴性的界面显示
     let checkFalseNegativeShow = false
 
-
+    // 样本详情表中，需要检查是否相等的 count字段名 列表
     let field_needCheck_inSampleInfoinPanal = JSON.parse(JSON.stringify(sheetDisplayConfigDict[dict.SAMPLEINFOINPANAL][dict.TITLE_LIST].reduce((result, title)=>{
         if (title[dict.NEED_CHECK]){
             result.push(title[dict.TITLE])
@@ -1869,20 +1875,23 @@
         //     return Object.keys(unequal_values).length>0
         // }
     }
+    function __check_availSelect_forSampleInfoInPanal(id) {
+        return field_needCheck_inSampleInfoinPanal.every(field=>{
+            let submitCount = all_nowValue_of_data_dict[params.type][id][field]
+            let count_field = field.replace('Submit', '')
+            let count = all_nowValue_of_data_dict[params.type][id][count_field]
+            // console.log('__check_availSelect_of_oneData_alreadyInsid', count_field, count, submitCount)
+
+            return  count === submitCount
+        })
+    }
     function __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(str_id){
         let id = parseInt(str_id)
 
         if(params.type===dict.SAMPLEINFOINPANAL){
             // console.log('__check_availSelect_of_oneData_alreadyInsid 概览页面')
             // 确保需要校验的 SubmitCount(提交数)与 对应的Count(总数) 相等
-            return field_needCheck_inSampleInfoinPanal.every(field=>{
-                let submitCount = all_nowValue_of_data_dict[params.type][id][field]
-                let count_field = field.replace('Submit', '')
-                let count = all_nowValue_of_data_dict[params.type][id][count_field]
-                // console.log('__check_availSelect_of_oneData_alreadyInsid', count_field, count, submitCount)
-
-                return  count === submitCount
-            })
+            return __check_availSelect_forSampleInfoInPanal(id)
         }
 
         // console.log('<===__check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict begin')
@@ -1955,7 +1964,9 @@
 
     // 重置当前页面某id是否可选
     function __update_oneId_availSelect_inPageIdAvailSelectDict(id){
-        page_id_availableSelect_dict[id] = __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id)
+        // console.log('__update_oneId_availSelect_inPageIdAvailSelectDict id', id)
+        let available = __check_availSelect_of_oneData_alreadyInsideAllStatusOfDataDict(id)
+        page_id_availableSelect_dict[id] = available
     }
     // 重置当前页所有id，是否可选
     function __update_allIds_availSelect_inPageIdAvailSelectDict(){
@@ -2365,6 +2376,8 @@
     let page_id_availableEdit_dict = {}
     // 当前页面的id，能否操作列按钮显示
     let page_id_availableSelect_dict = {}
+    // 特殊情况，sampleInfoInPanal页，能否被选中全员
+    let availableSelect_inSampleInfoInPanal = {}
 
 
     //用作差异校验, 每页以id为key，value为所有field的字典
@@ -3061,7 +3074,14 @@
     }
     // 初始化当前页所有数据，当前不可编辑 false
     function __set_allIds_availEdit_false_inPageIdAvailEditDict(){
-        page_id_availableEdit_dict =  JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
+        page_id_availableEdit_dict = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
+            result[item[dict.ID]] = false
+            return result
+        }, {})))
+    }
+    // 初始化当前页所有数据，当前不可选择 false
+    function __set_allIds_availSelect_false_inPageIdvailableSelectDict() {
+        page_id_availableSelect_dict = JSON.parse(JSON.stringify(page_data.reduce((result, item)=>{
             result[item[dict.ID]] = false
             return result
         }, {})))
@@ -3074,24 +3094,27 @@
         // B) 当前页各id能否被编辑, 初始化都不能编辑
         __set_allIds_availEdit_false_inPageIdAvailEditDict()
 
-        // C) 更新totalPageNums，利用更新的data_count
+        // C) 当前页面id能否被选中，初始化都不能选择 2020.12.4
+        __set_allIds_availSelect_false_inPageIdvailableSelectDict()
+
+        // D) 更新totalPageNums，利用更新的data_count
         __updateTotalPageNums()
 
-        // D) 更新 all_data_status_dict 中数据状态
+        // E) 更新 all_data_status_dict 中数据状态
         __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict()
 
-        // E)如果当前 审核工作状态, 需要更新之前的过往日志
+        // F)如果当前 审核工作状态, 需要更新之前的过往日志
         if(affirmSelection_dict[all_affirmWorkingStatus_of_sheet_dict[params.type]][dict.PREVIOUS_LOG_UPDATE]){
             console.log('__getPageData 审核工作状态需要 开始更新日志')
             await __update_Ids_and_relatedIds_PreviousLogs()
         }
 
-        // F) 更新页面所有id可否选择,
+        // G) 更新页面所有id可否选择,
         // 查看日志，取消提交的工作状态 依赖于F)
         // 概览依赖于E)的nowValue判断count和submitCout相同
         __update_allIds_availSelect_inPageIdAvailSelectDict()
 
-        // G) 如果当前需要查看历史假突变，需要更新之前的历史假突变
+        // H) 如果当前需要查看历史假突变，需要更新之前的历史假突变
         if(sheetDisplayConfigDict[params.type][dict.SHOW_HISTORYFALSEPOSITIVEMUTANT] && openHistoryFalsePositiveMutant){
             await __update_currentPageHistoryFalseMutantDict(dict.FALSE_POSITIVE)
         }
@@ -3111,7 +3134,7 @@
         // console.log("__getPageData upperQueryName params", name)
 
         await api[`list${name}`](all_search_params_dict[params.type]).then(response=>{
-            console.log('__getPageData response.data', response.data)
+            // console.log('__getPageData 目标 参数 返回数据', `list${name}`, all_search_params_dict[params.type], response.data)
             page_data = response.data.results
             //更新当前页data总条数，__updateTotalPageNums()需要调用，获得总页数
             data_count = response.data.count
@@ -3123,6 +3146,7 @@
         })
 
         if(success){
+            // 初始化很多相关参数
             await __set_configs_afterPageDataUpdated()
         }
 
@@ -3234,6 +3258,49 @@
         }
     }
 
+    async function __update_availableSelectINSampleInfoInPanal_byListAllSampleInfoInPanals () {
+        __handleLoadingShow(true, '__update_availableSelectINSampleInfoInPanal_byListAllSampleInfoInPanals')
+
+        let allSampleInfos
+        await api.listSampleInfoInPanal({
+            sampleIds: all_search_params_dict[dict.SAMPLEINFOINPANAL][dict.SAMPLEIDS],
+            panalId: all_search_params_dict[dict.SAMPLEINFOINPANAL][dict.PANALID]
+        }).then(response => {
+            console.log('__update_availableSelectINSampleInfoInPanal_byListAllSampleInfoInPanals response.data', response.data)
+            allSampleInfos = response.data
+        }).catch(error =>{
+            console.log('__update_availableSelectINSampleInfoInPanal_byListAllSampleInfoInPanals error', error)
+        })
+
+        if (allSampleInfos) {
+            // 1. 更新所有的状态，值，为__check_availSelect_forSampleInfoInPanal提供最新数据
+            __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(allSampleInfos, dict.SAMPLEINFOINPANAL)
+            for (let sampleInfo of allSampleInfos) {
+                let id = sampleInfo[dict.ID]
+                availableSelect_inSampleInfoInPanal[id] = __check_availSelect_forSampleInfoInPanal(id)
+            }
+        }
+
+        // 2. 如果现在不能选择（有没有提交的），将选中的样本取消,
+        // todo 样本概览页 all_selected_dataIds_dict 存的是样本id，而不是数据ID
+        all_selected_dataIds_dict[dict.SAMPLEINFOINPANAL] = all_selected_dataIds_dict[dict.SAMPLEINFOINPANAL].filter(sampleId => {
+            let sampleInfoInPanal_Id
+            for (let sampleInfo_id in all_nowValue_of_data_dict[dict.SAMPLEINFOINPANAL]) {
+                let sampleInfo = all_nowValue_of_data_dict[dict.SAMPLEINFOINPANAL][sampleInfo_id]
+                if (sampleInfo[dict.SAMPLEID] === sampleId) {
+                    sampleInfoInPanal_Id = sampleInfo_id
+                    break
+                }
+            }
+            if (sampleInfoInPanal_Id) {
+                return availableSelect_inSampleInfoInPanal[sampleInfoInPanal_Id]
+            } else {
+                return false
+            }
+        })
+
+        __handleLoadingShow(false, '__update_availableSelectINSampleInfoInPanal_byListAllSampleInfoInPanals')
+    }
     // submenu选择
     async function handleSelectSubmenu(type, get_page_data=true){
         if (type===params.type) return
@@ -3247,6 +3314,11 @@
 
         //1) 更换公用的selected_ids信息
         __update_selectedIds_afterPush()
+
+        if (params.type === dict.SAMPLEINFOINPANAL) {
+            // 2020.12.4 打补丁 需要更新可选样本信息行总表
+            await __update_availableSelectINSampleInfoInPanal_byListAllSampleInfoInPanals()
+        }
 
         if (get_page_data){
             await __getPageData()
@@ -4227,8 +4299,15 @@
         subFilter_selections_dict[`${sheet.toLowerCase()}_exonicfuncRefgene`] = [{value: null, content: "突变方式(全选)"}, ...new_selections]
     }
 
+    // 利用存好的 更新 样本信息页 可选总表
+    function __update_availableSelectINSampleInfoInPanal () {
+        console.log('__update_availableSelectINSampleInfoInPanal')
+        for (let id in all_status_of_data_dict[dict.SAMPLEINFOINPANAL]) {
+            availableSelect_inSampleInfoInPanal[id] = __check_availSelect_forSampleInfoInPanal(id)
+        }
+    }
     // 加载初始化
-    function __setSampleList_and_AllSampleRecordDict__allSpecificFilters(data){
+    function __setSampleList__allSampleRecordDict__allSpecificFilters(data){
         //1） 更新sample_list
         let sampleInfoInPanals = data.sampleInfoInPanals
 
@@ -4245,7 +4324,7 @@
         // 顺便初始化已选择的样本id列表，即selected_sampleId_list
         selected_sampleId_list = JSON.parse(JSON.stringify(sample_list.map(sample=>sample[dict.ID])))
 
-        // 顺便初始化 {NGS200306-14: 1, NGS200306-22: 2, NGS200306-42: 3, NGS200208-38: 4}
+        // 顺便初始化 sample_dict {NGS200306-14: 1, NGS200306-22: 2, NGS200306-42: 3, NGS200208-38: 4}
         sample_dict = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
             let sample = sampleInfoInPanal[dict.SAMPLE]
             let sampleSn = sample[dict.SAMPLESN]
@@ -4253,7 +4332,12 @@
             return result
         }, {})))
 
-        // 更新all_sample_record_dict
+        // 2020.12.4 打补丁 利用所有 sampleInfoInPanals填充 all_status_of_data_dict nowValueOfDatadict preValueOfDataDict
+        __update_dataStatusDict_nowValueOfDataDict_preValueOfDataDict(sampleInfoInPanals, dict.SAMPLEINFOINPANAL)
+        // 然后获取整个样本信息表，是否可以选择！
+        __update_availableSelectINSampleInfoInPanal()
+
+        // 2) 更新all_sample_record_dict
         for (let sheet in all_sample_record_dict) {
             all_sample_record_dict[sheet] = JSON.parse(JSON.stringify(sampleInfoInPanals.reduce((result, sampleInfoInPanal)=>{
                 // 顺便统计更新all_sheet_record_dict, 每页总数详细
@@ -4352,7 +4436,7 @@
             panal_data = response.data
 
             // 初始化sampleId_list, 利用sampleInfoInPanals中样本信息，对手工表All_sample_record_dict初始化
-            __setSampleList_and_AllSampleRecordDict__allSpecificFilters(response.data)
+            __setSampleList__allSampleRecordDict__allSpecificFilters(response.data)
 
         }).catch(error=>{
             console.log("getSampleList", error)
@@ -5451,11 +5535,24 @@
         }
     }
 
-    function handleToggleAllSample_inSampeInfoInPanal(){
-        if(all_selected_dataIds_dict[params.type].length===sample_list.length){
+    function handleToggleAllSample_inSampeInfoInPanal () {
+        let availableSelectNum = Object.keys(availableSelect_inSampleInfoInPanal).reduce((num, id) => {
+            const available = availableSelect_inSampleInfoInPanal[id]
+            if (available) {
+                num += 1
+            }
+            return num
+        }, 0)
+        if(all_selected_dataIds_dict[params.type].length === availableSelectNum){
             all_selected_dataIds_dict[params.type] = []
         }else{
-            all_selected_dataIds_dict[params.type] = sample_list.map(sample=>sample[dict.ID])
+            all_selected_dataIds_dict[params.type] = Object.keys(availableSelect_inSampleInfoInPanal).reduce((result, id) => {
+                if (availableSelect_inSampleInfoInPanal[id]) {
+                    let sampleId = all_nowValue_of_data_dict[dict.SAMPLEINFOINPANAL][id][dict.SAMPLEID]
+                    result.push(sampleId)
+                }
+                return result
+            }, [])
         }
     }
 
@@ -6149,8 +6246,9 @@
         }
 
         //手动更新公用过滤的dom的value值,done,delete,logsEdit,exonicfuncRefgene,connectSheet
-        if(params.type!==pre_params_type){
+        if(params.type !== pre_params_type){
             __update_filter_dom_value()
+
             pre_params_type = params.type
         }
 
@@ -6166,22 +6264,24 @@
         // console.log(sample_list, sampleSn_dict)
         // console.log(all_titleListItem_dict, all_wholeTitle_list_dict, all_defaultTitle_list_dict, all_selectTitle_list_dict)
         // console.log(all_sample_record_dict, all_sheet_record_dict)
-        console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
+        // console.log(all_search_params_dict, all_subFilter_indexes_dict, all_subFilter_names_dict, subFilter_selections_dict)
         // console.log(exonicfuncRefgeneSelection)
         // console.log(all_editedData_dict)
         // console.log(all_pre_data_id, all_pre_sample_id, all_now_data_id, all_now_sample_id)
         // console.log(all_modifyTitle_list_dict)
         // console.log(all_titleList_dict)
         // console.log(pageModifyField_mouseEnter_dict)
-        // console.log(all_selected_dataIds_dict)
-        // console.log(all_status_of_data_dict)
-        // console.log(all_preValue_of_data_dict, all_nowValue_of_data_dict)
+        console.log('all_selected_dataIds_dict', all_selected_dataIds_dict)
+        console.log('all_status_of_data_dict', all_status_of_data_dict)
+        console.log('all_preValue_of_data_dict, all_nowValue_of_data_dict', all_preValue_of_data_dict, all_nowValue_of_data_dict)
         // console.log(all_submit_params_dict)
         // console.log(all_submit_logs_dict, logs_together_dict)
         // console.log(all_now_data_id[params.type], all_now_sample_id[params.type])
         // console.log(all_affirm_status_dict)
         // console.log(all_selected_dataIds_dict)
+        console.log('page_data', page_data)
         // console.log(page_id_modifyField_mouseEnter_dicts, page_id_availableSelect_dict, page_id_availableEdit_dict)
+        console.log('availableSelect_inSampleInfoInPanal', availableSelect_inSampleInfoInPanal)
         // console.log(all_locked_logId_for_adjustMultipleAffirmItems, all_selected_dataIds_dict)
         // console.log(all_previousLog_list_dict)
         // console.log(now_input_field && now_input_id, !panal_unable_handle, now_params_type === params.type, page_id_availableEdit_dict[now_input_id], page_data.some(data=>data.id===now_input_id))
