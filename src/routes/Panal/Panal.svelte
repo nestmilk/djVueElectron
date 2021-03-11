@@ -684,6 +684,7 @@
 
         let name_dict = {}
         for (let file of filewidget.files) {
+            console.log('load file', file)
             let panalName = fileUtil.getKey(file.name)
             if (name_dict[panalName]) {
                 name_dict[panalName]++

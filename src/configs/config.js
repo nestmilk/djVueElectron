@@ -1348,6 +1348,20 @@ export const sheetDisplayConfigList = [
                 defaultDisplay: true,
                 selectDisplay: false
             }, {
+                title: "cutoff",
+                translate: "阈值线",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: true
+            }, {
+                title: "level",
+                translate: "等级",
+                type: "text",
+                modify: false,
+                defaultDisplay: true,
+                selectDisplay: true
+            }, {
                 title: "immuneId",
                 type: "text",
                 translate: "免疫ID",
