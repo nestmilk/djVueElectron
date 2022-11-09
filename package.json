@@ -39,7 +39,7 @@
     "popper.js": "^1.16.0",
     "sirv-cli": "^0.4.4",
     "socket.io-client": "^2.3.0",
-    "socket.io-parser": "^3.4.0",
+    "socket.io-parser": "^3.4.2",
     "svelte-spa-router": "^2.0.0",
     "uuid": "^3.4.0"
   },
